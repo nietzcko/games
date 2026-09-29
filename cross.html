@@ -26,6 +26,22 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 #time{font-size:26px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);font-variant-numeric:tabular-nums;}
 #btnMenu{pointer-events:auto;background:rgba(14,16,12,0.7);border:none;color:#f1ecd8;border-radius:8px;width:44px;height:44px;font-size:22px;cursor:pointer;}
 
+#btns .pb{position:fixed;z-index:20;display:flex;align-items:center;justify-content:center;touch-action:none;
+  -webkit-tap-highlight-color:transparent;cursor:pointer;background:rgba(20,16,10,0.6);border:2px solid rgba(255,255,255,0.25);
+  color:#f1ecd8;font-size:14px;letter-spacing:1px;border-radius:50%;transition:background .06s,border-color .06s;}
+#btns #bSL,#btns #bSR{bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:84px;height:84px;font-size:28px;}
+#btns #bSL{left:12px;} #btns #bSR{left:106px;}
+#btns #bHop,#btns #bFast,#btns #bRun{right:14px;width:78px;height:78px;}
+#btns #bHop{bottom:calc(env(safe-area-inset-bottom,0px) + 194px);border-color:#ffb27a;}
+#btns #bFast{bottom:calc(env(safe-area-inset-bottom,0px) + 106px);border-color:#e8763c;}
+#btns #bRun{bottom:calc(env(safe-area-inset-bottom,0px) + 18px);border-color:#5f8fd8;}
+#btns .pb.on{background:rgba(255,255,255,0.28);}
+#btns .fast.on{background:rgba(232,118,60,0.55);}
+#btns .run.on{background:rgba(95,143,216,0.55);}
+#btns .hop.on{background:rgba(255,178,122,0.6);}
+#btns .steer.brake{background:rgba(200,53,42,0.55);border-color:#ff5a4f;}
+#hudBot.mid{left:12px;transform:none;bottom:calc(env(safe-area-inset-bottom,0px) + 114px);width:min(178px,calc(100vw - 130px));}
+#hudBot.low{bottom:calc(env(safe-area-inset-bottom,0px) + 14px);}
 #hudBot{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 128px);
   z-index:10;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:5px;width:min(320px,88vw);}
 #hint{width:fit-content;max-width:100%;margin:6px auto 0;font-size:15px;padding:4px 12px;border-radius:7px;background:rgba(14,16,12,0.72);color:#fff;min-height:26px;
@@ -81,7 +97,9 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 .stage{background:rgba(34,27,18,0.9);border-left:4px solid #ffc93c;border-radius:10px;padding:16px 18px;width:100%;max-width:440px;margin:16px 0 20px;}
 .stage .n{font-size:17px;color:#fff;letter-spacing:2px;}
 .stage .t{font-size:12px;color:#c9c3a8;margin-top:4px;line-height:1.6;}
-#diffRow{display:flex;gap:6px;margin-top:12px;}
+#diffRow,#ctrlRow{display:flex;gap:6px;margin-top:12px;}
+#ctrlRow button{flex:1;font-family:inherit;font-size:13px;padding:9px 0;border-radius:8px;cursor:pointer;background:rgba(255,255,255,0.06);color:#ddd6bd;border:1px solid rgba(255,255,255,0.14);}
+#ctrlRow button.sel{background:#ffc93c;color:#10130f;border-color:#ffc93c;}
 .lvl{display:flex;align-items:center;gap:10px;}
 .stage.look{margin-top:22px;}
 .lookRow{display:flex;gap:14px;align-items:flex-start;margin-top:8px;}
@@ -134,6 +152,14 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
   <div id="knobBox"><div id="knob">&#128690;</div></div>
 </div>
 
+<div id="btns" class="hidden">
+  <div id="bSL" class="pb steer" aria-label="Steer left">&#9664;</div>
+  <div id="bSR" class="pb steer" aria-label="Steer right">&#9654;</div>
+  <div id="bHop" class="pb hop" aria-label="Hop">HOP</div>
+  <div id="bFast" class="pb fast" aria-label="Go hard">FAST</div>
+  <div id="bRun" class="pb run" aria-label="Jump off and run">RUN</div>
+</div>
+
 <div id="fl"></div>
 
 <div id="menu">
@@ -152,6 +178,11 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
   </div>
   <button class="ob main" id="btnStart">Start race</button>
   <div class="stage look">
+    <div class="n" style="font-size:15px;">Controls</div>
+    <div id="ctrlRow"><button data-m="buttons" onclick="setCtrl('buttons')">Buttons</button><button data-m="joy" onclick="setCtrl('joy')">Joystick</button><button data-m="slider" onclick="setCtrl('slider')">Slider</button></div>
+    <div class="t" id="ctrlTxt"></div>
+  </div>
+  <div class="stage look" style="margin-top:0;">
     <div class="n" style="font-size:15px;">Your rider</div>
     <div class="lookRow">
       <canvas id="preview"></canvas>
@@ -169,7 +200,7 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
     <div style="width:36%;background:linear-gradient(90deg,#9aa048,#4a8050);">Steady<br>grips, recovers</div>
     <div style="width:14%;background:#3f6aa8;">Run</div>
   </div>
-  <p class="how" style="color:#ffb27a;margin-top:10px;">Barriers: hop them at speed or run them. Stairs: always run. Sand: you roll in on momentum, but pedalling in sand drains energy fast. Once you're slower than running pace, jump off and run. Mud: stay steady or your wheel spins. Go into a tight corner a bit hot and you drift. Too hot, or drift too long, and you wash out.</p>
+  <p class="how" style="color:#ffb27a;margin-top:10px;">Barriers: hop them at speed or run them. Stairs: always run. Sand: you roll in on momentum, but pedalling in sand drains energy fast. Once you're slower than running pace, jump off and run. Mud: stay steady or your wheel spins. Go into a tight corner too hot and you drift: the faster you are, the more the slide scrubs off.</p>
   <p class="how" style="margin-top:20px;font-size:12px;color:#a9a58f;">Keyboard: left and right arrows move the slider, 1 to 4 jump to a zone, space to hop.</p>
 </div>
 
@@ -203,6 +234,8 @@ const DIS_T=0.32, MNT_T=0.34;// getting off and back on
 const SAND_GRIP=0.22, SAND_BLEED=1.0, SAND_COST=8;
 const A_LAT=480;             // grip: how hard you can corner
 const PLANK_GAP=22;
+const SLIDE_V=430;          // above this speed (about 21 km/h) full lock breaks into a slide
+const GRIP_FREE=0.95;         // how hard a freely steered bike can corner before it slides
 const DRIFT_MAX=0.3;
 const DRIFT_SAFE=0.3;         // below this share of DRIFT_MAX a drift never washes out          // this far over the corner's limit is an instant wash-out          // half the gap between the two barrier planks
 const COLL_S=BIKE_L*1.0, COLL_L=40;
@@ -410,7 +443,7 @@ function buildSpine(){
     let s=0;for(let k=-3;k<=3;k++)s+=rad[(i+k+N)%N];
     const sp=spine[i];sp.rad=s/7;
     let g=1;if(sp.camber)g*=0.8;if(sp.surf==='mud')g*=0.9;if(sp.surf==='sand')g*=0.92;
-    sp.vmax=Math.sqrt(A_LAT*sp.rad)*g;
+    sp.g=g;sp.vmax=Math.sqrt(A_LAT*sp.rad)*g;
   }
   START_S=spine[18].d;
   // events along the lap
@@ -449,13 +482,31 @@ function spineAt(d){
   return {x:A.x+(B.x-A.x)*f,y:A.y+(B.y-A.y)*f,ux:ux,uy:uy,nx:-uy,ny:ux,i:lo,surf:A.surf};
 }
 // the slowest corner in the next `dist` of track
-function minVmaxAhead(s,dist){
-  let i=idxAt(s),covered=0,m=spine[i].vmax;
+// On the outside of a bend the arc is wider, so you can carry more speed;
+// on the inside it's tighter but shorter.
+function lineRad(sp,l){ return Math.max(90,sp.rad-sp.turn*(l||0)); }
+function vmaxAt(sp,l){ return Math.sqrt(A_LAT*lineRad(sp,l))*sp.g; }
+function lineFactor(sp,l){ return sp.rad>=4000?1:clamp(sp.rad/lineRad(sp,l),0.8,1.25); }
+function minVmaxAhead(s,dist,l){
+  let i=idxAt(s),covered=0,m=vmaxAt(spine[i],l);
   while(covered<dist){
     const n=(i+1)%N,d=n===0?L-spine[i].d:spine[n].d-spine[i].d;
-    covered+=d;i=n;m=Math.min(m,spine[i].vmax);
+    covered+=d;i=n;m=Math.min(m,vmaxAt(spine[i],l));
   }
   return m;
+}
+// nearest point of the course to (x,y), searching near the last known sample
+function projectXY(x,y,hint){
+  let best=Infinity,res=null;
+  for(let k=-30;k<=30;k++){
+    const i=((hint+k)%N+N)%N,j=(i+1)%N,A=spine[i],B=spine[j];
+    const dx=B.x-A.x,dy=B.y-A.y,len2=dx*dx+dy*dy||1;
+    const t=clamp(((x-A.x)*dx+(y-A.y)*dy)/len2,0,1);
+    const px=A.x+dx*t,py=A.y+dy*t,dd=(x-px)*(x-px)+(y-py)*(y-py);
+    if(dd<best){ best=dd;const len=Math.sqrt(len2),Bd=j===0?L:B.d;
+      res={i:i,d:A.d+(Bd-A.d)*t,l:(x-px)*(-dy/len)+(y-py)*(dx/len)}; }
+  }
+  return res;
 }
 function aheadDist(s,a){ return ((a-lapPos(s))%L+L)%L; }
 // the next thing on the course: returns {ev,dist,inside}
@@ -679,7 +730,7 @@ function drawPreview(dt){
   pvx.strokeStyle='rgba(20,12,4,0.35)';pvx.lineWidth=3;
   for(const x of [w*0.3,w*0.45,w*0.62])pvx.beginPath(),pvx.moveTo(x,0),pvx.lineTo(x,h),pvx.stroke();
   const keep=ctx;ctx=pvx;
-  ctx.save();ctx.translate(w/2,h/2+4);ctx.scale(h/125,h/125);drawRider(r);ctx.restore();
+  ctx.save();ctx.translate(w/2,h/2+4+21*RS*h/125);ctx.scale(h/125,h/125);drawRider(r);ctx.restore();
   ctx=keep;
 }
 
@@ -700,6 +751,73 @@ let state='menu',raceTime=0,cdT=0,cdShown=0,cam={x:0,y:0,angle:0,zoom:0.4};
 let particles=[],skids=[],shakeT=0,results=null,lastTs=0,finalShown=false;
 const ZOOM=0.55;
 const FINISH_ABS=()=>START_S+LAPS*L;
+
+// ── INPUT: joystick or slider ────────────────────────
+// Joystick: touch anywhere and that's the centre. Up and down is effort,
+// left and right steers. Push up to go harder, flick up to hop, pull down to
+// jump off and run. Let go and it springs back to steady riding.
+let ctrlMode='buttons';
+try{ const m=localStorage.getItem('cx_ctrl_v2'); if(m==='slider'||m==='joy'||m==='buttons')ctrlMode=m; }catch(e){}
+const joy={on:false,id:null,ox:0,oy:0,x:0,y:0,steer:0,hopReq:false,hist:[]};
+let kU=false,kD=false;
+const STEADY_SX=0.62;
+function joyR(){ const k=clamp(Math.min(W,H)/390,0.8,1.4); return {up:95*k,down:45*k,side:75*k,dead:6*k}; }
+cv.addEventListener('pointerdown',e=>{
+  if(!joyActive()||joy.on)return;
+  e.preventDefault();
+  joy.on=true;joy.id=e.pointerId;joy.ox=joy.x=e.clientX;joy.oy=joy.y=e.clientY;joy.hist=[[performance.now(),e.clientY]];
+  try{cv.setPointerCapture(e.pointerId);}catch(_){}
+});
+cv.addEventListener('pointermove',e=>{
+  if(!(joy.on&&e.pointerId===joy.id))return;
+  joy.x=e.clientX;joy.y=e.clientY;
+  // a quick flick upwards is a hop
+  const now=performance.now();joy.hist.push([now,e.clientY]);
+  while(joy.hist.length>1&&now-joy.hist[1][0]>90)joy.hist.shift();   // keep one sample from just before
+  const h0=joy.hist[0],R_=joyR(),rise=h0[1]-e.clientY;   // where the finger was 90 ms ago
+  if(rise>R_.up*0.62&&!joy.flicked){ joy.hopReq=true;joy.flicked=true; }
+  if(rise<R_.up*0.15)joy.flicked=false;
+});
+const joyEnd=e=>{ if(joy.on&&e.pointerId===joy.id){ joy.on=false;joy.id=null;joy.steer=0;joy.flicked=false; } };
+cv.addEventListener('pointerup',joyEnd);cv.addEventListener('pointercancel',joyEnd);cv.addEventListener('lostpointercapture',joyEnd);
+// ── INPUT: buttons. Left thumb steers, right thumb sets the effort.
+const bHeld={L:new Set(),R:new Set(),F:new Set(),Run:new Set(),Hop:new Set()};
+function bindPB(id,key,onDown){
+  const el=document.getElementById(id);
+  el.addEventListener('pointerdown',e=>{ e.preventDefault(); try{el.setPointerCapture(e.pointerId);}catch(_){} bHeld[key].add(e.pointerId); if(onDown)onDown(); syncPB(); });
+  const up=e=>{ bHeld[key].delete(e.pointerId); syncPB(); };
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up);
+  el.addEventListener('touchstart',e=>{ if(e.cancelable)e.preventDefault(); },{passive:false});
+}
+function syncPB(){
+  const L=bHeld.L.size>0||kL,R=bHeld.R.size>0||kR,brake=L&&R;
+  const set=(id,cls)=>{ document.getElementById(id).className='pb '+cls; };
+  set('bSL','steer'+(brake?' brake':L?' on':''));set('bSR','steer'+(brake?' brake':R?' on':''));
+  set('bFast','fast'+(bHeld.F.size||kU?' on':''));set('bRun','run'+(bHeld.Run.size||kD?' on':''));
+  set('bHop','hop'+(bHeld.Hop.size?' on':''));
+}
+bindPB('bSL','L');bindPB('bSR','R');bindPB('bFast','F');bindPB('bRun','Run');
+bindPB('bHop','Hop',()=>{ joy.hopReq=true; });
+function readButtons(){
+  const L=bHeld.L.size>0||kL,R=bHeld.R.size>0||kR;
+  const brake=L&&R;
+  joy.steer=brake?0:(R?1:0)-(L?1:0);
+  if(bHeld.Run.size||kD)sx=0.95;
+  else if(brake)sx=RUN_X-0.01;                     // both steer buttons: brake
+  else if(bHeld.F.size||bHeld.Hop.size||kU)sx=0.18;
+  else sx=STEADY_SX;
+}
+function joyActive(){ return ctrlMode==='joy'&&(state==='racing'||state==='countdown'); }
+function updateJoy(dt){
+  if(!joy.on){ joy.steer=0; if(!kU&&!kD)sx=STEADY_SX; return; }
+  const R_=joyR(),dx=joy.x-joy.ox,up=joy.oy-joy.y;
+  // effort from the vertical offset only
+  if(up<=-R_.down)sx=0.95;                                            // pulled down: run
+  else if(up<0)sx=STEADY_SX+(-up/R_.down)*(RUN_X-0.02-STEADY_SX);     // a little down: easy
+  else sx=STEADY_SX-Math.min(1,up/R_.up)*(STEADY_SX-0.12);            // up: harder, to flat out
+  // steering from the horizontal offset only
+  joy.steer=Math.abs(dx)<R_.dead?0:clamp((dx-Math.sign(dx)*R_.dead)/(R_.side-R_.dead),-1,1);
+}
 
 // ── INPUT: the slider ────────────────────────────────
 let sx=0.62,prevZone='steady',savedSx=null;
@@ -725,18 +843,23 @@ document.addEventListener('keydown',e=>{
   const k=e.key;
   if(k==='ArrowLeft'||k==='a'||k==='A')kL=true;
   else if(k==='ArrowRight'||k==='d'||k==='D')kR=true;
+  else if(k==='ArrowUp'||k==='w'||k==='W')kU=true;
+  else if(k==='ArrowDown'||k==='s'||k==='S')kD=true;
   else if(k==='1')sx=0.04; else if(k==='2')sx=0.3; else if(k==='3')sx=0.66; else if(k==='4')sx=0.95;
-  else if(k===' '){ if(!e.repeat&&savedSx===null){ savedSx=sx; sx=0.04; } }
+  else if(k===' '){ if(ctrlMode!=='slider'){ if(!e.repeat)joy.hopReq=true; } else if(!e.repeat&&savedSx===null){ savedSx=sx; sx=0.04; } }
   else if(k==='Enter'&&state==='menu')startRace();
   else if((k==='r'||k==='R')&&(state==='racing'||state==='finish'))startRace();
   else return;
-  e.preventDefault();
+  e.preventDefault();syncPB();
 });
 document.addEventListener('keyup',e=>{
   const k=e.key;
   if(k==='ArrowLeft'||k==='a'||k==='A')kL=false;
   else if(k==='ArrowRight'||k==='d'||k==='D')kR=false;
-  else if(k===' '&&savedSx!==null){ sx=savedSx; savedSx=null; }
+  else if(k==='ArrowUp'||k==='w'||k==='W')kU=false;
+  else if(k==='ArrowDown'||k==='s'||k==='S')kD=false;
+  else if(k===' '&&savedSx!==null&&ctrlMode==='slider'){ sx=savedSx; savedSx=null; }
+  syncPB();
 });
 document.getElementById('btnStart').onclick=()=>startRace();
 document.getElementById('prevC').onclick=()=>pickCourse(-1);
@@ -783,7 +906,25 @@ function setDiff(d){
     ?'Your best on '+DIFFS[d].n+': '+ordinal(best.rank)+' place, fastest time '+fmt(best.time)
     :'No result on '+DIFFS[d].n+' yet';
 }
-function setRaceUI(on){ for(const id of ['hudTop','hudBot','ctl'])document.getElementById(id).classList.toggle('hidden',!on); }
+function setRaceUI(on){
+  for(const id of ['hudTop','hudBot'])document.getElementById(id).classList.toggle('hidden',!on);
+  document.getElementById('ctl').classList.toggle('hidden',!on||ctrlMode!=='slider');
+  document.getElementById('btns').classList.toggle('hidden',!on||ctrlMode!=='buttons');
+  document.getElementById('hudBot').classList.toggle('low',ctrlMode==='joy');
+  document.getElementById('hudBot').classList.toggle('mid',ctrlMode==='buttons');
+  joy.on=false;joy.steer=0;joy.hopReq=false;
+  for(const k in bHeld)bHeld[k].clear();syncPB();
+}
+function setCtrl(m){
+  ctrlMode=m;
+  try{ localStorage.setItem('cx_ctrl_v2',m); }catch(e){}
+  document.querySelectorAll('#ctrlRow button').forEach(b=>b.classList.toggle('sel',b.dataset.m===m));
+  document.getElementById('ctrlTxt').textContent=m==='buttons'
+    ?'Two thumbs. Left thumb: steer with the arrows, hold both to brake. Right thumb, top to bottom: tap HOP to bunny-hop, hold FAST to go hard, hold RUN to jump off and run. Nothing pressed means steady riding.'
+    :m==='joy'
+    ?'Touch anywhere, then drag. Up goes harder, down eases off, and pulling right down jumps off to run. Left and right steer. Flick up quickly to hop. Let go and you ride steady.'
+    :'One slider across the bottom: hop, fast, steady, run. Your line is picked for you.';
+}
 function showMenu(){
   state='menu';
   setRaceUI(false);
@@ -793,6 +934,7 @@ function showMenu(){
   for(const r of riders)placeOnTrack(r,0);
   cam={x:mapCx,y:mapCy,angle:0.4,zoom:Math.min(W,H)/(mapRad*2)*1.3};
   renderLevelCard();
+  setCtrl(ctrlMode);
   setDiff(diff);
   drawStageStrip();
 }
@@ -805,6 +947,7 @@ function startRace(){
   makeRiders();
   for(const r of riders)placeOnTrack(r,0);
   raceTime=0;cdT=3;cdShown=0;particles=[];skids=[];results=null;shakeT=0;finalShown=false;
+  player.theta=player.angle;player.si=spineAt(player.s-REAR).i;player.sBefore=player.s;player.delta=0;
   cam={x:player.x,y:player.y,angle:player.angle,zoom:ZOOM};
   state='countdown';
   lastTs=performance.now();
@@ -845,11 +988,28 @@ function flash(t,color,ms){
 function say(r,t,color,ms){ if(r.isPlayer)flash(t,color,ms); }
 
 // ── SIMULATION ───────────────────────────────────────
+const REAR=21*RS;   // back wheel sits this far behind the rider's track position
 function placeOnTrack(r,dt){
-  const q=spineAt(r.s);
+  const q=spineAt(r.s-REAR);
+  if(dt&&freeSteer(r)&&r.theta!==undefined&&!r.done){
+    r.angle=r.theta;r.steerA=r.mode==='ride'||r.mode==='air'?(r.delta||0):0;
+    const lean=clamp((r.v*(r.yawRate||0))/A_LAT,-1,1)*(r.mode==='ride'?1:0);
+    r.lean=(r.lean||0)+(lean-(r.lean||0))*Math.min(1,dt*6);
+    return;
+  }
   r.x=q.x+q.nx*r.l;r.y=q.y+q.ny*r.l;
-  const a=spineAt(r.s-40),b=spineAt(r.s+40);
-  const ang=Math.atan2(b.y+b.ny*r.l-a.y-a.ny*r.l,b.x+b.nx*r.l-a.x-a.nx*r.l)+clamp(Math.atan2(r.lv,Math.max(200,r.v)),-0.15,0.15);
+  const a=spineAt(r.s-REAR-40),b=spineAt(r.s-REAR+40);
+  const yaw=(r.isPlayer&&ctrlMode!=='slider')?(r.head||0):clamp(Math.atan2(r.lv,Math.max(200,r.v)),-0.15,0.15);
+  const ang=Math.atan2(b.y+b.ny*r.l-a.y-a.ny*r.l,b.x+b.nx*r.l-a.x-a.nx*r.l)+yaw;
+  // lean into bends and into steering: how hard you're cornering, plus how hard you're turning
+  const sp=spine[q.i],corner=sp.rad<4000?sp.turn*Math.min(1,r.v*r.v/(A_LAT*sp.rad)):0;
+  const lean=clamp(corner*0.8+(r.isPlayer?(joy.steer||0)*0.5:clamp(r.lv/150,-0.5,0.5)),-1,1)*(r.mode==='ride'?1:0);
+  r.lean=(r.lean||0)+(lean-(r.lean||0))*Math.min(1,(dt||1)*6);
+  // front wheel: what the bend needs, plus your own steering
+  const cornerSteer=sp.rad<4000?sp.turn*Math.atan(42*RS/sp.rad):0;
+  const own=(r.isPlayer&&ctrlMode!=='slider')?(r.delta||0):clamp(r.lv/400,-0.12,0.12);
+  const sa=r.mode==='ride'||r.mode==='air'?clamp(cornerSteer+own,-0.6,0.6):0;
+  r.steerA=(r.steerA||0)+(sa-(r.steerA||0))*Math.min(1,(dt||1)*10);
   r.angle=dt?r.angle+wrapA(ang-r.angle)*Math.min(1,dt*12):ang;
 }
 function spawn(x,y,n,color,spd){
@@ -859,20 +1019,24 @@ function spawn(x,y,n,color,spd){
   }
 }
 function crash(r,t,msg){
-  r.crashT=t;r.v=0;r.mode='ride';r.modeT=0;r.driftI=0;r.slide=0;r.dYaw=0;r.E=Math.max(0,r.E-4);
+  r.crashT=t;r.v=0;r.mode='ride';r.modeT=0;r.head=0;r.delta=0;r.driftI=0;r.driftI=0;r.slide=0;r.dYaw=0;r.E=Math.max(0,r.E-4);
   r.mud=Math.min(1,(r.mud||0)+0.15);
   if(r.isPlayer){ player.crashes=(player.crashes||0)+1; shakeT=0.35; flash(msg,'#ff5a4f',1100); }
   spawn(r.x,r.y,14,'rgba(120,90,55,0.85)',90);
 }
 // ctl = {p, slow, wantRun, hop, cap}
+function freeSteer(r){ return r.isPlayer&&ctrlMode!=='slider'; }
 function stepRider(r,ctl,dt){
-  r.lastS=r.s;
+  const free=freeSteer(r);
+  // a freely steered bike moves itself (steerPlayer); judge barriers on that move
+  r.lastS=free&&r.sBefore!==undefined?r.sBefore:r.s;
   if(r.done){
     r.mode='ride';r.v=Math.max(90,r.v-220*dt);r.s+=r.v*dt;r.pedal=false;r.stand=0;return;
   }
   if(r.crashT>0){
     r.crashT-=dt;r.v=0;
-    if(r.crashT<=0){ r.crashT=0; if(r.forced||ctl.wantRun)r.mode='run'; }
+    if(r.crashT<=0){ r.crashT=0; if(r.forced||ctl.wantRun)r.mode='run';
+      if(free){ const q=spineAt(r.s-REAR); r.theta=Math.atan2(q.uy,q.ux); r.sBefore=r.s; } }   // back on your feet facing the course
     return;
   }
   const surf=spineAt(r.s).surf;
@@ -906,6 +1070,9 @@ function stepRider(r,ctl,dt){
     tgt=RUN_V*(0.9+0.1*r.power)*RUN_F[surf]*fat;dec=900;r.spin=false;
   }else{ tgt=RUN_V*0.85;dec=800;r.spin=false; }
   if(ctl.cap!==undefined)tgt=Math.min(tgt,ctl.cap);
+  // a sliding tyre has no grip left to drive with: pedalling does nothing mid-drift
+  if(free&&(r.mode==='ride')&&(r.driftI>0||r.regrip>0))tgt=Math.min(tgt,r.v);
+  if(r.regrip>0&&!(r.driftI>0))r.regrip-=dt;
   const inSand=surf==='sand'&&(r.mode==='ride');
   if(inSand)tgt=V0*r.power*p*SAND_GRIP*fat;
   if(r.mode==='air'){}                                 // no pedalling in the air
@@ -915,21 +1082,22 @@ function stepRider(r,ctl,dt){
   // too fast for the bend: a little over and the back steps out and you
   // drift, scrubbing speed and sliding wide. Too far over, for too long, or
   // into the tape, and you wash out.
-  r.driftI=0;
-  if(r.mode==='ride'){
-    const sp=spine[spineAt(r.s).i],over=r.v/sp.vmax-1;
-    if(over>DRIFT_MAX){ r.slide=0; crash(r,1.3,'Washed out'); return; }
+  if(!free)r.driftI=0;
+  if(r.mode==='ride'&&!free){
+    const sp=spine[spineAt(r.s).i],vm=vmaxAt(sp,r.l),over=r.v/vm-1;
     if(over>0){
       const I=Math.min(1,over/DRIFT_MAX);
       r.driftI=I;r.driftTurn=sp.turn;
       if(I>DRIFT_SAFE)r.slide=(r.slide||0)+(I-DRIFT_SAFE)*4*dt;
       else r.slide=Math.max(0,(r.slide||0)-dt*0.8);
-      r.v-=(r.v-sp.vmax)*0.9*dt;
+      // the harder the slide, the more speed it scrubs; way too fast and you skid right down
+      r.v-=(r.v-vm)*(0.9+3.2*I)*dt;
+      if(over>DRIFT_MAX)r.v=Math.min(r.v,vm*(1+DRIFT_MAX));
       r.l-=sp.turn*170*I*I*dt;r.lv*=0.9;
-      if(r.slide>=1){ r.slide=0; crash(r,1.3,'Washed out'); return; }
-      if(Math.abs(r.l)>TRACK_W/2+2){ r.slide=0; crash(r,1.3,'Into the tape'); return; }
+      r.slide=Math.min(r.slide,1);
+      r.l=clamp(r.l,-(TRACK_W/2-8),TRACK_W/2-8);
       // dirt off the back wheel, and a mark on the ground
-      const rx=r.x-Math.cos(r.angle)*28*RS,ry=r.y-Math.sin(r.angle)*28*RS;
+      const rx=r.x,ry=r.y;
       if(Math.random()<dt*34*I){
         const col=surf==='mud'?'rgba(80,55,30,0.85)':surf==='sand'?'rgba(230,210,160,0.8)':'rgba(120,95,55,0.75)';
         const oa=r.angle-sp.turn*Math.PI/2;
@@ -950,7 +1118,7 @@ function stepRider(r,ctl,dt){
     else if(d>0)cost=16*d*m*(r.spin?1.3:1); else cost=-14*(-d);
   }else if(r.mode==='run')cost=surf==='stairs'?3.6:surf==='sand'?2.8:2.2;
   r.E=clamp(r.E-cost*dt,0,100);
-  r.s+=r.v*dt;
+  if(!free)r.s+=r.v*dt*lineFactor(spine[spineAt(r.s).i],r.l);
   // barriers
   const from=Math.max(r.lastS,r.cleared===undefined?-1e9:r.cleared);
   for(const pk of planks){
@@ -988,9 +1156,20 @@ function stepRider(r,ctl,dt){
     else if(surf==='sand')spawn(r.x,r.y,1,'rgba(230,210,160,0.7)',60);
   }
 }
+function readKeys(dt){
+  if(ctrlMode==='buttons'){ readButtons(); return; }
+  if(ctrlMode==='joy'){
+    updateJoy(dt);
+    if(!joy.on){
+      if(kU)sx=0.12; else if(kD)sx=0.95;
+      joy.steer=(kR?1:0)-(kL?1:0);
+    }
+  }else{ if(kL)sx=clamp(sx-1.3*dt,0,1); if(kR)sx=clamp(sx+1.3*dt,0,1); }
+}
 function playerCtl(){
   const z=zoneOf(sx);
-  const hop=z==='hop'&&prevZone!=='hop';
+  let hop=z==='hop'&&prevZone!=='hop';
+  if(ctrlMode!=='slider'){ hop=joy.hopReq; joy.hopReq=false; }
   prevZone=z;
   return {p:sliderPower(sx),slow:sliderSlow(sx),wantRun:z==='run',hop:hop};
 }
@@ -1003,7 +1182,7 @@ function aiCtl(r){
   c.p=p;
   // corners: ease off in time
   const look=r.v*0.8+140;
-  c.cap=minVmaxAhead(r.s,look)*(0.95+0.1*r.skill);
+  c.cap=Math.min(minVmaxAhead(r.s,look,r.l),minVmaxAhead(r.s,look,r.want))*(0.95+0.1*r.skill);
   const surf=spineAt(r.s).surf;
   if(surf==='mud')c.p=Math.min(c.p,0.88);
   const ne=nextEvent(r.s),ev=ne.ev,d=ne.dist;
@@ -1042,13 +1221,93 @@ function aiCtl(r){
 }
 // Everyone, you included, picks a line round slower riders automatically.
 const LANES=[-88,-30,30,88];
+function steerPlayer(r,dt){
+  // A real bike in the world: the buttons turn the bars, the bike turns at
+  // speed/wheelbase * tan(bar angle) about its back wheel and goes where it
+  // points. Nothing steers it for you, so you can ride any line, or turn round.
+  // Turn harder than the grip allows and it slides and scrubs speed.
+  const inp=joy.steer,WB=42*RS,onBike=r.mode==='ride'||r.mode==='air';
+  // Full lock eases off with speed like real bars. Up to riding pace it stays
+  // just inside the grip, so steering hard never slides you. Faster than that
+  // it asks for more than the tyres have, and the harder/faster, the bigger the slide.
+  const aGrip=A_LAT*GRIP_FREE,vs=SLIDE_V;
+  const dmax=onBike?Math.min(0.55,Math.atan(aGrip*WB/Math.max(1,r.v*r.v)*(r.v>vs?1+2.2*(r.v-vs)/vs:0.97))):0.9;
+  r.delta=r.delta||0;
+  r.delta+=clamp(inp*dmax-r.delta,-3.2*dt,3.2*dt);
+  if(r.theta===undefined)r.theta=r.angle;
+  r.sBefore=r.s;
+  if(r.crashT>0||r.done){ r.driftI=0; return; }
+  const v=r.v;
+  let yaw;
+  r.driftI=0;
+  if(onBike){
+    yaw=v/WB*Math.tan(r.delta);
+    if(r.mode==='air')yaw*=0.15;                         // no grip in the air
+    // the same grip everywhere: only speed and how hard you turn decide a slide
+    const aMax=A_LAT*GRIP_FREE,maxYaw=aMax/Math.max(60,v);
+    const over=Math.abs(yaw)/maxYaw-1;
+    // once the back steps out you're committed to the slide for a moment:
+    // it doesn't just flick back into grip the instant you're at the limit
+    if(over>0.12&&r.mode==='ride'&&!(r.slideT>0)){ r.slideT=0.35+0.5*Math.min(1,over/0.6); r.slideI=Math.min(1,over/0.6); r.v*=1-0.18-0.12*r.slideI; }   // the back stepping out costs you momentum straight away
+    if(r.slideT>0)r.slideT-=dt;
+    if((over>0||r.slideT>0)&&r.mode==='ride'){
+      const I=Math.max(Math.min(1,Math.max(0,over)/0.6),(r.slideI||0)*0.8);
+      r.driftI=Math.max(I,0.05);r.driftTurn=Math.sign(yaw)||r.driftTurn||1;
+      if(Math.abs(yaw)>maxYaw*(1-0.4*I))
+      // sliding tyres grip less than rolling ones: you turn less than you asked,
+      // run wide, and the slide scrubs speed hard
+        yaw=Math.sign(yaw)*maxYaw*(1-0.4*I);
+      // a slide bleeds you down well below what you could have carried with grip
+      // through the turn you're asking for
+      const vGrip=Math.sqrt(aMax*WB/Math.max(0.03,Math.abs(Math.tan(r.delta))));
+      r.v=Math.max(0,r.v-(Math.max(0,r.v-0.6*vGrip)*5+120)*I*dt);
+      if(r.slideT>0)r.regrip=Math.max(r.regrip||0,0.8+1.4*I);   // a real slide takes a while to recover from
+      const surf=spine[r.si||0].surf;
+      if(Math.random()<dt*34*I){
+        const col=surf==='mud'?'rgba(80,55,30,0.85)':surf==='sand'?'rgba(230,210,160,0.8)':'rgba(120,95,55,0.75)';
+        const oa=r.theta-r.driftTurn*Math.PI/2;
+        particles.push({x:r.x,y:r.y,vx:Math.cos(oa)*120*(0.6+Math.random()),vy:Math.sin(oa)*120*(0.6+Math.random()),life:1,max:0.4+Math.random()*0.3,r:5+Math.random()*7,c:col});
+      }
+      if(r.rear)skids.push({x0:r.rear.x,y0:r.rear.y,x1:r.x,y1:r.y,t:raceTime,a:0.25+0.35*I});
+      r.rear={x:r.x,y:r.y};
+      shakeT=Math.max(shakeT,0.05*I);
+    }
+    // nearly stopped you can still hop the bike round with your hands
+    if(r.v<120&&inp){ const piv=inp*1.6*(1-r.v/120); if(Math.abs(piv)>Math.abs(yaw))yaw=piv; }
+  }else yaw=inp*2.6;                                    // on foot you just turn
+  r.wasDrifting=r.driftI>0;
+  r.yawRate=yaw;
+  r.theta+=yaw*dt;
+  r.x+=Math.cos(r.theta)*v*dt;r.y+=Math.sin(r.theta)*v*dt;
+  // where that puts you on the course
+  const pr=projectXY(r.x,r.y,r.si||0);
+  r.si=pr.i;
+  let d=pr.d-lapPos(r.s-REAR);
+  if(d>L/2)d-=L; else if(d<-L/2)d+=L;
+  r.s+=d;r.l=pr.l;
+  // the tape: you ride along it, not through it, and it scrubs speed
+  const lim=TRACK_W/2-6;
+  if(Math.abs(r.l)>lim){
+    const side=Math.sign(r.l),q=spineAt(r.s-REAR);
+    r.l=side*lim;r.x=q.x+q.nx*r.l;r.y=q.y+q.ny*r.l;
+    // how squarely you're pushing into it decides how much it stops you
+    const tau=Math.atan2(q.uy,q.ux),into=Math.sin(r.theta-tau)*side;   // >0: heading into the tape
+    const loss=4+Math.max(0,into)*22;
+    r.v=Math.max(0,r.v*(1-Math.min(0.9,loss*dt)));
+    if(r.v>40&&Math.random()<dt*25)spawn(r.x,r.y,1,'rgba(214,204,178,0.7)',40);
+  }
+  r.lv=0;r.want=r.l;
+}
 function chooseLane(r,dt){
+  if(r.isPlayer&&ctrlMode!=='slider'){ steerPlayer(r,dt); return; }
   r.laneT-=dt;
   if(r.laneT<=0){
     r.laneT=0.3+Math.random()*0.2;
     let best=r.want,bs=Infinity;
+    const bend=spine[spineAt(r.s+300).i];
     for(const ln of LANES){
       let sc=Math.abs(ln-r.l)*0.4;
+      if(bend.rad<1500)sc-=0.3*bend.turn*ln;
       for(const o of riders){
         if(o===r||o.done)continue;
         const ds=o.s-r.s;
@@ -1075,8 +1334,14 @@ function resolve(dt){
       const ds=o.s-r.s;
       if(ds>0&&ds<COLL_S+50&&Math.abs(o.l-r.l)<COLL_L){
         const cap=Math.max(0,o.v+(ds-COLL_S)*2.5);
-        if(r.v>cap)r.v=cap;
-        if(ds<COLL_S*0.7)r.s-=Math.min(COLL_S*0.7-ds,80*dt);   // ease back, no jump
+        if(r.v>cap&&!(freeSteer(r)&&Math.cos(r.theta-Math.atan2(spineAt(r.s).uy,spineAt(r.s).ux))<0))r.v=cap;
+        if(ds<COLL_S*0.7&&!freeSteer(r))r.s-=Math.min(COLL_S*0.7-ds,80*dt);   // ease back, no jump
+      }
+      // shoulder to shoulder: lean off each other sideways
+      if(Math.abs(ds)<COLL_S*0.85&&Math.abs(o.l-r.l)<COLL_L*0.9){
+        const side=r.l<o.l?-1:1,push=Math.min(COLL_L*0.9-Math.abs(o.l-r.l),120*dt);
+        if(!freeSteer(r))r.l+=side*push*(r.isPlayer?0.35:0.5);
+        else o.l-=side*push*0.5;
       }
     }
   }
@@ -1087,12 +1352,12 @@ function step(dt){
     const n=Math.ceil(cdT);
     if(n!==cdShown&&n>0){cdShown=n;flash(String(n),'#fff',700);}
     if(cdT<=0){ state='racing';flash('GO!','#7fffa8',800); }
-    if(kL)sx=clamp(sx-1.3*dt,0,1); if(kR)sx=clamp(sx+1.3*dt,0,1);
+    readKeys(dt);
     prevZone=zoneOf(sx);
   }
   if(state==='racing'||state==='finish'){
     raceTime+=dt*1000;
-    if(kL)sx=clamp(sx-1.3*dt,0,1); if(kR)sx=clamp(sx+1.3*dt,0,1);
+    readKeys(dt);
     for(const r of riders){
       const c=r.isPlayer?playerCtl():aiCtl(r);
       stepRider(r,c,dt);
@@ -1103,7 +1368,7 @@ function step(dt){
     const fin=FINISH_ABS();
     for(const r of riders){
       if(!r.done&&r.s>=fin){
-        r.done=true;r.finishT=raceTime-(r.s-fin)/Math.max(1,r.v)*1000;
+        r.done=true;r.finishT=raceTime-(r.s-fin)/Math.max(1,r.v)*1000;r.l=clamp(r.l,-TRACK_W/2+30,TRACK_W/2-30);
         if(r===player)playerFinished();
       }
     }
@@ -1344,18 +1609,22 @@ function drawProps(){
 
 // ── DRAWING: RIDERS ──────────────────────────────────
 function drawBike(r,crossBars){
+  const fc=r.frame||r.accent,sa=crossBars===false?0:(r.steerA||0);
   ctx.fillStyle='#16181d';
-  ctx.beginPath();ctx.roundRect(10,-2.8,22,5.6,2.8);ctx.fill();          // knobbly tyres
-  ctx.beginPath();ctx.roundRect(-32,-2.8,22,5.6,2.8);ctx.fill();
-  const fc=r.frame||r.accent;
+  ctx.beginPath();ctx.roundRect(-32,-2.8,22,5.6,2.8);ctx.fill();          // back tyre
   ctx.strokeStyle=fc;ctx.lineWidth=3.4;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(19,0);ctx.stroke();
-  // seat stays and chainstays fanning back to the rear wheel, fork blades at the front
+  ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(17,0);ctx.stroke();
+  // seat stays and chainstays fanning back to the rear wheel
   ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(-21,-3.4);ctx.moveTo(-12,0);ctx.lineTo(-21,3.4);
-  ctx.moveTo(18,0);ctx.lineTo(21,-3.2);ctx.moveTo(18,0);ctx.lineTo(21,3.2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(-21,-3.4);ctx.moveTo(-12,0);ctx.lineTo(-21,3.4);ctx.stroke();
+  // front end turns about the head tube: wheel, fork and bars together
+  ctx.save();ctx.translate(18,0);ctx.rotate(sa);
+  ctx.fillStyle='#16181d';ctx.beginPath();ctx.roundRect(-8,-2.8,22,5.6,2.8);ctx.fill();
+  ctx.strokeStyle=fc;ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(-1,0);ctx.lineTo(3,-3.2);ctx.moveTo(-1,0);ctx.lineTo(3,3.2);ctx.stroke();
   ctx.strokeStyle='#222';ctx.lineWidth=2.4;
-  ctx.beginPath();ctx.moveTo(19,-8.5);ctx.lineTo(19,8.5);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(1,-8.5);ctx.lineTo(1,8.5);ctx.stroke();
+  ctx.restore();
 }
 // A side-view bike (x forward, z up) seen from above after rolling it by th:
 // z lands on screen y as -z*sin(th), across-the-bike widths shrink by cos(th).
@@ -1426,9 +1695,10 @@ function drawRiderOnBike(r){
     ctx.arc(kx,ky,1.8,Math.atan2(ny,nx),Math.atan2(-ny,-nx));
     ctx.lineTo(hx-nx*2.6,hy-ny*2.6);ctx.closePath();ctx.fill();
   }
-  // upper body rocks with each pedal stroke, much more when standing
+  // upper body rocks with each pedal stroke, much more when standing,
+  // and shifts over to the inside when leaning into a turn
   ctx.save();
-  ctx.translate(-11+fw,0);
+  ctx.translate(-11+fw,(r.lean||0)*3.2);
   ctx.rotate(sn*(0.05+0.1*st)*moving);
   ctx.translate(11,sn*(0.5+1.2*st)*moving);
   ctx.fillStyle='#1e2025';ctx.beginPath();ctx.ellipse(-11,0,4.4,4.6,0,0,Math.PI*2);ctx.fill();
@@ -1440,11 +1710,12 @@ function drawRiderOnBike(r){
   ctx.strokeStyle=r.accent;ctx.lineWidth=2.4;
   ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(6,0);ctx.stroke();
   // arms reach back to the bars, which stay with the bike
-  const bx=18.5-fw;
+  const sa=r.steerA||0,bx=19-fw,S_=Math.sin(sa),C_=Math.cos(sa);
+  const lx=bx+8*S_,ly=-8*C_-sn*1.2*st,rx2=bx-8*S_,ry2=8*C_-sn*1.2*st;
   ctx.strokeStyle=r.jersey;ctx.lineWidth=3.4;
-  ctx.beginPath();ctx.moveTo(5,-7.4);ctx.lineTo(bx-0.5,-8-sn*1.2*st);ctx.moveTo(5,7.4);ctx.lineTo(bx-0.5,8-sn*1.2*st);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(5,-7.4);ctx.lineTo(lx-0.5,ly);ctx.moveTo(5,7.4);ctx.lineTo(rx2-0.5,ry2);ctx.stroke();
   ctx.fillStyle='#1e2025';
-  ctx.beginPath();ctx.arc(bx,-8-sn*1.2*st,1.9,0,Math.PI*2);ctx.arc(bx,8-sn*1.2*st,1.9,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(lx,ly,1.9,0,Math.PI*2);ctx.arc(rx2,ry2,1.9,0,Math.PI*2);ctx.fill();
   // head nods a touch against the shoulders
   // head: sways against the shoulders, bobs with each stroke and turns to
   // look into the bend
@@ -1525,11 +1796,11 @@ function drawRider(r){
   const carry=onFoot?clamp(r.carry||0,0,1):0;
   ctx.save();ctx.translate(r.x,r.y);
   const yaw=r.angle+(r.dYaw||0);
-  ctx.save();ctx.translate(lift*16,lift*20);ctx.rotate(yaw);ctx.scale(RS,RS);
+  ctx.save();ctx.translate(lift*16,lift*20);ctx.rotate(yaw);ctx.scale(RS,RS);ctx.translate(21,0);
   ctx.fillStyle='rgba(0,0,0,'+(0.28-0.12*lift)+')';ctx.beginPath();ctx.ellipse(4,5,31,onFoot?14:9,0,0,Math.PI*2);ctx.fill();
   ctx.restore();
   ctx.rotate(yaw+(fallen?1.1:0));
-  const sc=RS*(1+0.2*lift);ctx.scale(sc,sc);
+  const sc=RS*(1+0.2*lift);ctx.scale(sc,sc);ctx.translate(21,0);
   if(onFoot)drawRunner(r,carry); else drawRiderOnBike(r);
   drawMud(r);
   ctx.restore();
@@ -1575,6 +1846,38 @@ function drawScene(){
   if(state!=='menu')drawPlayerMarker();
   ctx.restore();
   drawWeather();
+  if(joyActive())drawJoy();
+}
+
+// ── JOYSTICK ─────────────────────────────────────────
+function drawJoy(){
+  if(!joy.on)return;
+  const R_=joyR(),ox=joy.ox,oy=joy.oy;
+  const kx=ox+clamp(joy.x-ox,-R_.side*1.2,R_.side*1.2),ky=oy+clamp(joy.y-oy,-R_.up*1.25,R_.down*1.4);
+  ctx.save();ctx.lineCap='round';
+  // effort track: run below, steady at the centre, fast above
+  const g=ctx.createLinearGradient(0,oy+R_.down,0,oy-R_.up);
+  g.addColorStop(0,'rgba(63,106,168,0.75)');g.addColorStop(0.32,'rgba(110,160,80,0.7)');
+  g.addColorStop(0.45,'rgba(150,170,70,0.7)');g.addColorStop(1,'rgba(214,90,50,0.8)');
+  ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=20;
+  ctx.beginPath();ctx.moveTo(ox,oy+R_.down);ctx.lineTo(ox,oy-R_.up);ctx.stroke();
+  ctx.strokeStyle=g;ctx.lineWidth=14;
+  ctx.beginPath();ctx.moveTo(ox,oy+R_.down);ctx.lineTo(ox,oy-R_.up);ctx.stroke();
+  // steering track
+  ctx.strokeStyle='rgba(255,255,255,0.22)';ctx.lineWidth=8;
+  ctx.beginPath();ctx.moveTo(ox-R_.side,oy);ctx.lineTo(ox+R_.side,oy);ctx.stroke();
+  // little arrows at the ends
+  ctx.fillStyle='rgba(255,255,255,0.75)';
+  const tri=(x,y,a)=>{ ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.beginPath();ctx.moveTo(7,0);ctx.lineTo(-5,-6);ctx.lineTo(-5,6);ctx.closePath();ctx.fill();ctx.restore(); };
+  tri(ox,oy-R_.up-12,-Math.PI/2);tri(ox,oy+R_.down+12,Math.PI/2);tri(ox-R_.side-12,oy,Math.PI);tri(ox+R_.side+12,oy,0);
+  ctx.font='11px "Share Tech Mono", monospace';ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,0.75)';
+  ctx.fillText('FLICK TO HOP',ox,oy-R_.up-24);ctx.fillText('RUN',ox,oy+R_.down+32);
+  // centre mark and knob
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.beginPath();ctx.arc(ox,oy,4,0,Math.PI*2);ctx.fill();
+  const z=zoneOf(sx),col={hop:'#ff9a5c',fast:'#e8763c',steady:'#9fd36a',run:'#7fa8ff'}[z];
+  ctx.fillStyle=col;ctx.strokeStyle='rgba(0,0,0,0.6)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(kx,ky,19,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.restore();
 }
 
 // ── WEATHER: drizzle and a grimy vignette ───────────
@@ -1715,7 +2018,11 @@ function updHUD(){
   setTxt('lap',p.done?'Finished':(lap===LAPS?'Last lap':'Lap '+lap+' of '+LAPS));
   setTxt('time',fmt(p.done?p.finishT:raceTime));
   setTxt('speed',Math.round(p.v*KMH)+' km/h');
-  setTxt('mode',p.crashT>0?'Down!':p.driftI>0?'Drifting':MODE_TXT[p.mode]);
+  const zn=zoneOf(sx),ZN={hop:'Hop',fast:'Fast',steady:'Steady',run:'Run'},ZC={hop:'#ff9a5c',fast:'#ff7a4c',steady:'#9fd36a',run:'#7fa8ff'};
+  const modeTxt=p.crashT>0?'Down!':p.driftI>0?'Drifting':(ctrlMode!=='slider'&&p.mode==='ride')?ZN[zn]:MODE_TXT[p.mode];
+  setTxt('mode',modeTxt);
+  const mc=(ctrlMode!=='slider'&&p.mode==='ride'&&!(p.driftI>0)&&!(p.crashT>0))?ZC[zn]:'#fff';
+  if(hudLast.mc!==mc){ hudLast.mc=mc; hudEl.mode.style.color=mc; }
   setTxt('eTxt','Energy '+Math.round(p.E));
   hudEl.eBar.style.width=p.E.toFixed(1)+'%';
   hudEl.eBar.style.background=p.E>50?'#6be38a':p.E>25?'#ffd23f':'#ff5a4f';
