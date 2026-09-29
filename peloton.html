@@ -14,7 +14,7 @@
 html,body{height:100%;}
 body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier New',monospace;color:var(--ink);
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;}
-#bL,#bR,#bA,#bA *,#hudTop,#hudBot{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;}
+#bL,#bR,#bA,#bA *,#hudTop,#hudBot,.side{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block;}
 .hidden{display:none !important;}
 
@@ -28,14 +28,17 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 #time{font-size:26px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.9);font-variant-numeric:tabular-nums;}
 #btnMenu{pointer-events:auto;background:rgba(10,16,28,0.7);border:none;color:#dff1ff;border-radius:8px;width:44px;height:44px;font-size:22px;cursor:pointer;}
 
-#hudBot{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 118px);
-  z-index:10;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:5px;width:min(300px,86vw);}
-#gradeLine{display:flex;align-items:center;gap:10px;}
-#grade{font-size:17px;padding:3px 10px;border-radius:6px;color:#10141f;background:#bfc6cf;min-width:78px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.5);}
-#speed{font-size:17px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.95);font-variant-numeric:tabular-nums;}
-.bar{width:100%;height:12px;background:rgba(8,12,20,0.7);border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.18);}
-.bar>div{height:100%;width:50%;border-radius:6px;transition:background .3s;}
-.barLab{display:flex;justify-content:space-between;width:100%;font-size:11px;letter-spacing:1px;color:#dff1ff;text-shadow:0 1px 3px rgba(0,0,0,0.95);}
+#hudBot{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 124px);
+  z-index:10;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:3px;width:min(200px,40vw);}
+.side{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 120px);z-index:10;pointer-events:none;}
+#gradeBox{left:14px;} #speedBox{right:14px;text-align:right;}
+#grade{font-size:16px;padding:3px 9px;border-radius:6px;color:#10141f;background:#bfc6cf;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.5);}
+#speed{font-size:26px;line-height:1;color:#fff;text-shadow:0 1px 5px rgba(0,0,0,0.95);font-variant-numeric:tabular-nums;}
+#speed small{font-size:11px;color:#c9d6e2;margin-left:3px;}
+.bar{width:100%;height:9px;background:rgba(8,12,20,0.65);border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,0.16);}
+.bar.thin{height:5px;border:none;background:rgba(8,12,20,0.45);}
+.bar>div{height:100%;width:50%;border-radius:5px;transition:background .3s;}
+.barLab{display:flex;justify-content:space-between;width:100%;min-height:13px;font-size:10px;letter-spacing:1px;color:#dff1ff;text-shadow:0 1px 3px rgba(0,0,0,0.95);}
 #draftLab{color:#8896a8;}
 
 .pbtn{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(50% - 64px);height:96px;z-index:20;
@@ -53,7 +56,7 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 #bA.live{border-color:#fff;box-shadow:0 0 18px rgba(255,156,107,0.8);}
 #bA.dead{opacity:0.35;}
 #bA.hot{border-color:#ffd23f;box-shadow:0 0 16px rgba(255,210,63,0.7);}
-#brakeHint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:21;
+#brakeHint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:21;transition:opacity .6s;
   font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.55);pointer-events:none;text-align:center;line-height:1.3;}
 
 #fl{position:fixed;top:36%;left:50%;transform:translate(-50%,-50%);font-size:clamp(24px,8vw,52px);letter-spacing:3px;text-align:center;
@@ -69,14 +72,24 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 #menu h1{color:#fff;font-size:clamp(40px,13vw,76px);letter-spacing:10px;text-shadow:0 6px 24px rgba(0,0,0,0.95);font-weight:normal;}
 .sub{color:#ffd23f;font-size:13px;letter-spacing:5px;margin:0 0 22px;}
 .how{color:rgba(224,238,252,0.85);font-size:13px;max-width:420px;line-height:1.75;text-align:center;margin-bottom:8px;}
-.stage{background:rgba(14,20,34,0.85);border-left:4px solid #ffd23f;border-radius:10px;padding:16px 18px;width:100%;max-width:440px;margin:18px 0 22px;}
-.stage .n{font-size:17px;color:#fff;letter-spacing:3px;}
-.stage .t{font-size:12px;color:#9fb8cc;margin-top:4px;line-height:1.6;}
-#diffRow{display:flex;gap:6px;margin-top:12px;}
+.stage{position:relative;background:rgba(14,20,34,0.85);border-left:4px solid #3a4a68;border-radius:10px;padding:14px 60px 14px 16px;width:100%;cursor:pointer;transition:background .15s,transform .1s;}
+.stage:active{transform:scale(0.985);}
+.stage .go{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;
+  background:#ffd23f;color:#10141f;display:flex;align-items:center;justify-content:center;font-size:15px;padding-left:3px;}
+.stage:hover{background:rgba(24,36,60,0.95);}
+.stage.sel{border-left-color:#ffd23f;background:rgba(30,40,62,0.95);box-shadow:0 0 0 1px rgba(255,210,63,0.35);}
+.stage .n{font-size:16px;color:#fff;letter-spacing:2px;display:flex;align-items:center;gap:10px;}
+.stage .no{font-size:13px;color:#10141f;background:#6f8399;border-radius:5px;padding:1px 7px;}
+.stage.sel .no{background:#ffd23f;}
+.stage .k{font-size:11px;color:#ffd23f;letter-spacing:1px;margin-top:4px;}
+.stage .t{font-size:12px;color:#9fb8cc;margin-top:4px;line-height:1.55;}
+.stage .bst{color:#71839a;font-size:11px;}
+.stage canvas{width:100%;height:46px;display:block;margin-top:8px;}
+#stageList{display:flex;flex-direction:column;gap:9px;width:100%;max-width:440px;margin:12px 0 22px;}
+#diffRow{display:flex;gap:6px;margin-top:6px;width:100%;max-width:440px;}
 #diffRow button{flex:1;font-family:inherit;font-size:13px;padding:9px 0;border-radius:8px;cursor:pointer;
   background:rgba(255,255,255,0.06);color:#c9d6e2;border:1px solid rgba(255,255,255,0.14);}
 #diffRow button.sel{background:#ffd23f;color:#10141f;border-color:#ffd23f;}
-#stageProf{width:100%;height:54px;display:block;margin-top:10px;}
 
 #finish{position:fixed;inset:0;background:rgba(5,8,16,0.84);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;overflow-y:auto;}
 #finish h2{font-size:clamp(30px,9vw,54px);color:#fff;letter-spacing:3px;font-weight:normal;}
@@ -99,12 +112,13 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 </div>
 
 <div id="hudBot" class="hidden">
-  <div id="gradeLine"><div id="grade">0%</div><div id="speed">0 km/h</div></div>
-  <div class="barLab"><span>Energy</span><span id="eTxt">100</span></div>
+  <div class="barLab"><span>ENERGY</span><span id="eTxt">100</span></div>
   <div class="bar"><div id="eBar" style="width:100%;background:#6be38a;"></div></div>
-  <div class="barLab"><span id="draftLab">No draft</span><span id="dTxt"></span></div>
-  <div class="bar" style="height:7px;"><div id="dBar" style="width:0%;background:#59e8ff;"></div></div>
+  <div class="bar thin"><div id="dBar" style="width:0%;background:#59e8ff;"></div></div>
+  <div class="barLab"><span id="draftLab"></span><span id="dTxt"></span></div>
 </div>
+<div id="gradeBox" class="side hidden"><div id="grade">0%</div></div>
+<div id="speedBox" class="side hidden"><div id="speed">0</div></div>
 
 <div id="bL" class="pbtn hidden" aria-label="Steer left">&#9664;</div>
 <div id="bR" class="pbtn hidden" aria-label="Steer right">&#9654;</div>
@@ -118,14 +132,9 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
   <p class="sub">ROAD RACE</p>
   <p class="how">Everyone rides at about the same speed. Tuck in behind another rider to go faster and save energy. Tap attack for a short burst that drains you fast, and save enough for the sprint.</p>
   <p class="how" style="color:#ff9c6b;">Steep climbs kill the draft and burn energy. Brake before the hairpins on the way down. Stay on the road.</p>
-  <div class="stage">
-    <div class="n">Stage 1: Hexagon Hill</div>
-    <div class="t">S-bends, a wall of hairpins to the top, hairpins back down, then a flat run to the line. About a minute and a half.</div>
-    <div id="diffRow"><button onclick="setDiff(0)">Easy</button><button onclick="setDiff(1)">Normal</button><button onclick="setDiff(2)">Hard</button><button onclick="setDiff(3)">Pro</button></div>
-    <div class="t" id="best">No result yet</div>
-    <canvas id="stageProf"></canvas>
-  </div>
-  <button class="ob main" id="btnStart">Start race</button>
+  <p class="how" style="margin:0 0 4px;font-size:12px;color:#8fa3b8;">Pick a difficulty, then tap a stage to race it.</p>
+  <div id="diffRow"><button onclick="setDiff(0)">Easy</button><button onclick="setDiff(1)">Normal</button><button onclick="setDiff(2)">Hard</button><button onclick="setDiff(3)">Pro</button></div>
+  <div id="stageList"></div>
   <p class="how" style="margin-top:22px;font-size:12px;color:#8fa3b8;">Left and right to steer, both together to brake, the middle button to attack.<br>Keyboard: arrow keys, space to brake, up to attack.</p>
 </div>
 
@@ -158,8 +167,8 @@ const V0=620*PACE;                          // everyone's cruising speed on the 
 const BRAKE=950*PACE*PACE;
 const DRAFT_BONUS=0.16;                // speed gained in a perfect slipstream
 const DRAFT_SAVE=0.8;                  // energy saved in a perfect slipstream
-const DRAFT_RECOVER=3.0;               // and below the cap, energy coming back fast
-const RECOVER_CAP=30;                  // energy only comes back up to here
+const DRAFT_RECOVER=9;               // and below the cap, energy coming back fast
+const RECOVER_CAP=100;                 // energy can come all the way back
 const BASE_DRAIN=2.1;                  // cost of riding in the wind on the flat
 const DRAFT_NEAR=BIKE_L*1.45, DRAFT_FAR=BIKE_L*3.8, DRAFT_LAT=46;
 const COLL_S=BIKE_L*1.02, COLL_L=34;
@@ -170,12 +179,40 @@ function draftEff(g){ return Math.max(0,Math.min(1,1-g/8)); }  // 8% and up: no 
 
 // ── THE STAGE ────────────────────────────────────────
 // [direction the tile exits, gradient in %]
-// Sweeping S-bends, a stack of hairpins up the wall, and hairpins down the
-// other side, where the descent is fast enough that you have to brake.
-const STAGE={name:'Hexagon Hill',tiles:[
-  [0,0],[0,0],[1,2],[2,3],[1,4],[0,4],
-  [2,7],[0,8],[2,8],[0,6],[1,2],[0,0],
-  [0,-3],[5,-6],[3,-7],[5,-7],[3,-6],[5,-4],[0,-2],[0,0],[0,0]]};
+// Each stage: [direction the tile exits, gradient in %] per hex tile, plus
+// the landscape it runs through.
+const LAND_STD={low:['meadow','wheat','field','meadow','forest'],mid:['meadow','forest','field','forest','stone'],
+  high:['forest','pines','stone','pines','meadow'],top:['pines','stone','snow','pines','snowrock']};
+const STAGES=[
+  {name:'Hexagon Hill',kind:'Mountain pass',
+   desc:'S-bends, a wall of hairpins to the top, hairpins back down, then a flat run to the line.',
+   tiles:[[0,0],[0,0],[1,2],[2,3],[1,4],[0,4],[2,7],[0,8],[2,8],[0,6],[1,2],[0,0],
+          [0,-3],[5,-6],[3,-7],[5,-7],[3,-6],[5,-4],[0,-2],[0,0],[0,0]]},
+  {name:'Harbour Sprint',kind:'Flat',
+   desc:'Flat and fast along the water. Stay in the wheels, stay out of the wind, win the bunch sprint.',
+   rings:1,land:{low:['sand','meadow','field','sand','wheat'],mid:['meadow','field','wheat','meadow','forest'],high:LAND_STD.high,top:LAND_STD.top},
+   tiles:[[0,0],[0,0],[5,0],[5,1],[0,1],[1,0],[1,-1],[0,0],[0,2],[5,3],[5,0],[0,-2],
+          [1,-1],[1,0],[2,0],[1,1],[0,0],[5,0],[0,0],[0,0]]},
+  {name:'Col du Serpent',kind:'Summit finish',
+   desc:'Almost all uphill, through a ladder of hairpins to a finish on the summit. No shelter; pace yourself.',
+   land:{low:['meadow','forest','field','forest','meadow'],mid:['forest','pines','stone','pines','forest'],
+         high:['pines','stone','snowrock','pines','stone'],top:['snow','snowrock','snow','stone','snow']},
+   tiles:[[0,0],[0,1],[1,3],[1,5],[0,6],[2,7],[0,8],[2,7],[0,9],[2,8],[1,6],[0,5],
+          [5,6],[0,7],[2,8],[0,9],[2,8],[1,6]]},
+  {name:'Descent Derby',kind:'Technical descent',
+   desc:'One short, hard climb, then a long plunge through the hairpins. Brake late, but not too late.',
+   tiles:[[0,0],[0,3],[1,6],[0,8],[2,7],[0,5],[1,2],[1,0],[0,-4],[5,-7],[3,-8],[5,-7],
+          [3,-8],[5,-6],[0,-5],[0,-6],[1,-5],[0,-4],[5,-2],[0,0],[0,0],[0,0]]},
+  {name:'Ardennes Classic',kind:'Hilly',
+   desc:'Short, savage walls of 9 to 11 percent through autumn woods. Every one is a chance to attack.',
+   land:{low:['field','wheat','meadow','forest','wheat'],mid:['forest','meadow','forest','field','stone'],high:LAND_STD.high,top:LAND_STD.top},
+   trees:['#7a3518','#c0582a','rgba(240,180,90,0.55)'],
+   tiles:[[0,0],[0,0],[1,4],[1,10],[0,2],[5,-6],[5,-3],[0,6],[1,11],[2,3],[1,-7],
+          [0,-5],[5,9],[0,1],[1,-6],[0,-3],[0,1],[0,0]]}
+];
+let stageIdx=0;
+try{ const v=parseInt(localStorage.getItem('peloton_stage_v1'),10); if(v>=0&&v<STAGES.length)stageIdx=v; }catch(e){}
+let STAGE=STAGES[stageIdx];
 
 // ── HELPERS ──────────────────────────────────────────
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -222,13 +259,14 @@ function gradeColor(g){
   if(g<3)return '#e8d44a';
   if(g<5)return '#f2a431';
   if(g<7)return '#e8602c';
-  return '#c8233a';
+  if(g<9)return '#c8233a';
+  return '#7a1030';
 }
 
 // ── PALETTE ──────────────────────────────────────────
 const TERRAIN={
   field:'#86b95c', meadow:'#7fb356', forest:'#3f6e2c', wheat:'#e0c159',
-  stone:'#9b9a92', pines:'#2f4a38', snow:'#eef3f8', snowrock:'#8d97a2', water:'#2a7fa8'
+  stone:'#9b9a92', sand:'#e0c083', pines:'#2f4a38', snow:'#eef3f8', snowrock:'#8d97a2', water:'#2a7fa8'
 };
 const SKY=['#2a86cf','#79bfe6','#cfe7ee'];
 const TILE_GAP=13, TILE_LIFT=7, TABLE='#141920';
@@ -238,7 +276,7 @@ const LINE_W='rgba(248,246,238,0.72)';
 const SHOULDER='#c9b284';
 const STOCK=['#c2553c','#a9432e','#d3763d','#7d4a38','#b7563b','#6f7b86'];
 const WALL_A='#ddcbab', WALL_B='#bda887';
-const TREE_DARK='#2c5622', TREE_MID='#3f7a30', TREE_LIT='rgba(158,208,114,0.6)';
+let TREE_DARK='#2c5622', TREE_MID='#3f7a30', TREE_LIT='rgba(158,208,114,0.6)';
 const PINE_DARK='#1f3d26', PINE_MID='#2f5c38', PINE_LIT='rgba(120,175,120,0.5)';
 const FAN_COLS=['#d12a2a','#ffd23f','#1f6fd1','#ffffff','#1ea85a','#ff4f9a','#f07a18','#16a3b8'];
 
@@ -287,7 +325,25 @@ let START_S=0,FINISH_S=0,SPRINT_S=0,elevMin=0,elevMax=1;
 let houses=[],mapCx=0,mapCy=0,mapRad=1;
 const SAMPLES=32;
 
+// Lay the tiles and the road only: enough for the profile.
+function layStage(){
+  trackTiles=[];
+  let cx=0,cy=0,prev=STAGE.tiles[0][0];
+  STAGE.tiles.forEach((t,i)=>{
+    trackTiles.push({idx:i,cx:cx,cy:cy,entry:(prev+3)%6,exit:t[0],grade:t[1],isDeco:false,tList:[],bList:[]});
+    const nc=neighborCenter(cx,cy,t[0]);cx=nc.x;cy=nc.y;prev=t[0];
+  });
+  buildSpine();
+}
+function selectStage(i){
+  stageIdx=i;STAGE=STAGES[i];
+  try{ localStorage.setItem('peloton_stage_v1',String(i)); }catch(e){}
+  buildStage();
+}
 function buildStage(){
+  const tr=STAGE.trees||['#2c5622','#3f7a30','rgba(158,208,114,0.6)'];
+  TREE_DARK=tr[0];TREE_MID=tr[1];TREE_LIT=tr[2];
+  profBase=null;
   trackTiles=[];
   let cx=0,cy=0,prev=STAGE.tiles[0][0];
   const occ=new Set();
@@ -297,9 +353,9 @@ function buildStage(){
     const nc=neighborCenter(cx,cy,t[0]);cx=nc.x;cy=nc.y;prev=t[0];
   });
   buildSpine();
-  // two rings of countryside, then a lake all round
+  // countryside round the road, then water all round
   let ring=trackTiles,land=[];
-  for(let k=0;k<2;k++){
+  for(let k=0;k<(STAGE.rings||2);k++){
     const next=[];
     for(const t of ring)for(let e=0;e<6;e++){
       const nc=neighborCenter(t.cx,t.cy,e),key=keyOf(nc.x,nc.y);
@@ -315,10 +371,8 @@ function buildStage(){
     water.push({cx:nc.x,cy:nc.y,isDeco:true,isWet:true,kind:'water',tList:[],bList:[]});
   }
   // the land follows the altitude: farms low down, forest, then rock and snow on top
-  const LOW=['meadow','wheat','field','meadow','forest'];
-  const MID=['meadow','forest','field','forest','stone'];
-  const HIGH=['forest','pines','stone','pines','meadow'];
-  const TOP=['pines','stone','snow','pines','snowrock'];
+  const LS=STAGE.land||LAND_STD;
+  const LOW=LS.low,MID=LS.mid,HIGH=LS.high,TOP=LS.top;
   for(const t of land){
     const en=elevNear(t.cx,t.cy);
     const h=Math.abs((Math.round(t.cx)*73856093)^(Math.round(t.cy)*19349663))%5;
@@ -540,7 +594,7 @@ function buildHousePaths(t){
 const TEAMS=[
   {j:'#1f6fd1',a:'#ffffff',h:'#1f6fd1'},{j:'#d12a2a',a:'#ffffff',h:'#1b1b1b'},{j:'#1ea85a',a:'#0b3d20',h:'#ffffff'},
   {j:'#f07a18',a:'#1b1b1b',h:'#f07a18'},{j:'#6b3fc8',a:'#ffd23f',h:'#ffffff'},{j:'#e8e8e8',a:'#d12a2a',h:'#d12a2a'},
-  {j:'#16a3b8',a:'#ffffff',h:'#16a3b8'},{j:'#2a303b',a:'#ff4f9a',h:'#2a303b'},{j:'#ff4f9a',a:'#2a303b',h:'#ffffff'},
+  {j:'#16a3b8',a:'#ffffff',h:'#16a3b8'},{j:'#2a303b',a:'#ff4f9a',h:'#ff4f9a'},{j:'#ff4f9a',a:'#2a303b',h:'#ffffff'},
   {j:'#8bc34a',a:'#2e4d12',h:'#8bc34a'},{j:'#9c2b4a',a:'#f2c14e',h:'#9c2b4a'}];
 const NAMES=['R. Bergmann','L. Moreau','T. Okafor','J. Lindqvist','M. Rossi','A. Kowalski','D. Hughes','S. Varga','P. Ortega','K. Tanaka','E. Novak'];
 // power, sprint kick
@@ -575,16 +629,18 @@ function aiRider(k,s,l){
   const tm=TEAMS[k%TEAMS.length],sp=AI_SPEC[k];
   return {isPlayer:false,name:NAMES[k],s:s,l:l,v:0,E:100,power:sp[0]+DIFFS[diff].p,kick:sp[1],home:l,want:l,laneT:Math.random()*0.5,
     jersey:tm.j,accent:tm.a,helmet:tm.h,ph:Math.random()*6,draft:0,draftRaw:0,crashT:0,done:false,finishT:null,
-    x:0,y:0,angle:0,lv:0,yaw:0,atkT:0,atkWait:0,aggr:(0.6+((k*37)%10)/10*0.8)*DIFFS[diff].a};
+    x:0,y:0,angle:0,lv:0,yaw:0,atkT:0,atkWait:0,role:'ride',pullT:0,pullLen:(3.5+Math.random()*4),swT:0,swingL:0,easy:1,aggr:(0.6+((k*37)%10)/10*0.8)*DIFFS[diff].a};
 }
 function computeDraft(r,g){
   let best=0,src=null;
+  r.touch=false;
   for(const o of riders){
     if(o===r||o.crashT>0)continue;
     const ds=o.s-r.s;
     if(ds<COLL_S*0.8||ds>DRAFT_FAR)continue;
     const dl=Math.abs(o.l-r.l);
     if(dl>DRAFT_LAT)continue;
+    if(ds<COLL_S+20&&dl<22)r.touch=true;           // right on the wheel
     const fl=ds<DRAFT_NEAR?1:1-(ds-DRAFT_NEAR)/(DRAFT_FAR-DRAFT_NEAR);
     const fw=1-(dl/DRAFT_LAT)*(dl/DRAFT_LAT);
     const v=fl*fw;
@@ -600,7 +656,15 @@ function computeDraft(r,g){
   }
   r.draftRaw=best;r.draftSrc=src;
   r.draft=best*draftEff(g);
+  r.recov=best*recoverEff(g,r.touch);
   return r.draft;
+}
+// How much a wheel helps you get your legs back. It holds up far better on
+// climbs than the speed benefit does; on the steepest walls only glued to the
+// wheel gives you a little.
+function recoverEff(g,touch){
+  if(g<8)return Math.max(0.35,Math.min(1,1-g/16));
+  return touch?0.3:0;
 }
 function inSprint(r){ return r.s>SPRINT_S&&r.s<FINISH_S+40; }
 // Your attack: a short, all-out effort. Much faster, and it empties the tank.
@@ -613,6 +677,7 @@ function targetSpeed(r,g){
   if(autoSprint(r)&&r.E>0.5)v*=1+0.2*r.kick*Math.min(1,r.E/20);
   if(r.atkT>0&&r.E>0.5)v*=1+ATTACK_BOOST*Math.min(1,r.E/15);
   if(r.chase)v*=1.035;
+  if(r.easy&&r.easy<1)v*=r.easy;
   return v;
 }
 // Effort costs energy everywhere. Getting it back only happens below
@@ -627,12 +692,16 @@ function energyStep(r,g,dt,braking){
     if(autoSprint(r))cost+=5.5*PACE;
     if(r.atkT>0)cost+=ATTACK_DRAIN;
     if(r.chase)cost+=1.4*PACE;
-    if(g<-1)rec+=0.3*PACE*(-g);                         // freewheeling downhill
-    rec+=DRAFT_RECOVER*PACE*r.draft;                    // sitting in a wheel
+    if(r.easy&&r.easy<1)cost*=0.6;
+    if(g<-1)rec+=0.45*PACE*(-g);                        // freewheeling downhill
+    rec+=DRAFT_RECOVER*PACE*(r.recov||0);               // sitting in a wheel
   }
   r.E=Math.max(0,r.E-cost*dt);
-  if(r.E<RECOVER_CAP&&cost===0||r.E<RECOVER_CAP&&!(r.atkT>0)&&!autoSprint(r))
+  r.gaining=false;
+  if(r.E<RECOVER_CAP&&!(r.atkT>0)&&!autoSprint(r)&&rec>cost*0.5){
     r.E=Math.min(RECOVER_CAP,r.E+rec*dt);
+    r.gaining=rec>cost;
+  }
 }
 function approach(r,tgt,dt){
   r.v+=(tgt-r.v)*(tgt>r.v?(r.atkT>0?1.7:0.8):1.4)*PACE*dt;
@@ -721,28 +790,26 @@ document.addEventListener('keyup',e=>{
   else if(k===' '||k==='ArrowDown'||k==='s'||k==='S')kB=false;
   syncBtns();
 });
-document.getElementById('btnStart').onclick=()=>startRace();
 document.getElementById('btnMenu').onclick=()=>showMenu();
 
 // ── SCREENS ──────────────────────────────────────────
 let bests={};
 try{ const b=localStorage.getItem('peloton_best_v2'); if(b)bests=JSON.parse(b); }catch(e){}
-function curBest(){ return bests[diff]||(bests[diff]={rank:null,time:null}); }
+// results saved before there were stages belong to the first one
+for(const k of Object.keys(bests))if(k.indexOf(':')<0){ if(!bests['0:'+k])bests['0:'+k]=bests[k]; delete bests[k]; }
+function curBest(){ const k=stageIdx+':'+diff; return bests[k]||(bests[k]={rank:null,time:null}); }
 function saveBest(){ try{ localStorage.setItem('peloton_best_v2',JSON.stringify(bests)); }catch(e){} }
 function setDiff(d){
   diff=d;
   try{ localStorage.setItem('peloton_diff_v1',String(d)); }catch(e){}
   document.querySelectorAll('#diffRow button').forEach((b,i)=>b.classList.toggle('sel',i===d));
-  const best=curBest();
-  document.getElementById('best').textContent=best.rank
-    ?'Your best on '+DIFFS[d].n+': '+ordinal(best.rank)+' place, fastest time '+fmt(best.time)
-    :'No result on '+DIFFS[d].n+' yet';
+  buildStageList();
 }
 
 function setRaceUI(on){
-  for(const id of ['hudTop','hudBot','bL','bR','bA','brakeHint'])document.getElementById(id).classList.toggle('hidden',!on);
+  for(const id of ['hudTop','hudBot','gradeBox','speedBox','bL','bR','bA','brakeHint'])document.getElementById(id).classList.toggle('hidden',!on);
 }
-function showMenu(){
+function showMenu(keepScroll){
   state='menu';
   setRaceUI(false);
   document.getElementById('finish').classList.add('hidden');
@@ -750,8 +817,9 @@ function showMenu(){
   makeRiders();
   for(const r of riders)placeOnRoad(r);
   cam={x:mapCx,y:mapCy,angle:0.4,zoom:Math.min(W,H)/(mapRad*2)*1.25};
+  const m=document.getElementById('menu'),y=m.scrollTop;
   setDiff(diff);
-  drawStageProfile();
+  if(keepScroll)m.scrollTop=y;
 }
 function startRace(){
   document.getElementById('menu').classList.add('hidden');
@@ -779,7 +847,7 @@ function showResults(){
       +ordinal(i+1)+'&nbsp; '+e.r.name+'</span><span>'+(i===0?fmt(e.t):'+'+((e.t-win.t)/1000).toFixed(1)+'s')+'</span></div>';
   });
   f.innerHTML='<h2>'+head+'</h2>'
-    +'<div style="font-size:12px;color:#8fa3b8;letter-spacing:2px;margin-top:2px;">'+DIFFS[diff].n+'</div>'
+    +'<div style="font-size:12px;color:#8fa3b8;letter-spacing:2px;margin-top:2px;">Stage '+(stageIdx+1)+': '+STAGE.name+' &middot; '+DIFFS[diff].n+'</div>'
     +'<div style="font-size:40px;color:#dff1ff;margin-top:6px;font-variant-numeric:tabular-nums;">'+fmt(player.finishT)+'</div>'
     +'<div style="font-size:14px;color:'+(rank===1?'#7fffa8':'#9fb8cc')+';margin-top:6px;">'+gap+'</div>'
     +'<div style="font-size:12px;color:#8fa3b8;margin-top:4px;">'+Math.round(results.energy)+' energy left at the line'
@@ -787,6 +855,7 @@ function showResults(){
     +'<div class="res">'+rows+'</div>'
     +'<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">'
     +'<button class="ob main" onclick="startRace()">Race again</button>'
+    +(stageIdx+1<STAGES.length?'<button class="ob" onclick="selectStage('+(stageIdx+1)+');startRace()">Next stage</button>':'')
     +'<button class="ob" onclick="showMenu()">Menu</button></div>';
   f.classList.remove('hidden');
   setRaceUI(false);
@@ -810,12 +879,14 @@ function spin(r,dt,g,braking){
   r.stand=(r.stand||0)+(st-(r.stand||0))*Math.min(1,dt*3);
 }
 function placeOnRoad(r){
+  if(!r.isPlayer){ r.ld=(r.ld===undefined||state==='menu'||state==='countdown')?r.l:r.ld+(r.l-r.ld)*0.25; }
+  const L=r.isPlayer?r.l:r.ld;
   const q=spineAt(r.s);
-  r.x=q.x+q.nx*r.l;r.y=q.y+q.ny*r.l;
+  r.x=q.x+q.nx*L;r.y=q.y+q.ny*L;
   if(!r.isPlayer||r.done||state==='menu'||state==='countdown'){
     // heading from a short stretch of road, so it turns smoothly through bends
     const a=spineAt(r.s-40),b=spineAt(r.s+40);
-    r.angle=Math.atan2(b.y+b.ny*r.l-a.y-a.ny*r.l,b.x+b.nx*r.l-a.x-a.nx*r.l)+(r.isPlayer?0:(r.yaw||0));
+    r.angle=Math.atan2(b.y+b.ny*L-a.y-a.ny*L,b.x+b.nx*L-a.x-a.nx*L)+(r.isPlayer?0:(r.yaw||0));
   }
   if(r.isPlayer)r.si=q.i;
 }
@@ -899,11 +970,43 @@ function updateAI(r,dt){
     let rate=0.0035*r.aggr;
     if(g>4)rate*=3;
     if(r.s>FINISH_S-2200)rate=0.35*r.aggr;
-    if(r.E>(r.s>FINISH_S-2200?12:40)&&Math.random()<rate*dt/PACE)r.atkT=ATTACK_DUR*(0.6+Math.random()*0.5);
+    if(r.role!=='swing'&&r.E>(r.s>FINISH_S-2200?12:55)&&Math.random()<rate*dt/PACE)r.atkT=ATTACK_DUR*(0.6+Math.random()*0.5);
   }
   // If you get away, the rivals behind you with legs left organise a chase.
   const gap=player.s-r.s;
-  r.chase=!player.done&&player.crashT<=0&&gap>220&&gap<3500&&r.E>35&&state==='racing';
+  r.chase=!player.done&&player.crashT<=0&&gap>220&&gap<3500&&r.E>45&&state==='racing';
+  // Sharing the work. The rider on the front of a group pulls for a few
+  // seconds, then swings off to the side, sits up and drifts back to the tail
+  // to get into the draft again. Anyone running low stops taking turns.
+  let ahead=false,behind=0;
+  for(const o of riders){
+    if(o===r||o.crashT>0||o.done)continue;
+    const ds=o.s-r.s;
+    if(ds>30&&ds<450)ahead=true;
+    else if(ds<-30&&ds>-650)behind++;
+  }
+  r.easy=1;
+  if(r.atkT>0||r.chase&&r.E>60){ if(r.role==='swing')r.role='ride'; }
+  if(r.role==='swing'){
+    r.swT+=dt;
+    r.easy=r.E<35?0.84:0.9;
+    if(behind===0||r.swT>7/PACE*0.63){ r.role='ride'; r.laneT=0; }
+  }else if(!ahead&&behind>0&&state==='racing'&&r.atkT<=0){
+    r.role='pull';
+    r.pullT+=dt;
+    if(r.pullT>r.pullLen||r.E<35){
+      // swing off towards whichever side of the road has more room
+      let lft=0,rgt=0;
+      for(const o of riders){ if(o===r)continue; const ds=o.s-r.s; if(ds>-500&&ds<60){ if(o.l<r.l)lft++; else rgt++; } }
+      const side=r.l>ROAD_W/2-110?-1:r.l<-(ROAD_W/2-110)?1:(lft<=rgt?-1:1);
+      r.role='swing';r.swT=0;r.pullT=0;r.pullLen=(3.5+Math.random()*4)/PACE*0.63;
+      r.swingL=clamp(r.l+side*80,-(ROAD_W/2-40),ROAD_W/2-40);
+      r.want=r.swingL;r.laneT=0.8;
+    }
+  }else{
+    if(r.role==='pull')r.role='ride';
+    r.pullT=Math.max(0,r.pullT-dt*0.5);
+  }
   computeDraft(r,g);
   const tgt=targetSpeed(r,g);
   const braking=r.v>q.vmax+5;
@@ -920,21 +1023,25 @@ function updateAI(r,dt){
   spin(r,dt,g,braking);
   // choose a line: sit on a wheel, go round anyone slower, open up for the sprint
   r.laneT-=dt;
-  if(r.laneT<=0){
-    r.laneT=0.45+Math.random()*0.5;
+  if(r.laneT<=0&&r.role==='swing'){ r.laneT=0.5; r.want=r.swingL; }
+  else if(r.laneT<=0){
+    const tired=r.E<35;
+    r.laneT=tired?0.3+Math.random()*0.3:0.45+Math.random()*0.5;
+    // Tired riders look further for a wheel and hang on to it; nobody picks a
+    // rider who is swinging off as the wheel to follow.
     let lead=null,bd=Infinity;
     for(const o of riders){
-      if(o===r||o.crashT>0)continue;
+      if(o===r||o.crashT>0||o.role==='swing')continue;
       const ds=o.s-r.s;
-      if(ds<COLL_S*0.7||ds>DRAFT_FAR*1.5)continue;
-      const sc=ds+Math.abs(o.l-r.l)*1.6;
+      if(ds<COLL_S*0.7||ds>DRAFT_FAR*(tired?3:1.5))continue;
+      const sc=ds+Math.abs(o.l-r.l)*(tired?0.8:1.6);
       if(sc<bd){bd=sc;lead=o;}
     }
     if(lead){
-      const w=lead.l+(Math.random()-0.5)*6;
-      if(Math.abs(w-r.want)>12)r.want=w;
+      const w=lead.l+(Math.random()-0.5)*(tired?2:6);
+      if(Math.abs(w-r.want)>(tired?5:12))r.want=w;
       const close=lead.s-r.s<DRAFT_NEAR*1.1;
-      const slower=lead.v<r.v-15;
+      const slower=lead.v<r.v-(tired?45:15);
       if(close&&(slower||r.atkT>0||(inSprint(r)&&r.E>8))){
         const side=lead.l>0?-1:1;
         r.want=lead.l+side*(COLL_L+22);
@@ -957,8 +1064,8 @@ function updateAI(r,dt){
   const wantV=clamp((r.want-r.l)*1.6*PACE,-lat*PACE,lat*PACE);
   r.lv+=clamp(wantV-r.lv,-lat*1.8*PACE*PACE*dt,lat*1.8*PACE*PACE*dt);
   r.l=clamp(r.l+r.lv*dt,-lim,lim);
-  const yawT=clamp(Math.atan2(r.lv,Math.max(250*PACE,r.v)),-0.1,0.1);
-  r.yaw+=(yawT-r.yaw)*Math.min(1,dt*5);
+  const yawT=clamp(Math.atan2(r.lv,Math.max(450*PACE,r.v)),-0.06,0.06);
+  r.yaw+=(yawT-r.yaw)*Math.min(1,dt*3);
 }
 function collide(){
   let moved=false;
@@ -970,7 +1077,7 @@ function collide(){
     const penS=COLL_S-Math.abs(ds),penL=COLL_L-Math.abs(dl);
     if(penL<penS*0.45){
       // side by side: ease apart over a few frames; you get nudged less than they do
-      const sgn=dl>=0?1:-1,push=penL*0.35+0.3;
+      const sgn=dl>=0?1:-1,push=penL*0.15+0.1;
       const wa=A.isPlayer?0.25:B.isPlayer?1.75:1,wb=2-wa;
       A.l-=sgn*push*wa*0.5;B.l+=sgn*push*wb*0.5;
       if(!A.isPlayer){ A.lv*=0.6; if((A.want-B.l)*sgn>-COLL_L)A.want=B.l-sgn*(COLL_L+8); }
@@ -1234,8 +1341,8 @@ function drawFinishBanner(){
 function drawRider(r){
   const fallen=r.crashT>0,st=r.stand||0;
   // a gentle rock with each pedal stroke, much more when out of the saddle
-  let sway=r.pedal?Math.sin(r.ph)*(0.012+0.05*st):0;
-  if(r.E<12&&!fallen&&!r.done&&r.pedal)sway+=Math.sin(r.ph*0.5)*0.03;
+  let sway=r.pedal?Math.sin(r.ph)*(0.005+0.018*st):0;
+  if(r.E<12&&!fallen&&!r.done&&r.pedal)sway+=Math.sin(r.ph*0.5)*0.01;
   ctx.save();ctx.translate(r.x,r.y);ctx.rotate(r.angle+(fallen?1.1:0));ctx.scale(RS,RS);
   ctx.fillStyle='rgba(0,0,0,0.26)';ctx.beginPath();ctx.ellipse(4,5,31,9,0,0,Math.PI*2);ctx.fill();
   ctx.rotate(sway);
@@ -1275,9 +1382,14 @@ function drawRider(r){
   ctx.beginPath();ctx.moveTo(5,-7.4);ctx.lineTo(18-fw,-8);ctx.moveTo(5,7.4);ctx.lineTo(18-fw,8);ctx.stroke();
   ctx.fillStyle='#23252b';
   ctx.beginPath();ctx.arc(18.5-fw,-8,1.8,0,Math.PI*2);ctx.arc(18.5-fw,8,1.8,0,Math.PI*2);ctx.fill();
-  // helmet, longer front to back
-  ctx.fillStyle=r.helmet;ctx.beginPath();ctx.ellipse(11,0,6.8,5.2,0,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.1;ctx.stroke();
+  // The helmet is the energy gauge: team colour fills it from the back
+  // towards the front, and what is used up shows as bare grey shell.
+  ctx.fillStyle='#565c67';ctx.beginPath();ctx.ellipse(11,0,7.6,5.8,0,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.clip();
+  ctx.fillStyle=r.helmet;ctx.fillRect(3.4,-6,15.2*Math.max(0,Math.min(1,r.E/100)),12);
+  ctx.restore();
+  ctx.strokeStyle=r.E<15?'rgba(255,90,79,0.9)':'rgba(0,0,0,0.45)';ctx.lineWidth=r.E<15?1.6:1.1;
+  ctx.beginPath();ctx.ellipse(11,0,7.6,5.8,0,0,Math.PI*2);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.4)';ctx.beginPath();ctx.ellipse(10.5,-1.8,3.6,1.3,0,0,Math.PI*2);ctx.fill();
   ctx.restore();
 }
@@ -1300,17 +1412,13 @@ function drawDraftZones(){
     ctx.restore();
   }
 }
-// How much each rival has left: a small bar under them, and a spark while they attack.
+// A spark over any rival who is attacking.
 function drawRivalStatus(){
   const reach=Math.hypot(W,H)/cam.zoom*0.6;
   for(const r of riders){
     if(r.isPlayer||r.done)continue;
     if(Math.abs(r.x-cam.x)>reach||Math.abs(r.y-cam.y)>reach)continue;
     ctx.save();ctx.translate(r.x,r.y);ctx.rotate(cam.angle+Math.PI/2);
-    const w=64,y=62;
-    ctx.fillStyle='rgba(8,12,20,0.7)';ctx.fillRect(-w/2-3,y-3,w+6,13);
-    ctx.fillStyle=r.E>50?'#6be38a':r.E>25?'#ffd23f':'#ff5a4f';
-    ctx.fillRect(-w/2,y,w*r.E/100,7);
     if(r.atkT>0){
       ctx.font='bold 54px "Share Tech Mono", monospace';ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.lineWidth=8;ctx.strokeStyle='rgba(0,0,0,0.7)';ctx.strokeText('\u26A1',0,-78);
@@ -1350,10 +1458,13 @@ function drawScene(){
 
 // ── HUD ──────────────────────────────────────────────
 let profBase=null;
-function renderProfile(c2,w,h,pad){
-  const x0=pad,x1=w-pad,y0=pad+2,y1=h-pad;
-  const xs=d=>x0+(d/spineLen)*(x1-x0);
-  const ys=e=>y1-(e-elevMin)/((elevMax-elevMin)||1)*(y1-y0);
+function curProfile(){ return {spine:spine,len:spineLen,emin:elevMin,emax:elevMax,sprint:SPRINT_S,finish:FINISH_S}; }
+function renderProfile(c2,w,h,pad,P,range){
+  P=P||curProfile();
+  const spine=P.spine,x0=pad,x1=w-pad,y0=pad+2,y1=h-pad;
+  const rg=Math.max(range||0,(P.emax-P.emin)||1);
+  const xs=d=>x0+(d/P.len)*(x1-x0);
+  const ys=e=>y1-(e-P.emin)/rg*(y1-y0);
   for(let i=1;i<spine.length;i++){
     const A=spine[i-1],B=spine[i];
     c2.fillStyle=gradeColor(A.g);
@@ -1362,7 +1473,7 @@ function renderProfile(c2,w,h,pad){
   c2.strokeStyle='rgba(255,255,255,0.85)';c2.lineWidth=1.5;c2.beginPath();
   for(let i=0;i<spine.length;i+=2){ const x=xs(spine[i].d),y=ys(spine[i].e); i?c2.lineTo(x,y):c2.moveTo(x,y); }
   c2.stroke();
-  for(const [s,col] of [[SPRINT_S,'rgba(232,72,54,0.9)'],[FINISH_S,'#ffffff']]){
+  for(const [s,col] of [[P.sprint,'rgba(232,72,54,0.9)'],[P.finish,'#ffffff']]){
     c2.strokeStyle=col;c2.lineWidth=2;c2.setLineDash([3,3]);
     c2.beginPath();c2.moveTo(xs(s),y0-2);c2.lineTo(xs(s),h);c2.stroke();c2.setLineDash([]);
   }
@@ -1391,12 +1502,50 @@ function drawProfileHUD(){
   pctx.fillStyle='#ffd23f';pctx.strokeStyle='#000';pctx.lineWidth=1.5;
   pctx.beginPath();pctx.arc(px,py,4.5,0,Math.PI*2);pctx.fill();pctx.stroke();
 }
-function drawStageProfile(){
-  const c=document.getElementById('stageProf');
-  const w=c.clientWidth,h=c.clientHeight;if(!w)return;
-  c.width=Math.round(w*DPR);c.height=Math.round(h*DPR);
-  const x=c.getContext('2d');x.setTransform(DPR,0,0,DPR,0,0);x.clearRect(0,0,w,h);
-  renderProfile(x,w,h,3);
+// Every stage's profile, worked out once, drawn on one shared height scale so
+// a summit finish looks like one next to a flat stage.
+let stageProfiles=null;
+function allProfiles(){
+  if(stageProfiles)return stageProfiles;
+  const keep=stageIdx;
+  stageProfiles=STAGES.map((st,i)=>{
+    STAGE=st;layStage();
+    const p=curProfile();
+    return Object.assign(p,{secs:Math.round(estimateTime()*1.15)});
+  });
+  STAGE=STAGES[keep];
+  return stageProfiles;
+}
+function estimateTime(){
+  let t=0;
+  for(let i=1;i<spine.length;i++){ const d=spine[i].d; if(d<START_S||d>FINISH_S)continue;
+    t+=(d-spine[i-1].d)/Math.min(V0*gradeFactor(spine[i].gs)*1.06,spine[i].vmax); }
+  return t;
+}
+function buildStageList(){
+  const P=allProfiles();
+  const range=Math.max(...P.map(p=>p.emax-p.emin));
+  const box=document.getElementById('stageList');
+  box.innerHTML='';
+  STAGES.forEach((st,i)=>{
+    const b=bests[i+':'+diff];
+    const d=document.createElement('div');
+    d.className='stage'+(i===stageIdx?' sel':'');
+    d.innerHTML='<div class="go">\u25B6</div><div class="n"><span class="no">'+(i+1)+'</span>'+st.name+'</div>'
+      +'<div class="k">'+st.kind+' &middot; about '+(P[i].secs>=75?(Math.round(P[i].secs/30)/2)+' min':P[i].secs+' s')+'</div>'
+      +'<div class="t">'+st.desc+'</div>'
+      +'<canvas></canvas>'
+      +'<div class="t bst">'+(b&&b.rank?'Best on '+DIFFS[diff].n+': '+ordinal(b.rank)+', '+fmt(b.time):'No result on '+DIFFS[diff].n+' yet')+'</div>';
+    d.onclick=()=>{ if(stageIdx!==i)selectStage(i); startRace(); };
+    box.appendChild(d);
+    const c=d.querySelector('canvas');
+    requestAnimationFrame(()=>{
+      const w=c.clientWidth,h=c.clientHeight;if(!w)return;
+      c.width=Math.round(w*DPR);c.height=Math.round(h*DPR);
+      const x=c.getContext('2d');x.setTransform(DPR,0,0,DPR,0,0);
+      renderProfile(x,w,h,3,P[i],range);
+    });
+  });
 }
 const hudEl={};
 for(const id of ['pos','togo','time','grade','speed','eTxt','eBar','draftLab','dTxt','dBar'])hudEl[id]=document.getElementById(id);
@@ -1418,12 +1567,15 @@ function updHUD(){
   setTxt('grade',(gr>0?'\u25B2 ':gr<0?'\u25BC ':'')+Math.abs(gr)+'%');
   hudEl.grade.style.background=gradeColor(g);
   hudEl.grade.style.color=g<=-3?'#fff':'#10141f';
-  setTxt('speed',Math.round(p.v*KMH)+' km/h');
-  setTxt('eTxt',String(Math.round(p.E)));
+  setTxt('speed',Math.round(p.v*KMH)+'<small>km/h</small>',true);
+  // the brake reminder only for the start of the race
+  const bh=document.getElementById('brakeHint'),showBh=state==='countdown'||raceTime<7000;
+  if(bh.style.opacity!==(showBh?'1':'0')){bh.style.opacity=showBh?'1':'0';}
+  setTxt('eTxt',(p.gaining?'\u25B2 ':'')+Math.round(p.E));
   hudEl.eBar.style.width=p.E.toFixed(1)+'%';
   hudEl.eBar.style.background=p.E>50?'#6be38a':p.E>25?'#ffd23f':'#ff5a4f';
-  let lab='No draft',col='#8896a8';
-  if(p.draftRaw>0.3&&draftEff(g)<0.35){lab='Too steep to draft';col='#ff9c6b';}
+  let lab='',col='#8896a8';
+  if(p.draftRaw>0.3&&draftEff(g)<0.35){ if(p.touch&&g>=8){lab='On the wheel';col='#59e8ff';} else {lab=g>=8?'Too steep: get on the wheel':'Too steep to draft';col='#ff9c6b';} }
   else if(p.draft>0.05){lab='Drafting';col='#59e8ff';}
   if(!p.done&&inSprint(p)&&p.atkT<=0){lab='Sprint zone: attack!';col='#ffd23f';}
   if(p.atkT>0){lab='Attacking';col='#ff9c6b';}
@@ -1452,10 +1604,10 @@ function loop(ts){
 
 rsz();
 buildSharedPaths();
+allProfiles();
 buildStage();
 showMenu();
 requestAnimationFrame(t=>{lastTs=t;loop(t);});
 </script>
 </body>
 </html>
-
