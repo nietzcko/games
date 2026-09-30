@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-:root{ --bg:#070a11; --ink:#e0f4ff; --gold:#ffd23f; --panel:rgba(10,16,28,0.8); --muted:#8fa3b8; --cyan:#59e8ff; }
+:root{ --bg:#070a11; --ink:#e0f4ff; --gold:#e3c35a; --panel:rgba(10,16,28,0.8); --muted:#8fa3b8; --cyan:#7cc9d8; }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#070a11; --ink:#e0f4ff; } }
 :root[data-theme="dark"]{ --bg:#070a11; --ink:#e0f4ff; }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -46,16 +46,16 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
   display:flex;align-items:center;justify-content:center;font-size:40px;touch-action:none;cursor:pointer;
   -webkit-tap-highlight-color:transparent;transition:background .08s,border-color .08s;}
 #bL{left:12px;} #bR{right:12px;}
-.pbtn.on{background:rgba(89,232,255,0.28);border-color:#59e8ff;}
-.pbtn.brake{background:rgba(255,80,70,0.35);border-color:#ff5a4f;}
+.pbtn.on{background:rgba(124,201,216,0.28);border-color:#7cc9d8;}
+.pbtn.brake{background:rgba(255,80,70,0.35);border-color:#e06a5f;}
 #bA{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 30px);z-index:21;
   width:84px;height:84px;border-radius:50%;touch-action:none;cursor:pointer;-webkit-tap-highlight-color:transparent;
-  --f:0deg;background:conic-gradient(#ff9c6b var(--f), rgba(10,16,28,0.7) 0);border:2px solid rgba(255,156,107,0.7);
+  --f:0deg;background:conic-gradient(#e0a27f var(--f), rgba(10,16,28,0.7) 0);border:2px solid rgba(255,156,107,0.7);
   display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:26px;line-height:1;}
 #bA span{font-size:10px;letter-spacing:1px;margin-top:3px;}
 #bA.live{border-color:#fff;box-shadow:0 0 18px rgba(255,156,107,0.8);}
 #bA.dead{opacity:0.35;}
-#bA.hot{border-color:#ffd23f;box-shadow:0 0 16px rgba(255,210,63,0.7);}
+#bA.hot{border-color:#e3c35a;box-shadow:0 0 16px rgba(255,210,63,0.7);}
 #brakeHint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:21;transition:opacity .6s;
   font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.55);pointer-events:none;text-align:center;line-height:1.3;}
 
@@ -64,24 +64,24 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 
 .ob{background:rgba(10,16,28,0.85);border:1px solid rgba(255,255,255,0.18);color:#dff1ff;border-radius:10px;padding:14px 26px;font-size:16px;
   cursor:pointer;font-family:inherit;letter-spacing:1px;}
-.ob:hover,.ob:active,.ob:focus-visible{background:#ffd23f;color:#10141f;outline:none;}
-.ob.main{background:#ffd23f;color:#10141f;border:none;font-size:18px;padding:16px 40px;}
+.ob:hover,.ob:active,.ob:focus-visible{background:#e3c35a;color:#10141f;outline:none;}
+.ob.main{background:#e3c35a;color:#10141f;border:none;font-size:18px;padding:16px 40px;}
 
 #menu{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 34px) 20px 40px;
   overflow-y:auto;background:radial-gradient(ellipse at 50% 40%, rgba(6,10,18,0.25) 0%, rgba(6,10,18,0.78) 55%, rgba(4,7,13,0.95) 100%);}
 #menu h1{color:#fff;font-size:clamp(40px,13vw,76px);letter-spacing:10px;text-shadow:0 6px 24px rgba(0,0,0,0.95);font-weight:normal;}
-.sub{color:#ffd23f;font-size:13px;letter-spacing:5px;margin:0 0 22px;}
+.sub{color:#e3c35a;font-size:13px;letter-spacing:5px;margin:0 0 22px;}
 .how{color:rgba(224,238,252,0.85);font-size:13px;max-width:420px;line-height:1.75;text-align:center;margin-bottom:8px;}
 .stage{position:relative;background:rgba(14,20,34,0.85);border-left:4px solid #3a4a68;border-radius:10px;padding:14px 60px 14px 16px;width:100%;cursor:pointer;transition:background .15s,transform .1s;}
 .stage:active{transform:scale(0.985);}
 .stage .go{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;
-  background:#ffd23f;color:#10141f;display:flex;align-items:center;justify-content:center;font-size:15px;padding-left:3px;}
+  background:#e3c35a;color:#10141f;display:flex;align-items:center;justify-content:center;font-size:15px;padding-left:3px;}
 .stage:hover{background:rgba(24,36,60,0.95);}
-.stage.sel{border-left-color:#ffd23f;background:rgba(30,40,62,0.95);box-shadow:0 0 0 1px rgba(255,210,63,0.35);}
+.stage.sel{border-left-color:#e3c35a;background:rgba(30,40,62,0.95);box-shadow:0 0 0 1px rgba(255,210,63,0.35);}
 .stage .n{font-size:16px;color:#fff;letter-spacing:2px;display:flex;align-items:center;gap:10px;}
 .stage .no{font-size:13px;color:#10141f;background:#6f8399;border-radius:5px;padding:1px 7px;}
-.stage.sel .no{background:#ffd23f;}
-.stage .k{font-size:11px;color:#ffd23f;letter-spacing:1px;margin-top:4px;}
+.stage.sel .no{background:#e3c35a;}
+.stage .k{font-size:11px;color:#e3c35a;letter-spacing:1px;margin-top:4px;}
 .stage .t{font-size:12px;color:#9fb8cc;margin-top:4px;line-height:1.55;}
 .stage .bst{color:#71839a;font-size:11px;}
 .stage canvas{width:100%;height:46px;display:block;margin-top:8px;}
@@ -89,13 +89,13 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 #diffRow{display:flex;gap:6px;margin-top:6px;width:100%;max-width:440px;}
 #diffRow button{flex:1;font-family:inherit;font-size:13px;padding:9px 0;border-radius:8px;cursor:pointer;
   background:rgba(255,255,255,0.06);color:#c9d6e2;border:1px solid rgba(255,255,255,0.14);}
-#diffRow button.sel{background:#ffd23f;color:#10141f;border-color:#ffd23f;}
+#diffRow button.sel{background:#e3c35a;color:#10141f;border-color:#e3c35a;}
 
 #finish{position:fixed;inset:0;background:rgba(5,8,16,0.84);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;overflow-y:auto;}
 #finish h2{font-size:clamp(30px,9vw,54px);color:#fff;letter-spacing:3px;font-weight:normal;}
 .res{width:100%;max-width:360px;margin:16px 0 22px;font-size:14px;}
 .res div{display:flex;justify-content:space-between;padding:6px 10px;border-radius:6px;color:#c9d6e2;}
-.res div.me{background:rgba(255,210,63,0.18);color:#ffd23f;}
+.res div.me{background:rgba(255,210,63,0.18);color:#e3c35a;}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle;}
 </style>
 </head>
@@ -113,8 +113,8 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 
 <div id="hudBot" class="hidden">
   <div class="barLab"><span>ENERGY</span><span id="eTxt">100</span></div>
-  <div class="bar"><div id="eBar" style="width:100%;background:#6be38a;"></div></div>
-  <div class="bar thin"><div id="dBar" style="width:0%;background:#59e8ff;"></div></div>
+  <div class="bar"><div id="eBar" style="width:100%;background:#79c98f;"></div></div>
+  <div class="bar thin"><div id="dBar" style="width:0%;background:#7cc9d8;"></div></div>
   <div class="barLab"><span id="draftLab"></span><span id="dTxt"></span></div>
 </div>
 <div id="gradeBox" class="side hidden"><div id="grade">0%</div></div>
@@ -131,7 +131,7 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
   <h1>PELOTON</h1>
   <p class="sub">ROAD RACE</p>
   <p class="how">Everyone rides at about the same speed. Tuck in behind another rider to go faster and save energy. Tap attack for a short burst that drains you fast, and save enough for the sprint.</p>
-  <p class="how" style="color:#ff9c6b;">Steep climbs kill the draft and burn energy. Brake before the hairpins on the way down. Stay on the road.</p>
+  <p class="how" style="color:#e0a27f;">Steep climbs kill the draft and burn energy. Brake before the hairpins on the way down. Stay on the road.</p>
   <p class="how" style="margin:0 0 4px;font-size:12px;color:#8fa3b8;">Pick a difficulty, then tap a stage to race it.</p>
   <div id="diffRow"><button onclick="setDiff(0)">Easy</button><button onclick="setDiff(1)">Normal</button><button onclick="setDiff(2)">Hard</button><button onclick="setDiff(3)">Pro</button></div>
   <div id="stageList"></div>
@@ -251,7 +251,27 @@ function fmt(ms){
 function ordinal(n){ const s=['th','st','nd','rd'],v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
 
 // Gradient colours, the way a race profile is printed.
-function gradeColor(g){
+// ── MUTED PALETTE ────────────────────────────────────
+// Every world colour goes through mute(): saturation pulled well down and the
+// extremes of light and dark eased in, for a calmer, printed-map look.
+const MUTE_SAT=0.6;
+function mute(hex,k){
+  if(typeof hex!=='string'||hex[0]!=='#')return hex;
+  k=k===undefined?MUTE_SAT:k;
+  let r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0,l=(mx+mn)/2;
+  if(mx!==mn){const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);
+    h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h/=6;}
+  s*=k;l=0.04+l*0.9;
+  const f=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;return t<1/6?p+(q-p)*6*t:t<1/2?q:t<2/3?p+(q-p)*(2/3-t)*6:p;};
+  const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;
+  const to=x=>Math.round(x*255).toString(16).padStart(2,'0');
+  return '#'+to(f(p,q,h+1/3))+to(f(p,q,h))+to(f(p,q,h-1/3));
+}
+const _gcCache={};
+function gradeColor(g){ const k=g<=-6?0:g<=-3?1:g<-0.5?2:g<=0.5?3:g<3?4:g<5?5:g<7?6:g<9?7:8;
+  return _gcCache[k]||(_gcCache[k]=mute(rawGradeColor(g),0.75)); }
+function rawGradeColor(g){
   if(g<=-6)return '#2c6fd8';
   if(g<=-3)return '#3ea2e6';
   if(g<-0.5)return '#57c9c0';
@@ -268,17 +288,18 @@ const TERRAIN={
   field:'#86b95c', meadow:'#7fb356', forest:'#3f6e2c', wheat:'#e0c159',
   stone:'#9b9a92', sand:'#e0c083', pines:'#2f4a38', snow:'#eef3f8', snowrock:'#8d97a2', water:'#2a7fa8'
 };
-const SKY=['#2a86cf','#79bfe6','#cfe7ee'];
+const SKY=['#2a86cf','#79bfe6','#cfe7ee'].map(c=>mute(c));
+for(const k in TERRAIN)TERRAIN[k]=mute(TERRAIN[k]);
 const TILE_GAP=13, TILE_LIFT=7, TABLE='#141920';
 const RIM_LIGHT='rgba(242,224,172,0.5)';
 const ASPHALT='#3e434b';
 const LINE_W='rgba(248,246,238,0.72)';
-const SHOULDER='#c9b284';
-const STOCK=['#c2553c','#a9432e','#d3763d','#7d4a38','#b7563b','#6f7b86'];
-const WALL_A='#ddcbab', WALL_B='#bda887';
-let TREE_DARK='#2c5622', TREE_MID='#3f7a30', TREE_LIT='rgba(158,208,114,0.6)';
-const PINE_DARK='#1f3d26', PINE_MID='#2f5c38', PINE_LIT='rgba(120,175,120,0.5)';
-const FAN_COLS=['#d12a2a','#ffd23f','#1f6fd1','#ffffff','#1ea85a','#ff4f9a','#f07a18','#16a3b8'];
+const SHOULDER=mute('#c9b284');
+const STOCK=['#c2553c','#a9432e','#d3763d','#7d4a38','#b7563b','#6f7b86'].map(c=>mute(c));
+const WALL_A=mute('#ddcbab'), WALL_B=mute('#bda887');
+let TREE_DARK=mute('#2c5622'), TREE_MID=mute('#3f7a30'), TREE_LIT='rgba(158,196,124,0.45)';
+const PINE_DARK=mute('#1f3d26'), PINE_MID=mute('#2f5c38'), PINE_LIT='rgba(120,160,120,0.4)';
+const FAN_COLS=['#d12a2a','#e3c35a','#1f6fd1','#ffffff','#1ea85a','#ff4f9a','#f07a18','#16a3b8'].map(c=>mute(c));
 
 let GRIT,WAVES,WHEAT,ROCKS,DUNES,BEVEL=null,HEX_FILL,HEX_TILE,HEX_TOPRIM;
 function hexPath(rad){
@@ -342,7 +363,7 @@ function selectStage(i){
 }
 function buildStage(){
   const tr=STAGE.trees||['#2c5622','#3f7a30','rgba(158,208,114,0.6)'];
-  TREE_DARK=tr[0];TREE_MID=tr[1];TREE_LIT=tr[2];
+  TREE_DARK=mute(tr[0]);TREE_MID=mute(tr[1]);TREE_LIT=tr[2];
   profBase=null;
   trackTiles=[];
   let cx=0,cy=0,prev=STAGE.tiles[0][0];
@@ -593,9 +614,10 @@ function buildHousePaths(t){
 // ── RIDERS ───────────────────────────────────────────
 const TEAMS=[
   {j:'#1f6fd1',a:'#ffffff',h:'#1f6fd1'},{j:'#d12a2a',a:'#ffffff',h:'#1b1b1b'},{j:'#1ea85a',a:'#0b3d20',h:'#ffffff'},
-  {j:'#f07a18',a:'#1b1b1b',h:'#f07a18'},{j:'#6b3fc8',a:'#ffd23f',h:'#ffffff'},{j:'#e8e8e8',a:'#d12a2a',h:'#d12a2a'},
+  {j:'#f07a18',a:'#1b1b1b',h:'#f07a18'},{j:'#6b3fc8',a:'#e3c35a',h:'#ffffff'},{j:'#e8e8e8',a:'#d12a2a',h:'#d12a2a'},
   {j:'#16a3b8',a:'#ffffff',h:'#16a3b8'},{j:'#2a303b',a:'#ff4f9a',h:'#ff4f9a'},{j:'#ff4f9a',a:'#2a303b',h:'#ffffff'},
   {j:'#8bc34a',a:'#2e4d12',h:'#8bc34a'},{j:'#9c2b4a',a:'#f2c14e',h:'#9c2b4a'}];
+for(const t of TEAMS){ t.j=mute(t.j,0.72); t.a=mute(t.a,0.72); t.h=mute(t.h,0.72); }
 const NAMES=['R. Bergmann','L. Moreau','T. Okafor','J. Lindqvist','M. Rossi','A. Kowalski','D. Hughes','S. Varga','P. Ortega','K. Tanaka','E. Novak'];
 // power, sprint kick
 const AI_SPEC=[[1.05,0.9],[1.045,0.95],[1.07,1.12],[1.065,1.0],[1.06,1.05],[1.055,0.95],
@@ -621,7 +643,7 @@ function makeRiders(){
       const q=spineAt(START_S-g[0]);
       player=add({isPlayer:true,name:'You',s:START_S-g[0],l:g[1],v:0,E:100,power:1,kick:1,
         x:q.x+q.nx*g[1],y:q.y+q.ny*g[1],angle:Math.atan2(q.uy,q.ux),si:q.i,
-        jersey:'#ffd23f',accent:'#1b1b1b',helmet:'#ffd23f',ph:0,draft:0,draftRaw:0,crashT:0,done:false,finishT:null,atkT:0});
+        jersey:mute('#e3c35a',0.85),accent:'#1b1b1b',helmet:mute('#e3c35a',0.85),ph:0,draft:0,draftRaw:0,crashT:0,done:false,finishT:null,atkT:0});
     }else add(aiRider(ai++,START_S-g[0],g[1]));
   });
 }
@@ -732,9 +754,9 @@ const bL=document.getElementById('bL'),bR=document.getElementById('bR');
 function attack(){
   const p=player;
   if(state!=='racing'||!p||p.done||p.crashT>0||p.atkT>0)return;
-  if(p.E<ATTACK_MIN_E){ flash('NO ENERGY','#ff5a4f',800); return; }
+  if(p.E<ATTACK_MIN_E){ flash('NO ENERGY','#e06a5f',800); return; }
   p.atkT=ATTACK_DUR;
-  flash('ATTACK!','#ff9c6b',700);
+  flash('ATTACK!','#e0a27f',700);
   // riders close by may jump on it
   for(const r of riders){
     if(r.isPlayer||r.done||r.atkT>0)continue;
@@ -849,9 +871,9 @@ function showResults(){
   f.innerHTML='<h2>'+head+'</h2>'
     +'<div style="font-size:12px;color:#8fa3b8;letter-spacing:2px;margin-top:2px;">Stage '+(stageIdx+1)+': '+STAGE.name+' &middot; '+DIFFS[diff].n+'</div>'
     +'<div style="font-size:40px;color:#dff1ff;margin-top:6px;font-variant-numeric:tabular-nums;">'+fmt(player.finishT)+'</div>'
-    +'<div style="font-size:14px;color:'+(rank===1?'#7fffa8':'#9fb8cc')+';margin-top:6px;">'+gap+'</div>'
+    +'<div style="font-size:14px;color:'+(rank===1?'#8fd9a8':'#9fb8cc')+';margin-top:6px;">'+gap+'</div>'
     +'<div style="font-size:12px;color:#8fa3b8;margin-top:4px;">'+Math.round(results.energy)+' energy left at the line'
-    +(results.record?' &middot; <span style="color:#ffd23f;">personal best</span>':'')+'</div>'
+    +(results.record?' &middot; <span style="color:#e3c35a;">personal best</span>':'')+'</div>'
     +'<div class="res">'+rows+'</div>'
     +'<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">'
     +'<button class="ob main" onclick="startRace()">Race again</button>'
@@ -912,7 +934,7 @@ function updatePlayer(dt){
     }
     return;
   }
-  if(p.atkT>0){ p.atkT-=dt; if(p.E<=0.5){ p.atkT=0; flash('EMPTY','#ff5a4f',900); } }
+  if(p.atkT>0){ p.atkT-=dt; if(p.E<=0.5){ p.atkT=0; flash('EMPTY','#e06a5f',900); } }
   const q=spineAt(p.s),g=q.g;
   // steering: quick when slow, heavy when fast
   // the bars come round over a fraction of a second rather than instantly
@@ -946,14 +968,14 @@ function updatePlayer(dt){
   if(offRoad&&p.v>80*PACE&&Math.random()<0.5)spawnDust(p.x,p.y,1,'rgba(190,170,130,0.7)');
   // Off the tarmac you have half a second to get back on before you go down.
   if(Math.abs(p.l)>ROAD_W/2){
-    if(!(p.offT>0))flash('GRAVEL!','#ff9c6b',500);
+    if(!(p.offT>0))flash('GRAVEL!','#e0a27f',500);
     p.offT=(p.offT||0)+dt;
   }else p.offT=0;
   if(Math.abs(p.l)>CRASH_L||p.offT>0.5){
     p.offT=0;p.steer=0;
     p.crashT=1.3;p.E=Math.max(0,p.E-8);
     spawnDust(p.x,p.y,16,'rgba(200,190,160,0.85)');
-    flash('CRASH','#ff5a4f',1200);
+    flash('CRASH','#e06a5f',1200);
   }
 }
 function updateAI(r,dt){
@@ -1102,7 +1124,7 @@ function step(dt){
     const n=Math.ceil(cdT);
     if(n!==cdShown&&n>0){cdShown=n;flash(String(n),'#fff',700);}
     if(cdT<=0){
-      state='racing';flash('GO!','#7fffa8',800);
+      state='racing';flash('GO!','#8fd9a8',800);
     }
   }
   if(state==='racing'||state==='finish'){
@@ -1118,7 +1140,7 @@ function step(dt){
         if(r===player)playerFinished();
       }
     }
-    if(!sprintShown&&player.s>SPRINT_S&&!player.done){ sprintShown=true; flash('SPRINT — ATTACK!','#ffd23f',1400); }
+    if(!sprintShown&&player.s>SPRINT_S&&!player.done){ sprintShown=true; flash('SPRINT — ATTACK!','#e3c35a',1400); }
   }
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];
@@ -1148,7 +1170,7 @@ function playerFinished(){
   saveBest();
   results={rank:rank,list:list,energy:p.E,record:record};
   state='finish';
-  flash(rank===1?'VICTORY!':ordinal(rank).toUpperCase(),rank===1?'#ffd23f':'#fff',1600);
+  flash(rank===1?'VICTORY!':ordinal(rank).toUpperCase(),rank===1?'#e3c35a':'#fff',1600);
   setTimeout(()=>{ if(state==='finish')showResults(); },1700);
 }
 
@@ -1333,7 +1355,7 @@ function drawFinishBanner(){
   ctx.fillStyle='#c8233a';ctx.beginPath();ctx.roundRect(-hw,-22,hw*2,44,6);ctx.fill();
   ctx.fillStyle='#fff';ctx.font='bold 34px "Share Tech Mono", monospace';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('FINISH',-hw*0.5,1);ctx.fillText('FINISH',hw*0.5,1);
-  ctx.fillStyle='#ffd23f';ctx.fillText('\u2691',0,1);
+  ctx.fillStyle='#e3c35a';ctx.fillText('\u2691',0,1);
   ctx.restore();
 }
 
@@ -1404,7 +1426,7 @@ function drawDraftZones(){
     ctx.save();ctx.translate(r.x,r.y);ctx.rotate(r.angle);
     const g=ctx.createLinearGradient(-BIKE_L*0.45,0,-DRAFT_FAR,0);
     const a=(mine?0.34:0.10)*eff;
-    const col=mine?'89,232,255':'255,255,255';
+    const col=mine?'124,201,216':'255,255,255';
     g.addColorStop(0,'rgba('+col+','+a+')');g.addColorStop(1,'rgba('+col+',0)');
     ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(-BIKE_L*0.45,-16);ctx.lineTo(-DRAFT_FAR,-DRAFT_LAT);
@@ -1422,7 +1444,7 @@ function drawRivalStatus(){
     if(r.atkT>0){
       ctx.font='bold 54px "Share Tech Mono", monospace';ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.lineWidth=8;ctx.strokeStyle='rgba(0,0,0,0.7)';ctx.strokeText('\u26A1',0,-78);
-      ctx.fillStyle='#ff9c6b';ctx.fillText('\u26A1',0,-78);
+      ctx.fillStyle='#e0a27f';ctx.fillText('\u26A1',0,-78);
     }
     ctx.restore();
   }
@@ -1430,7 +1452,7 @@ function drawRivalStatus(){
 function drawPlayerMarker(){
   const p=player;
   ctx.save();ctx.translate(p.x,p.y);ctx.rotate(cam.angle+Math.PI/2);
-  ctx.fillStyle='#ffd23f';ctx.strokeStyle='rgba(0,0,0,0.7)';ctx.lineWidth=5;
+  ctx.fillStyle='#e3c35a';ctx.strokeStyle='rgba(0,0,0,0.7)';ctx.lineWidth=5;
   ctx.beginPath();ctx.moveTo(-18,-96);ctx.lineTo(18,-96);ctx.lineTo(0,-72);ctx.closePath();ctx.stroke();ctx.fill();
   ctx.restore();
 }
@@ -1499,7 +1521,7 @@ function drawProfileHUD(){
     pctx.beginPath();pctx.arc(m.xs(s),m.ys(spineAt(s).e)-3,3,0,Math.PI*2);pctx.fill();pctx.stroke();
   }
   const ps=Math.min(player.s,spineLen),px=m.xs(ps),py=m.ys(spineAt(ps).e)-4;
-  pctx.fillStyle='#ffd23f';pctx.strokeStyle='#000';pctx.lineWidth=1.5;
+  pctx.fillStyle='#e3c35a';pctx.strokeStyle='#000';pctx.lineWidth=1.5;
   pctx.beginPath();pctx.arc(px,py,4.5,0,Math.PI*2);pctx.fill();pctx.stroke();
 }
 // Every stage's profile, worked out once, drawn on one shared height scale so
@@ -1573,12 +1595,12 @@ function updHUD(){
   if(bh.style.opacity!==(showBh?'1':'0')){bh.style.opacity=showBh?'1':'0';}
   setTxt('eTxt',(p.gaining?'\u25B2 ':'')+Math.round(p.E));
   hudEl.eBar.style.width=p.E.toFixed(1)+'%';
-  hudEl.eBar.style.background=p.E>50?'#6be38a':p.E>25?'#ffd23f':'#ff5a4f';
+  hudEl.eBar.style.background=p.E>50?'#79c98f':p.E>25?'#e3c35a':'#e06a5f';
   let lab='',col='#8896a8';
-  if(p.draftRaw>0.3&&draftEff(g)<0.35){ if(p.touch&&g>=8){lab='On the wheel';col='#59e8ff';} else {lab=g>=8?'Too steep: get on the wheel':'Too steep to draft';col='#ff9c6b';} }
-  else if(p.draft>0.05){lab='Drafting';col='#59e8ff';}
-  if(!p.done&&inSprint(p)&&p.atkT<=0){lab='Sprint zone: attack!';col='#ffd23f';}
-  if(p.atkT>0){lab='Attacking';col='#ff9c6b';}
+  if(p.draftRaw>0.3&&draftEff(g)<0.35){ if(p.touch&&g>=8){lab='On the wheel';col='#7cc9d8';} else {lab=g>=8?'Too steep: get on the wheel':'Too steep to draft';col='#e0a27f';} }
+  else if(p.draft>0.05){lab='Drafting';col='#7cc9d8';}
+  if(!p.done&&inSprint(p)&&p.atkT<=0){lab='Sprint zone: attack!';col='#e3c35a';}
+  if(p.atkT>0){lab='Attacking';col='#e0a27f';}
   const frac=p.atkT>0?p.atkT/ATTACK_DUR:0;
   const ak=(p.atkT>0?'a':p.E<ATTACK_MIN_E?'x':'r')+Math.round(frac*40);
   if(hudLast.atk!==ak){ hudLast.atk=ak;
