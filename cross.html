@@ -1283,7 +1283,8 @@ function stepRider(r,ctl,dt){
     if(surf==='sand')cost=SAND_COST*p;                 // grinding through sand is expensive
     else if(d>0)cost=16*d*m*(r.spin?1.3:1); else cost=-14*(-d);
   }else if(r.mode==='run')cost=surf==='stairs'?3.6:surf==='sand'?2.8:2.2;
-  if(r.isPlayer&&ctrlMode==='buttons')cost=0;
+  // with the two-button controls nobody tires: you or the rivals
+  if(ctrlMode==='buttons')cost=0;
   r.E=clamp(r.E-cost*dt,0,100);
   if(!free)r.s+=r.v*dt*lineFactor(spine[spineAt(r.s).i],r.l);
   // barriers
@@ -1347,6 +1348,8 @@ function aiCtl(r){
   // pace judgement
   let p=r.E>60?0.96+0.06*r.skill:r.E>30?0.9:0.84;
   if(left<L*0.2&&r.E>6)p=1.12;
+  // no energy: a steady pace set by their strength, and a finish no harder than yours
+  if(ctrlMode==='buttons'){ p=0.97+0.05*r.skill; if(left<L*0.2)p=P_BOTH; }
   c.p=p;
   // corners: ease off in time
   const look=r.v*0.8+140;
