@@ -29,18 +29,20 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 #btns .pb{position:fixed;z-index:20;display:flex;align-items:center;justify-content:center;touch-action:none;
   -webkit-tap-highlight-color:transparent;cursor:pointer;background:rgba(20,16,10,0.6);border:2px solid rgba(255,255,255,0.25);
   color:#f1ecd8;font-size:14px;letter-spacing:1px;border-radius:50%;transition:background .06s,border-color .06s;}
-#btns #bSL,#btns #bSR{bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:84px;height:84px;font-size:28px;}
-#btns #bSL{left:12px;} #btns #bSR{left:106px;}
+#btns #bSL,#btns #bSR{bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:112px;height:112px;font-size:34px;}
+#btns #bSL{left:14px;} #btns #bSR{right:14px;left:auto;}
 #btns #bHop,#btns #bFast,#btns #bRun{right:14px;width:78px;height:78px;}
+#btns #bHop,#btns #bRun,#btns #bFast{display:none;}
+#btns #bFast{width:104px;height:104px;font-size:15px;}
 #btns #bHop{bottom:calc(env(safe-area-inset-bottom,0px) + 194px);border-color:#ffb27a;}
-#btns #bFast{bottom:calc(env(safe-area-inset-bottom,0px) + 106px);border-color:#e8763c;}
+#btns #bFast{bottom:calc(env(safe-area-inset-bottom,0px) + 18px);border-color:#e8763c;}
 #btns #bRun{bottom:calc(env(safe-area-inset-bottom,0px) + 18px);border-color:#5f8fd8;}
 #btns .pb.on{background:rgba(255,255,255,0.28);}
 #btns .fast.on{background:rgba(232,118,60,0.55);}
 #btns .run.on{background:rgba(95,143,216,0.55);}
 #btns .hop.on{background:rgba(255,178,122,0.6);}
 #btns .steer.brake{background:rgba(200,53,42,0.55);border-color:#ff5a4f;}
-#hudBot.mid{left:12px;transform:none;bottom:calc(env(safe-area-inset-bottom,0px) + 114px);width:min(178px,calc(100vw - 130px));}
+#hudBot.mid{bottom:calc(env(safe-area-inset-bottom,0px) + 144px);width:min(300px,86vw);}
 #hudBot.low{bottom:calc(env(safe-area-inset-bottom,0px) + 14px);}
 #hudBot{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 128px);
   z-index:10;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:5px;width:min(320px,88vw);}
@@ -138,8 +140,8 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 
 <div id="hudBot" class="hidden">
   <div id="statLine"><span id="speed">0 km/h</span><span id="mode">Riding</span><span id="eTxt">100</span></div>
-  <div class="bar"><div id="eBar" style="background:#6be38a;"></div></div>
-  <div class="bar" id="drift" style="visibility:hidden;"><div id="dBar" style="width:0%;"></div><i></i></div>
+  <div class="bar" id="eWrap"><div id="eBar" style="background:#6be38a;"></div></div>
+  <div class="bar" id="drift" style="visibility:hidden;display:none;"><div id="dBar" style="width:0%;"></div><i></i></div>
 </div>
 
 <div id="ctl" class="hidden" aria-label="Effort slider: hop, fast, steady, run">
@@ -156,7 +158,7 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
   <div id="bSL" class="pb steer" aria-label="Steer left">&#9664;</div>
   <div id="bSR" class="pb steer" aria-label="Steer right">&#9654;</div>
   <div id="bHop" class="pb hop" aria-label="Hop">HOP</div>
-  <div id="bFast" class="pb fast" aria-label="Go hard">FAST</div>
+  <div id="bFast" class="pb fast" aria-label="Pedal: hold to build effort, flick up to hop">PEDAL<br>&#8593; hop</div>
   <div id="bRun" class="pb run" aria-label="Jump off and run">RUN</div>
 </div>
 
@@ -277,7 +279,13 @@ const COURSES=[
   {name:'World Championships',laps:2,theme:'park',
    desc:'The big one. A long course with everything: three sets of barriers, mud, two sand pits, stairs and fast off-camber bends.',
    tiles:[[1,{k:'start'}],[3,{}],[4,mud(0.3,1)],[3,mud(0,0.6)],[3,B],[3,sand(0.1,0.9)],[2,{}],[4,C],
-     [5,{}],[5,stairs(0.3,0.62)],[1,C],[5,{}],[5,B],[0,mud(0.2,0.8)],[0,sand(0.15,0.85)],[0,B],[2,C],[2,{}],[1,{}]]}];
+     [5,{}],[5,stairs(0.3,0.62)],[1,C],[5,{}],[5,B],[0,mud(0.2,0.8)],[0,sand(0.15,0.85)],[0,B],[2,C],[2,{}],[1,{}]]},
+  // Traced from the official Kyokei Cyclo-cross Challenge map. Points are map
+  // pixels in race order; the start/finish is the first one.
+  {name:'Merkapt Sporttelep',laps:1,theme:'park',open:true,
+   desc:'Traced from the official Kyokei Cyclo-cross Challenge course map. A staircase in the twisty section, an underground tunnel, barriers and endless tight bends. One long lap.',
+   free:{scale:12,start:0,pts:[[813,433],[796,406],[779,380],[766,353],[752,333],[732,334],[712,344],[690,354],[668,352],[690,325],[702,296],[695,268],[672,254],[648,262],[636,286],[642,310],[628,322],[606,310],[586,316],[566,331],[550,350],[530,370],[510,392],[490,418],[474,445],[466,472],[472,494],[490,506],[510,502],[520,484],[530,462],[551,437],[573,415],[588,400],[603,404],[610,425],[612,455],[611,485],[601,512],[580,530],[554,546],[526,552],[498,550],[470,546],[444,548],[420,556],[398,570],[372,586],[346,604],[325,626],[292,642],[262,655],[255,672],[248,698],[222,718],[188,748],[182,763],[206,782],[246,800],[275,808],[300,794],[325,778],[352,770],[380,752],[396,726],[403,702],[398,683],[380,686],[366,704],[363,728],[345,748],[322,745],[312,728],[322,708],[344,688],[364,661],[392,636],[422,612],[450,596],[470,602],[472,622],[458,656],[442,690],[428,720],[425,752],[434,784],[458,790],[482,776],[510,754],[537,737],[564,722],[588,707],[592,684],[576,658],[556,634],[546,612],[563,590],[594,570],[624,548],[640,514],[643,482],[642,450],[643,420],[652,398],[668,388],[682,395],[688,415],[686,440],[684,470],[683,495],[688,510],[698,506],[708,516],[728,548],[745,605],[785,652],[820,690],[848,718],[872,722],[900,705],[925,690],[935,706],[920,718],[898,733],[868,748],[856,775],[868,808],[900,820],[950,800],[1000,772],[1030,735],[1060,700],[1072,668],[1060,641],[1042,640],[1030,622],[1015,600],[990,575],[955,538],[925,498],[897,462],[880,443],[862,447],[862,468],[885,505],[920,548],[958,592],[990,625],[996,652],[986,675],[966,679],[952,660],[946,632],[915,590],[880,545],[850,503],[828,468]],
+     features:[{k:'stairs',from:30,to:32},{k:'tunnel',from:69.2,to:73.8},{k:'barrier',at:122}]}}];
 const THEMES={
   park:{land:['park','woods','autumn','field','woods','park'],track:'park'},
   forest:{land:['woods','woods','autumn','woods','park','woods'],track:'park'},
@@ -359,7 +367,7 @@ function bevel(){
 }
 
 // ── BUILD THE COURSE ─────────────────────────────────
-let trackTiles=[],allTiles=[],spine=[],N=0,L=1,START_S=0;
+let trackTiles=[],allTiles=[],spine=[],N=0,L=1,START_S=0,structs=[];
 let events=[],planks=[],mapCx=0,mapCy=0,mapRad=1;
 let ruts=[],trackPath,tapeL,tapeR,stakePath,surfPaths={},camberPath;
 let trees=[],fans=[],tents=[],chevrons=[],ripples=[],steps=[];
@@ -370,7 +378,8 @@ function loadCourse(i){
   courseIdx=i;const c=COURSES[i];
   COURSE=c.tiles;THEME=THEMES[c.theme];LAPS=c.laps;
   try{ localStorage.setItem('cx_course_v1',String(i)); }catch(e){}
-  buildCourse();
+  structs=[];
+  if(c.free)buildFreeCourse(c); else buildCourse();
 }
 function buildCourse(){
   trackTiles=[];
@@ -427,6 +436,13 @@ function buildSpine(){
       spine.push({x:p.x,y:p.y,d:0,surf:surf,tile:t.idx,j:j,camber:f.k==='camber'});
     }
   });
+  measureSpine();
+  START_S=spine[18].d;
+  const mids=[];
+  for(const t of trackTiles)if(t.feat.k==='barrier')mids.push(spine[t.idx*SAMPLES+SAMPLES/2].d);
+  spineEvents(mids);
+}
+function measureSpine(){
   N=spine.length;L=0;
   for(let i=1;i<N;i++){ L+=Math.hypot(spine[i].x-spine[i-1].x,spine[i].y-spine[i-1].y); spine[i].d=L; }
   L+=Math.hypot(spine[0].x-spine[N-1].x,spine[0].y-spine[N-1].y);
@@ -445,7 +461,8 @@ function buildSpine(){
     let g=1;if(sp.camber)g*=0.8;if(sp.surf==='mud')g*=0.9;if(sp.surf==='sand')g*=0.92;
     sp.g=g;sp.vmax=Math.sqrt(A_LAT*sp.rad)*g;
   }
-  START_S=spine[18].d;
+}
+function spineEvents(mids){
   // events along the lap
   events=[];planks=[];
   let i=0;
@@ -457,15 +474,73 @@ function buildSpine(){
     events.push({k:k,a:spine[i].d,b:b,i0:i,i1:j});
     i=j+1;
   }
-  for(const t of trackTiles){
-    if(t.feat.k!=='barrier')continue;
-    const sp=spine[t.idx*SAMPLES+SAMPLES/2];
-    const mid=sp.d;
+  for(const mid of mids){
     planks.push(mid-PLANK_GAP,mid+PLANK_GAP);
     events.push({k:'barrier',a:mid-PLANK_GAP,b:mid+PLANK_GAP,mid:mid});
   }
   events.sort((p,q)=>p.a-q.a);
 }
+function catmull(p0,p1,p2,p3,t){
+  // centripetal Catmull-Rom: smooth, and never loops back on itself in tight bends
+  const k=(p,q)=>Math.pow(Math.hypot(q.x-p.x,q.y-p.y),0.5)||1e-4;
+  const t0=0,t1=k(p0,p1),t2=t1+k(p1,p2),t3=t2+k(p2,p3),tt=t1+(t2-t1)*t;
+  const lerp=(A,B,ta,tb)=>({x:((tb-tt)*A.x+(tt-ta)*B.x)/(tb-ta),y:((tb-tt)*A.y+(tt-ta)*B.y)/(tb-ta)});
+  const A1=lerp(p0,p1,t0,t1),A2=lerp(p1,p2,t1,t2),A3=lerp(p2,p3,t2,t3);
+  return lerp(lerp(A1,A2,t0,t2),lerp(A2,A3,t1,t3),t1,t2);
+}
+function wpToD(w){
+  for(let i=0;i<N;i++)if(spine[i].wp>=w){
+    if(i===0)return 0;
+    const a=spine[i-1],b=spine[i],f=(w-a.wp)/((b.wp-a.wp)||1);
+    return a.d+(b.d-a.d)*f;
+  }
+  return L;
+}
+function buildFreeCourse(c){
+  const F=c.free,sc=F.scale;
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const p of F.pts){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);}
+  const ox=(x0+x1)/2,oy=(y0+y1)/2;
+  const W_=F.pts.map(p=>({x:(p[0]-ox)*sc,y:(p[1]-oy)*sc})),n=W_.length;
+  trackTiles=[];spine=[];
+  for(let i=0;i<n;i++){
+    const p0=W_[(i-1+n)%n],p1=W_[i],p2=W_[(i+1)%n],p3=W_[(i+2)%n];
+    const k=Math.max(2,Math.round(Math.hypot(p2.x-p1.x,p2.y-p1.y)/40));
+    for(let j=0;j<k;j++){ const q=catmull(p0,p1,p2,p3,j/k); spine.push({x:q.x,y:q.y,d:0,surf:'grass',tile:-1,j:0,camber:false,wp:i+j/k}); }
+  }
+  for(const f of F.features)if(f.k==='stairs'||f.k==='mud'||f.k==='sand')
+    for(const sp of spine)if(sp.wp>=f.from&&sp.wp<f.to)sp.surf=f.k;
+  measureSpine();
+  START_S=wpToD(F.start||0);
+  spineEvents(F.features.filter(f=>f.k==='barrier').map(f=>wpToD(f.at)));
+  // tunnels and flyovers
+  structs=[];
+  for(const f of F.features){
+    if(f.k!=='tunnel'&&f.k!=='bridge')continue;
+    const a=wpToD(f.from),b=wpToD(f.to),i0=idxAt(a),i1=idxAt(b);
+    const path=new Path2D();
+    for(let i=i0;i<=i1+1;i++){ const sp=spine[i%N]; i===i0?path.moveTo(sp.x,sp.y):path.lineTo(sp.x,sp.y); }
+    structs.push({k:f.k,a:a,b:b,i0:i0,i1:i1,path:path,
+      railL:offsetPoly(-(TRACK_W/2+8),i0,i1+1,false),railR:offsetPoly(TRACK_W/2+8,i0,i1+1,false)});
+  }
+  // parkland of hex tiles under the whole course
+  let a=Infinity,b=-Infinity,cc=Infinity,d=-Infinity;
+  for(const sp of spine){a=Math.min(a,sp.x);b=Math.max(b,sp.x);cc=Math.min(cc,sp.y);d=Math.max(d,sp.y);}
+  const vx=1.5*R,vy=APOTHEM,m=R*2.2;
+  allTiles=[];
+  for(let i=Math.floor((a-m)/vx);i<=Math.ceil((b+m)/vx);i++){
+    for(let j=Math.floor((cc-m-i*vy)/(2*APOTHEM));j<=Math.ceil((d+m-i*vy)/(2*APOTHEM));j++){
+      const cx=i*vx,cy=i*vy+j*2*APOTHEM;
+      const h=Math.abs((Math.round(cx)*73856093)^(Math.round(cy)*19349663))%THEME.land.length;
+      allTiles.push({cx:cx,cy:cy,isDeco:true,kind:roadDist(cx,cy)<APOTHEM*0.9?THEME.track:THEME.land[h]});
+    }
+  }
+  allTiles.sort((p,q)=>p.cy-q.cy);
+  mapCx=(a+b)/2;mapCy=(cc+d)/2;mapRad=Math.max(b-a,d-cc)/2+APOTHEM;
+  buildTrackPaths();
+  buildScenery(lcg(1011));
+}
+function inStruct(s,k){ const p=lapPos(s); for(const st of structs)if(st.k===k&&p>=st.a&&p<=st.b)return st; return null; }
 function lapPos(s){ return ((s%L)+L)%L; }
 function idxAt(d){
   d=lapPos(d);
@@ -585,6 +660,7 @@ function buildScenery(rnd){
       for(const side of [-1,1]){
         if(rnd()>0.72)continue;
         const off=side*(TAPE+20+rnd()*46);
+        const fx=q.x+q.nx*off,fy=q.y+q.ny*off; if(roadDist(fx,fy)<TAPE+12)continue;
         fans.push({x:q.x+q.nx*off+(rnd()-0.5)*10,y:q.y+q.ny*off+(rnd()-0.5)*10,c:FAN_COLS[(rnd()*FAN_COLS.length)|0],a:rnd()*6});
       }
     }
@@ -592,6 +668,7 @@ function buildScenery(rnd){
   // team tents behind the start
   for(let k=0;k<6;k++){
     const q=spineAt(START_S-700+k*230),side=k%2?1:-1,off=side*(TAPE+230);
+    if(roadDist(q.x+q.nx*off,q.y+q.ny*off)<TAPE+110)continue;
     tents.push({x:q.x+q.nx*off,y:q.y+q.ny*off,a:Math.atan2(q.uy,q.ux),c:['#d12a2a','#1f6fd1','#1ea85a','#f07a18','#6b3fc8','#16a3b8'][k]});
   }
   // arrow boards on the outside of the tight bends
@@ -599,6 +676,7 @@ function buildScenery(rnd){
     const sp=spine[i];
     if(sp.vmax>V0*0.82)continue;
     const q=spineAt(sp.d),off=-sp.turn*(TAPE+30);
+    if(roadDist(q.x+q.nx*off,q.y+q.ny*off)<TAPE+10)continue;
     chevrons.push({x:q.x+q.nx*off,y:q.y+q.ny*off,a:Math.atan2(q.uy,q.ux),turn:sp.turn,camber:sp.camber});
   }
   // a wobbly closed shape: smoothed through randomly pushed-out points
@@ -792,20 +870,99 @@ function bindPB(id,key,onDown){
 function syncPB(){
   const L=bHeld.L.size>0||kL,R=bHeld.R.size>0||kR,brake=L&&R;
   const set=(id,cls)=>{ document.getElementById(id).className='pb '+cls; };
+  const twin=ctrlMode==='buttons';
   set('bSL','steer'+(brake?' brake':L?' on':''));set('bSR','steer'+(brake?' brake':R?' on':''));
   set('bFast','fast'+(bHeld.F.size||kU?' on':''));set('bRun','run'+(bHeld.Run.size||kD?' on':''));
   set('bHop','hop'+(bHeld.Hop.size?' on':''));
 }
-bindPB('bSL','L');bindPB('bSR','R');bindPB('bFast','F');bindPB('bRun','Run');
+bindPB('bSL','L');bindPB('bSR','R');bindPB('bFast','F');
+{ // a quick flick upwards off the PEDAL button is a bunny-hop
+  const el=document.getElementById('bFast'),fl={};
+  // works any time you're holding it: a quick upward swipe, not a slow drift
+  el.addEventListener('pointerdown',e=>{ fl[e.pointerId]={h:[[performance.now(),e.clientY]],done:false}; });
+  el.addEventListener('pointermove',e=>{
+    const f=fl[e.pointerId]; if(!f)return;
+    const now=performance.now();f.h.push([now,e.clientY]);
+    while(f.h.length>1&&now-f.h[1][0]>150)f.h.shift();
+    const rise=f.h[0][1]-e.clientY;
+    if(rise>38&&!f.done){ f.done=true; joy.hopReq=true; }
+    if(rise<10)f.done=false;
+  });
+  const end=e=>{ delete fl[e.pointerId]; };
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+}bindPB('bRun','Run');
 bindPB('bHop','Hop',()=>{ joy.hopReq=true; });
-function readButtons(){
-  const L=bHeld.L.size>0||kL,R=bHeld.R.size>0||kR;
-  const brake=L&&R;
-  joy.steer=brake?0:(R?1:0)-(L?1:0);
-  if(bHeld.Run.size||kD)sx=0.95;
-  else if(brake)sx=RUN_X-0.01;                     // both steer buttons: brake
-  else if(bHeld.F.size||bHeld.Hop.size||kU)sx=0.18;
-  else sx=STEADY_SX;
+// PEDAL fills a gauge. Hold it and the gauge climbs slowly to full; let go
+// and it sinks slowly. The gauge is your effort: near empty you're braking,
+// the middle is steady riding, full is flat out. Tap to hold it where you
+// want it. Everything responds gently, nothing snaps.
+const pedal={g:0,braking:false,brakeK:0};
+const G_RISE=0.75,G_FALL=0.55,G_BRAKE=0.18;
+function pedalTap(){}
+function powerToSx(p){ return clamp(HOP_X+0.001+(1.12-p)/0.62*(RUN_X-HOP_X),HOP_X+0.001,RUN_X-0.01); }
+// Two buttons, and you do everything.
+//  nothing pressed: pedal flat out
+//  one button: steer that way (tap = small correction, hold = harder), easing to steady
+//  both, quick tap: bunny-hop (time it for the barriers)
+//  both, held: brake; keep holding down to running pace and you jump off and run.
+//    Let go to get back on.
+//  Ride into stairs and you'll stumble off; sand you can ride on momentum or run.
+const P_ONE=0.79,P_BOTH=1.06,HOP_TAP=0.25,BRAKE_AFTER=0.15;   // no tiring, so flat out is a sustainable pace
+function readButtons(dt){
+  dt=dt||0;
+  const L=bHeld.L.size>0||kL,R=bHeld.R.size>0||kR,both=(L&&R)||kD,any=L||R;
+  const P_=player;
+  pedal.braking=false;pedal.brakeK=0;
+  // how long each button has been down tells us which came first
+  pedal.tL=L?(pedal.tL||0)+dt:0; pedal.tR=R?(pedal.tR||0)+dt:0;
+  // Steering one way and then pressing the other too is a skid: brake hard
+  // while keeping the turn, and the back wheel steps out into a drift.
+  const skidDir=both&&!kD?(pedal.tL>pedal.tR+0.12?-1:pedal.tR>pedal.tL+0.12?1:0):0;
+  pedal.skid=skidDir!==0&&P_&&P_.mode==='ride';
+  // a quick press-and-release of both together is a hop
+  if(both){ pedal.bothT=(pedal.bothT||0)+dt; if(skidDir)pedal.skidPress=true; }
+  else{
+    if(pedal.bothT>0&&pedal.bothT<HOP_TAP&&!pedal.onFoot&&!pedal.skidPress)joy.hopReq=true;
+    pedal.bothT=0;pedal.skidPress=false;
+  }
+  joy.steer=both?skidDir:(R?1:0)-(L?1:0);
+  // the moment you let go of the second button the skid is over: grip comes
+  // straight back and you keep pedalling, nothing carries on slowing you
+  if(pedal.wasSkid&&!pedal.skid&&P_){ P_.slideT=0;P_.slideI=0;P_.regrip=0;P_.skidGrace=0.4; }
+  pedal.wasSkid=pedal.skid;
+  const wasBrake=pedal.wasBrake; pedal.wasBrake=both;
+  if(pedal.skid){
+    // back brake only: you scrub speed through the slide rather than stopping dead
+    sx=RUN_X-0.01;pedal.braking=true;pedal.brakeK=0.1*Math.min(1,pedal.bothT/0.12);
+    return;
+  }
+  // short steering taps keep you on the gas; hold a turn for longer and you
+  // ease to a steady effort through it
+  pedal.oneT=(any&&!both)?(pedal.oneT||0)+dt:0;
+  const want=both?0.5:(pedal.oneT>0.4)?P_ONE:P_BOTH;
+  pedal.p=(pedal.p||0.5)+clamp(want-(pedal.p||0.5),-0.6*dt,0.45*dt);
+  if(both&&pedal.bothT>=BRAKE_AFTER){
+    pedal.brakeT=pedal.bothT-BRAKE_AFTER;
+    if(P_&&P_.mode==='ride'&&P_.v<RUN_V*1.05&&pedal.brakeT>0.45&&state==='racing')pedal.onFoot=true;
+    // braking for a barrier, the stairs or sand: you jump off straight away, whatever your speed
+    if(P_&&P_.mode==='ride'&&state==='racing'){
+      const ne=nextEvent(P_.s),ev=ne.ev;
+      if(ev&&(ev.k==='barrier'||ev.k==='stairs'||ev.k==='sand')&&(ne.inside||ne.dist<P_.v*1.0+120)){
+        pedal.onFoot=true;
+        pedal.obsUntil=P_.s+(ne.inside?ev.b-lapPos(P_.s):ne.dist+(ev.b-ev.a))+40;   // stay on foot till you're over it
+      }
+    }
+    if(pedal.onFoot||(P_&&P_.mode==='run')){ sx=0.95; return; }
+    sx=RUN_X-0.01;pedal.braking=true;pedal.brakeK=Math.min(1,pedal.brakeT/0.2);
+    return;
+  }
+  if(both){ sx=powerToSx(0.62); return; }          // the first instant of a press: just coast
+  if(wasBrake&&P_){ P_.slideT=0;P_.regrip=0; }
+  // jumped off for an obstacle: you keep running until you're over it
+  if(pedal.obsUntil&&P_&&P_.s<pedal.obsUntil&&(pedal.onFoot||P_.mode!=='ride')){ sx=0.95; return; }
+  pedal.obsUntil=0;
+  pedal.brakeT=0;pedal.onFoot=false;
+  sx=powerToSx(Math.max(0.55,pedal.p));
 }
 function joyActive(){ return ctrlMode==='joy'&&(state==='racing'||state==='countdown'); }
 function updateJoy(dt){
@@ -879,7 +1036,7 @@ function curBest(){ const lb=levelBests(courseIdx); return lb[diff]||(lb[diff]={
 function saveBest(){ try{ localStorage.setItem('cx_best_v2',JSON.stringify(bests)); }catch(e){} }
 // a level opens once you've been on the podium of the one before, on any difficulty
 function podium(i){ const lb=bests[i]; if(!lb)return false; for(const k in lb)if(lb[k]&&lb[k].rank&&lb[k].rank<=3)return true; return false; }
-function unlocked(i){ return i===0||podium(i-1); }
+function unlocked(i){ return i===0||COURSES[i].open||podium(i-1); }
 function pickCourse(dir){
   const n=(courseIdx+dir+COURSES.length)%COURSES.length;
   loadCourse(n);showMenu();
@@ -895,6 +1052,7 @@ function renderLevelCard(){
   btn.classList.toggle('locked',!open);
   document.getElementById('diffRow').style.display=open?'':'none';
   if(!open)document.getElementById('best').textContent='Finish in the top 3 on '+COURSES[courseIdx-1].name+' to unlock this level.';
+  if(c.free)document.getElementById('cSub').textContent='Real course, '+c.laps+' lap';
 }
 function setDiff(d){
   diff=d;
@@ -912,7 +1070,9 @@ function setRaceUI(on){
   document.getElementById('btns').classList.toggle('hidden',!on||ctrlMode!=='buttons');
   document.getElementById('hudBot').classList.toggle('low',ctrlMode==='joy');
   document.getElementById('hudBot').classList.toggle('mid',ctrlMode==='buttons');
-  joy.on=false;joy.steer=0;joy.hopReq=false;
+  document.getElementById('eWrap').style.display=ctrlMode==='buttons'?'none':'';
+  document.getElementById('eTxt').style.display=ctrlMode==='buttons'?'none':'';
+  joy.on=false;joy.steer=0;joy.hopReq=false;pedal.g=G_BRAKE;pedal.onFoot=false;pedal.p=0.5;pedal.brakeT=0;pedal.bothT=0;pedal.obsUntil=0;pedal.tL=0;pedal.tR=0;pedal.skid=false;pedal.skidPress=false;
   for(const k in bHeld)bHeld[k].clear();syncPB();
 }
 function setCtrl(m){
@@ -920,7 +1080,7 @@ function setCtrl(m){
   try{ localStorage.setItem('cx_ctrl_v2',m); }catch(e){}
   document.querySelectorAll('#ctrlRow button').forEach(b=>b.classList.toggle('sel',b.dataset.m===m));
   document.getElementById('ctrlTxt').textContent=m==='buttons'
-    ?'Two thumbs. Left thumb: steer with the arrows, hold both to brake. Right thumb, top to bottom: tap HOP to bunny-hop, hold FAST to go hard, hold RUN to jump off and run. Nothing pressed means steady riding.'
+    ?'Just two buttons, you do everything. Nothing pressed: pedal flat out. One button: steer that way (tap for a small correction, hold to turn harder; hold a turn for longer and you ease to a steady effort). Tap both together quickly: bunny-hop, time it for the barriers. Steering and then pressing the other button too: skid the back wheel and drift round. Hold both: brake, and keep holding down to running pace to jump off and run (brake just before a barrier, the stairs or sand and you jump off straight away); let go to get back on. Jump off before the stairs or you will stumble; sand you can ride on momentum or run.'
     :m==='joy'
     ?'Touch anywhere, then drag. Up goes harder, down eases off, and pulling right down jumps off to run. Left and right steer. Flick up quickly to hop. Let go and you ride steady.'
     :'One slider across the bottom: hop, fast, steady, run. Your line is picked for you.';
@@ -1018,7 +1178,8 @@ function spawn(x,y,n,color,spd){
     particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,max:0.35+Math.random()*0.4,r:4+Math.random()*7,c:color});
   }
 }
-function crash(r,t,msg){
+function crash(r,t,msg,side){
+  r.crashDur=t;r.fallSide=side||(Math.random()<0.5?-1:1);
   r.crashT=t;r.v=0;r.mode='ride';r.modeT=0;r.head=0;r.delta=0;r.driftI=0;r.driftI=0;r.slide=0;r.dYaw=0;r.E=Math.max(0,r.E-4);
   r.mud=Math.min(1,(r.mud||0)+0.15);
   if(r.isPlayer){ player.crashes=(player.crashes||0)+1; shakeT=0.35; flash(msg,'#ff5a4f',1100); }
@@ -1070,6 +1231,10 @@ function stepRider(r,ctl,dt){
     tgt=RUN_V*(0.9+0.1*r.power)*RUN_F[surf]*fat;dec=900;r.spin=false;
   }else{ tgt=RUN_V*0.85;dec=800;r.spin=false; }
   if(ctl.cap!==undefined)tgt=Math.min(tgt,ctl.cap);
+  // real braking: slow right down, hard
+  if(ctl.brake>0&&r.mode==='ride'){ tgt=0; dec=200+450*ctl.brake; }
+  // with the buttons, easing off is gentle; only braking slows you hard
+  else if(free&&ctrlMode==='buttons'&&r.mode==='ride')dec=Math.min(dec,170);
   // a sliding tyre has no grip left to drive with: pedalling does nothing mid-drift
   if(free&&(r.mode==='ride')&&(r.driftI>0||r.regrip>0))tgt=Math.min(tgt,r.v);
   if(r.regrip>0&&!(r.driftI>0))r.regrip-=dt;
@@ -1109,7 +1274,8 @@ function stepRider(r,ctl,dt){
     }
   }
   if(!r.driftI){ r.slide=Math.max(0,(r.slide||0)-dt*1.2); r.rear=null; }
-  r.dYaw=(r.dYaw||0)+((r.driftI?r.driftTurn*0.5*r.driftI:0)-(r.dYaw||0))*Math.min(1,dt*8);
+  const swingTo=r.driftI?r.driftTurn*(r.isPlayer&&pedal.skid?0.32:0.25)*Math.max(r.driftI,r.isPlayer&&pedal.skid?0.7:0):0;
+  r.dYaw=(r.dYaw||0)+(swingTo-(r.dYaw||0))*Math.min(1,dt*7);
   // energy
   let cost=0;
   if(r.mode==='ride'){
@@ -1117,6 +1283,7 @@ function stepRider(r,ctl,dt){
     if(surf==='sand')cost=SAND_COST*p;                 // grinding through sand is expensive
     else if(d>0)cost=16*d*m*(r.spin?1.3:1); else cost=-14*(-d);
   }else if(r.mode==='run')cost=surf==='stairs'?3.6:surf==='sand'?2.8:2.2;
+  if(r.isPlayer&&ctrlMode==='buttons')cost=0;
   r.E=clamp(r.E-cost*dt,0,100);
   if(!free)r.s+=r.v*dt*lineFactor(spine[spineAt(r.s).i],r.l);
   // barriers
@@ -1157,7 +1324,7 @@ function stepRider(r,ctl,dt){
   }
 }
 function readKeys(dt){
-  if(ctrlMode==='buttons'){ readButtons(); return; }
+  if(ctrlMode==='buttons'){ readButtons(dt); return; }
   if(ctrlMode==='joy'){
     updateJoy(dt);
     if(!joy.on){
@@ -1170,8 +1337,9 @@ function playerCtl(){
   const z=zoneOf(sx);
   let hop=z==='hop'&&prevZone!=='hop';
   if(ctrlMode!=='slider'){ hop=joy.hopReq; joy.hopReq=false; }
+  const brk=ctrlMode==='buttons'&&pedal.braking?pedal.brakeK:0;
   prevZone=z;
-  return {p:sliderPower(sx),slow:sliderSlow(sx),wantRun:z==='run',hop:hop};
+  return {p:sliderPower(sx),slow:sliderSlow(sx),wantRun:z==='run',hop:hop,brake:brk};
 }
 function aiCtl(r){
   const c={p:r.cruise||1,slow:0.3,wantRun:false,hop:false};
@@ -1231,9 +1399,25 @@ function steerPlayer(r,dt){
   // just inside the grip, so steering hard never slides you. Faster than that
   // it asks for more than the tyres have, and the harder/faster, the bigger the slide.
   const aGrip=A_LAT*GRIP_FREE,vs=SLIDE_V;
-  const dmax=onBike?Math.min(0.55,Math.atan(aGrip*WB/Math.max(1,r.v*r.v)*(r.v>vs?1+2.2*(r.v-vs)/vs:0.97))):0.9;
+  const btn=onBike&&r.isPlayer&&ctrlMode==='buttons';
+  // With the buttons the bike can't turn tight on grip alone: its tightest
+  // circle grows with speed. Hairpins need a skid.
+  const rMin=280+0.7*r.v;
+  const dmax=btn&&pedal.skid?0.55:btn?Math.min(Math.atan(WB/rMin),0.55,Math.atan(aGrip*WB/Math.max(1,r.v*r.v)*0.97)):onBike?Math.min(0.55,Math.atan(aGrip*WB/Math.max(1,r.v*r.v)*(r.v>vs?1+1.1*(r.v-vs)/vs:0.97))):0.9;
   r.delta=r.delta||0;
-  r.delta+=clamp(inp*dmax-r.delta,-3.2*dt,3.2*dt);
+  if(ctrlMode==='buttons'){
+    // Soft steering: a tap is a small correction; keep holding and the bars
+    // turn further and faster, reaching full lock after about 0.7 s. Let go
+    // and they centre smoothly.
+    if(inp){ if(Math.sign(inp)!==Math.sign(r.hold||0))r.hold=0; r.hold=(Math.abs(r.hold)+dt)*Math.sign(inp); }
+    else r.hold=0;
+    const h=Math.abs(r.hold||0);
+    const tgt=inp*dmax*Math.min(1,0.3+h/0.5),rate=inp?1.2+2.2*Math.min(1,h/0.4):2.2;
+    r.delta+=clamp(tgt-r.delta,-rate*dt,rate*dt);
+  }else r.delta+=clamp(inp*dmax-r.delta,-3.2*dt,3.2*dt);
+  // just out of a skid: the bars drop straight back to a normal lock and the
+  // tyres bite again, so nothing keeps sliding or slowing you
+  if(r.skidGrace>0){ r.skidGrace-=dt; r.delta=clamp(r.delta,-dmax,dmax); r.slideT=0; r.regrip=0; }
   if(r.theta===undefined)r.theta=r.angle;
   r.sBefore=r.s;
   if(r.crashT>0||r.done){ r.driftI=0; return; }
@@ -1244,11 +1428,14 @@ function steerPlayer(r,dt){
     yaw=v/WB*Math.tan(r.delta);
     if(r.mode==='air')yaw*=0.15;                         // no grip in the air
     // the same grip everywhere: only speed and how hard you turn decide a slide
-    const aMax=A_LAT*GRIP_FREE,maxYaw=aMax/Math.max(60,v);
+    const skidding=r.isPlayer&&ctrlMode==='buttons'&&pedal.skid&&v>140;
+    const aMax=A_LAT*GRIP_FREE*(skidding?0.6:1),maxYaw=aMax/Math.max(60,v);
+    // with the buttons, only a skid (brake while turning) slides you; plain steering just turns, within the grip
+    if(r.skidGrace>0||(r.isPlayer&&ctrlMode==='buttons'&&!pedal.skid))yaw=clamp(yaw,-maxYaw,maxYaw);
     const over=Math.abs(yaw)/maxYaw-1;
     // once the back steps out you're committed to the slide for a moment:
     // it doesn't just flick back into grip the instant you're at the limit
-    if(over>0.12&&r.mode==='ride'&&!(r.slideT>0)){ r.slideT=0.35+0.5*Math.min(1,over/0.6); r.slideI=Math.min(1,over/0.6); r.v*=1-0.18-0.12*r.slideI; }   // the back stepping out costs you momentum straight away
+    if(over>0.12&&r.mode==='ride'&&!(r.slideT>0)){ r.slideT=0.35+0.5*Math.min(1,over/0.6); r.slideI=Math.min(1,over/0.6); }
     if(r.slideT>0)r.slideT-=dt;
     if((over>0||r.slideT>0)&&r.mode==='ride'){
       const I=Math.max(Math.min(1,Math.max(0,over)/0.6),(r.slideI||0)*0.8);
@@ -1256,28 +1443,43 @@ function steerPlayer(r,dt){
       if(Math.abs(yaw)>maxYaw*(1-0.4*I))
       // sliding tyres grip less than rolling ones: you turn less than you asked,
       // run wide, and the slide scrubs speed hard
-        yaw=Math.sign(yaw)*maxYaw*(1-0.4*I);
+        yaw=Math.sign(yaw)*(skidding?Math.min(Math.abs(yaw),1.5):maxYaw*(1-0.2*I));   // a skid swings the back round: you rotate quicker
       // a slide bleeds you down well below what you could have carried with grip
       // through the turn you're asking for
       const vGrip=Math.sqrt(aMax*WB/Math.max(0.03,Math.abs(Math.tan(r.delta))));
-      r.v=Math.max(0,r.v-(Math.max(0,r.v-0.6*vGrip)*5+120)*I*dt);
-      if(r.slideT>0)r.regrip=Math.max(r.regrip||0,0.8+1.4*I);   // a real slide takes a while to recover from
+      // the slide scrubs speed progressively: the further over the limit, the harder
+      if(skidding)r.v=Math.max(0,r.v-(70+90*I)*dt);         // a skid bleeds speed steadily
+      else r.v=Math.max(0,r.v-(Math.max(0,r.v-0.6*vGrip)*4+200)*I*dt);
+      if(r.slideT>0)r.regrip=Math.max(r.regrip||0,0.35+0.6*I);  // and you need a moment to get the power back down
       const surf=spine[r.si||0].surf;
       if(Math.random()<dt*34*I){
         const col=surf==='mud'?'rgba(80,55,30,0.85)':surf==='sand'?'rgba(230,210,160,0.8)':'rgba(120,95,55,0.75)';
         const oa=r.theta-r.driftTurn*Math.PI/2;
         particles.push({x:r.x,y:r.y,vx:Math.cos(oa)*120*(0.6+Math.random()),vy:Math.sin(oa)*120*(0.6+Math.random()),life:1,max:0.4+Math.random()*0.3,r:5+Math.random()*7,c:col});
       }
-      if(r.rear)skids.push({x0:r.rear.x,y0:r.rear.y,x1:r.x,y1:r.y,t:raceTime,a:0.25+0.35*I});
-      r.rear={x:r.x,y:r.y};
+      const fx=r.x+Math.cos(r.angle)*42*RS,fy=r.y+Math.sin(r.angle)*42*RS,ba=r.angle+(r.dYaw||0);
+      const bx=fx-Math.cos(ba)*42*RS,by=fy-Math.sin(ba)*42*RS;
+      if(r.rear)skids.push({x0:r.rear.x,y0:r.rear.y,x1:bx,y1:by,t:raceTime,a:0.25+0.35*I});
+      r.rear={x:bx,y:by};
       shakeT=Math.max(shakeT,0.05*I);
     }
     // nearly stopped you can still hop the bike round with your hands
     if(r.v<120&&inp){ const piv=inp*1.6*(1-r.v/120); if(Math.abs(piv)>Math.abs(yaw))yaw=piv; }
-  }else yaw=inp*2.6;                                    // on foot you just turn
+  }else{
+    yaw=inp*2.6;                                        // on foot you just turn
+    // running with nothing pressed, you follow the course rather than wander into the tape
+    if(!inp&&ctrlMode==='buttons'){ const q=spineAt(r.s),tau=Math.atan2(q.uy,q.ux),e=wrapA((Math.cos(r.theta-tau)>=0?tau:tau+Math.PI)-r.theta)-r.l*0.004; yaw=clamp(e*3,-2.2,2.2); }
+  }
   r.wasDrifting=r.driftI>0;
   r.yawRate=yaw;
   r.theta+=yaw*dt;
+  // with nothing pressed the bike settles gently back along the course
+  // (and follows its bends), instead of carrying on at whatever angle it had
+  if(ctrlMode==='buttons'&&!inp&&onBike&&r.mode==='ride'){
+    const q=spineAt(r.s),tau=Math.atan2(q.uy,q.ux),fwd=Math.cos(r.theta-tau)>=0?tau:tau+Math.PI;
+    const e=wrapA(fwd-r.theta);
+    r.theta+=clamp(e*0.6,-0.3,0.3)*dt;
+  }
   r.x+=Math.cos(r.theta)*v*dt;r.y+=Math.sin(r.theta)*v*dt;
   // where that puts you on the course
   const pr=projectXY(r.x,r.y,r.si||0);
@@ -1292,6 +1494,12 @@ function steerPlayer(r,dt){
     r.l=side*lim;r.x=q.x+q.nx*r.l;r.y=q.y+q.ny*r.l;
     // how squarely you're pushing into it decides how much it stops you
     const tau=Math.atan2(q.uy,q.ux),into=Math.sin(r.theta-tau)*side;   // >0: heading into the tape
+    // ride into it with real sideways speed and you go down; a glancing touch just scrubs speed
+    if(r.mode==='ride'&&r.v*Math.max(0,into)>85){
+      r.l=side*(lim-24);r.x=q.x+q.nx*r.l;r.y=q.y+q.ny*r.l;
+      crash(r,1.2,'Into the tape',side);r.sBefore=r.s;
+      return;
+    }
     const loss=4+Math.max(0,into)*22;
     r.v=Math.max(0,r.v*(1-Math.min(0.9,loss*dt)));
     if(r.v>40&&Math.random()<dt*25)spawn(r.x,r.y,1,'rgba(214,204,178,0.7)',40);
@@ -1334,7 +1542,9 @@ function resolve(dt){
       const ds=o.s-r.s;
       if(ds>0&&ds<COLL_S+50&&Math.abs(o.l-r.l)<COLL_L){
         const cap=Math.max(0,o.v+(ds-COLL_S)*2.5);
-        if(r.v>cap&&!(freeSteer(r)&&Math.cos(r.theta-Math.atan2(spineAt(r.s).uy,spineAt(r.s).ux))<0))r.v=cap;
+        // close behind someone you ease back to their speed; touching wheels slows you a bit quicker
+        if(r.v>cap&&!(freeSteer(r)&&Math.cos(r.theta-Math.atan2(spineAt(r.s).uy,spineAt(r.s).ux))<0))
+          r.v-=(r.v-cap)*Math.min(1,(ds<COLL_S?3:1.2)*dt);
         if(ds<COLL_S*0.7&&!freeSteer(r))r.s-=Math.min(COLL_S*0.7-ds,80*dt);   // ease back, no jump
       }
       // shoulder to shoulder: lean off each other sideways
@@ -1511,6 +1721,7 @@ function drawTrack(){
       ctx.stroke();
     }
   }
+  for(const st of structs)if(st.k==='tunnel'){ ctx.lineCap='butt';ctx.strokeStyle='#2b2620';ctx.lineWidth=TRACK_W;ctx.stroke(st.path); }
   ctx.lineCap='round';
   // course tape and stakes
   ctx.strokeStyle='rgba(214,204,178,0.9)';ctx.lineWidth=7;ctx.stroke(tapeL);ctx.stroke(tapeR);
@@ -1607,6 +1818,37 @@ function drawProps(){
   }
 }
 
+// Tunnel roofs hide whoever is underground (a ghost shows through), and a
+// flyover deck sits over the riders passing beneath it.
+function drawStructs(){
+  for(const st of structs){
+    const e0=spineAt(st.a),e1=spineAt(st.b);
+    if(st.k==='tunnel'){
+      ctx.save();ctx.lineCap='butt';ctx.lineJoin='round';
+      // an earth mound over the tube: darker rim, grassy top
+      ctx.globalAlpha=0.92;ctx.strokeStyle='#3b4526';ctx.lineWidth=TRACK_W+76;ctx.stroke(st.path);
+      ctx.strokeStyle='#55623a';ctx.lineWidth=TRACK_W+50;ctx.stroke(st.path);
+      ctx.strokeStyle='rgba(150,165,100,0.25)';ctx.lineWidth=TRACK_W*0.45;ctx.stroke(st.path);
+      ctx.globalAlpha=1;
+      ctx.restore();
+      // concrete portals at both ends
+      for(const [q,dir] of [[e0,1],[e1,-1]]){
+        ctx.save();ctx.translate(q.x,q.y);ctx.rotate(Math.atan2(q.uy,q.ux));
+        ctx.fillStyle='#8f8b7e';ctx.fillRect(-dir*6-12,-TRACK_W/2-34,24,TRACK_W+68);
+        ctx.fillStyle='#15110c';ctx.fillRect(dir>0?8:-26,-TRACK_W/2+4,18,TRACK_W-8);
+        ctx.restore();
+      }
+    }else{
+      ctx.save();ctx.lineCap='butt';ctx.lineJoin='round';
+      ctx.save();ctx.translate(14,18);ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=TRACK_W+24;ctx.stroke(st.path);ctx.restore();
+      ctx.strokeStyle='#7b5d3c';ctx.lineWidth=TRACK_W+16;ctx.stroke(st.path);
+      ctx.strokeStyle='#5f4529';ctx.lineWidth=TRACK_W+16;ctx.setLineDash([5,20]);ctx.stroke(st.path);ctx.setLineDash([]);
+      ctx.strokeStyle='#d6cdb6';ctx.lineWidth=6;ctx.stroke(st.railL);ctx.stroke(st.railR);
+      ctx.restore();
+    }
+  }
+}
+
 // ── DRAWING: RIDERS ──────────────────────────────────
 function drawBike(r,crossBars){
   const fc=r.frame||r.accent,sa=crossBars===false?0:(r.steerA||0);
@@ -1638,8 +1880,8 @@ function drawBikeRolled(r,th,shadow){
   for(const cx of [-21,21]){
     const c=P(cx,0);
     ctx.strokeStyle=ink||'#16181d';ctx.lineWidth=3.6;
-    ctx.beginPath();ctx.ellipse(c[0],c[1],12,Math.max(0.6,12*S),0,0,Math.PI*2);ctx.stroke();
-    if(!shadow&&S>0.3){
+    ctx.beginPath();ctx.ellipse(c[0],c[1],12,Math.max(0.6,12*Math.abs(S)),0,0,Math.PI*2);ctx.stroke();
+    if(!shadow&&Math.abs(S)>0.3){
       ctx.strokeStyle='rgba(200,200,200,0.35)';ctx.lineWidth=0.7;
       ctx.beginPath();
       for(let i=0;i<6;i++){ const a=i*Math.PI/6; ctx.moveTo(c[0]-Math.cos(a)*11,c[1]-Math.sin(a)*11*S); ctx.lineTo(c[0]+Math.cos(a)*11,c[1]+Math.sin(a)*11*S); }
@@ -1657,7 +1899,7 @@ function drawBikeRolled(r,th,shadow){
   ctx.strokeStyle=ink||'#2a2d33';ctx.lineWidth=2.2;
   ctx.beginPath();ctx.moveTo(hb[0],hb[1]);ctx.lineTo(fa[0],fa[1]);ctx.stroke();
   // chainring, saddle, bars
-  if(!shadow){ ctx.strokeStyle='#8a8f96';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(bb[0],bb[1],4.5,Math.max(0.5,4.5*S),0,0,Math.PI*2);ctx.stroke(); }
+  if(!shadow){ ctx.strokeStyle='#8a8f96';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(bb[0],bb[1],4.5,Math.max(0.5,4.5*Math.abs(S)),0,0,Math.PI*2);ctx.stroke(); }
   const sd=P(-9,20),sp=P(-8,17);
   ctx.strokeStyle=ink||'#2a2d33';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(sp[0],sp[1]);ctx.lineTo(sd[0],sd[1]);ctx.stroke();
   ctx.fillStyle=ink||'#15181f';ctx.beginPath();ctx.ellipse(sd[0],sd[1],5,Math.max(1.4,2.6*C),0,0,Math.PI*2);ctx.fill();
@@ -1787,6 +2029,33 @@ function drawMud(r){
   for(let i=0;i<n;i++){ const s=SPLAT[i]; ctx.moveTo(s[0]+s[2],s[1]); ctx.arc(s[0],s[1],s[2],0,Math.PI*2); }
   ctx.fill();
 }
+// Down: the bike flops onto its side (seen side-on, wheels and frame) and the
+// rider lands sprawled beside it, then scrambles up at the end.
+function drawFallen(r){
+  const dur=r.crashDur||1.3,k=clamp(1-r.crashT/dur,0,1),sd=r.fallSide||1;
+  const tumble=Math.min(1,k/0.18),up=k>0.85?(k-0.85)/0.15:0;
+  ctx.save();ctx.rotate(sd*0.35*tumble);
+  // bike, rolled almost flat
+  ctx.save();ctx.translate(0,sd*4);
+  ctx.save();ctx.translate(3,4);ctx.globalAlpha=0.25;drawBikeRolled(r,sd*1.25*tumble,true);ctx.restore();
+  drawBikeRolled(r,sd*1.25*tumble*(1-0.5*up),false);
+  ctx.restore();
+  // rider thrown off over the top of the bike
+  const ox=6-6*up,oy=-sd*(16+4*tumble)*(1-0.6*up);
+  ctx.save();ctx.translate(ox,oy);ctx.rotate(sd*(0.9*tumble)*(1-up));
+  ctx.lineCap='round';
+  ctx.strokeStyle='#1e2025';ctx.lineWidth=4.4;                 // legs splayed back
+  ctx.beginPath();ctx.moveTo(-6,-3);ctx.lineTo(-17,-8);ctx.moveTo(-6,3);ctx.lineTo(-16,9);ctx.stroke();
+  ctx.fillStyle='#ece8dc';ctx.beginPath();ctx.ellipse(-18,-8.5,3,1.8,0,0,Math.PI*2);ctx.ellipse(-17,9.5,3,1.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=r.jersey;ctx.lineWidth=3.4;                  // arms flung out
+  ctx.beginPath();ctx.moveTo(4,-6);ctx.lineTo(10,-14);ctx.moveTo(4,6);ctx.lineTo(13,10);ctx.stroke();
+  ctx.fillStyle=r.jersey;ctx.beginPath();ctx.ellipse(-1,0,8.5,6.2,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=r.accent;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(6,0);ctx.stroke();
+  ctx.fillStyle=r.helmet;ctx.beginPath();ctx.ellipse(10,1,5.8,4.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.1;ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
 function drawRider(r){
   const fallen=r.crashT>0;
   let lift=0;
@@ -1796,12 +2065,14 @@ function drawRider(r){
   const carry=onFoot?clamp(r.carry||0,0,1):0;
   ctx.save();ctx.translate(r.x,r.y);
   const yaw=r.angle+(r.dYaw||0);
-  ctx.save();ctx.translate(lift*16,lift*20);ctx.rotate(yaw);ctx.scale(RS,RS);ctx.translate(21,0);
+  // a drift swings the bike about its front wheel: the front holds its line, the back steps out
+  const dy=r.dYaw||0,swing=()=>{ ctx.translate(42,0);ctx.rotate(dy);ctx.translate(-42,0); };
+  ctx.save();ctx.translate(lift*16,lift*20);ctx.rotate(r.angle);ctx.scale(RS,RS);swing();ctx.translate(21,0);
   ctx.fillStyle='rgba(0,0,0,'+(0.28-0.12*lift)+')';ctx.beginPath();ctx.ellipse(4,5,31,onFoot?14:9,0,0,Math.PI*2);ctx.fill();
   ctx.restore();
-  ctx.rotate(yaw+(fallen?1.1:0));
-  const sc=RS*(1+0.2*lift);ctx.scale(sc,sc);ctx.translate(21,0);
-  if(onFoot)drawRunner(r,carry); else drawRiderOnBike(r);
+  ctx.rotate(r.angle);
+  const sc=RS*(1+0.2*lift);ctx.scale(sc,sc);swing();ctx.translate(21,0);
+  if(fallen)drawFallen(r); else if(onFoot)drawRunner(r,carry); else drawRiderOnBike(r);
   drawMud(r);
   ctx.restore();
 }
@@ -1840,7 +2111,9 @@ function drawScene(){
   for(const p of particles){ ctx.globalAlpha=Math.max(0,p.life)*0.8;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);ctx.fill(); }
   ctx.globalAlpha=1;
   const order=riders.slice().sort((a,b)=>(a.isPlayer?1:0)-(b.isPlayer?1:0)||(a.mode==='air'?1:0)-(b.mode==='air'?1:0));
-  for(const r of order)drawRider(r);
+  for(const r of order)if(!inStruct(r.s,'bridge'))drawRider(r);
+  drawStructs();
+  for(const r of order)if(inStruct(r.s,'bridge'))drawRider(r);
   drawFinishBanner();
   drawProps();
   if(state!=='menu')drawPlayerMarker();
@@ -2026,6 +2299,17 @@ function updHUD(){
   setTxt('eTxt','Energy '+Math.round(p.E));
   hudEl.eBar.style.width=p.E.toFixed(1)+'%';
   hudEl.eBar.style.background=p.E>50?'#6be38a':p.E>25?'#ffd23f':'#ff5a4f';
+  if(ctrlMode==='buttons'){
+    // the gauge round the PEDAL button: red while it's braking, green steady, orange hard
+    const f=pedal.g,bf=document.getElementById('bFast');
+    const key=Math.round(f*60)+(pedal.onFoot?'r':'');
+    if(hudLast.cad!==key){ hudLast.cad=key;
+      const col=pedal.onFoot?'rgba(95,143,216,0.85)':f<G_BRAKE?'rgba(214,70,55,0.8)':f<0.6?'rgba(120,175,80,0.8)':'rgba(232,118,60,0.85)';
+      bf.style.background='conic-gradient('+col+' '+(f*360)+'deg, rgba(20,16,10,0.6) 0)'; }
+    if(pedal.onFoot&&p.mode==='ride')setTxt('mode','Jumping off');
+    else if(p.mode==='run'&&!(p.crashT>0))setTxt('mode','Running');
+    else if(p.mode==='ride'&&pedal.braking&&!(p.crashT>0)){ setTxt('mode','Braking'); if(hudLast.mc!=='#ff8a7a'){ hudLast.mc='#ff8a7a'; hudEl.mode.style.color='#ff8a7a'; } }
+  }
   // drift gauge: the line marks how far you can hold it forever
   const dI=p.driftI||0,show=dI>0||(p.slide||0)>0.02;
   if(hudLast.dshow!==show){ hudLast.dshow=show; hudEl.drift.style.visibility=show?'visible':'hidden'; }
