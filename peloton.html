@@ -30,7 +30,7 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 
 #hudBot{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 124px);
   z-index:10;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:3px;width:min(200px,40vw);}
-.side{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 120px);z-index:10;pointer-events:none;}
+.side{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 142px);z-index:10;pointer-events:none;}
 #gradeBox{left:14px;} #speedBox{right:14px;text-align:right;}
 #grade{font-size:16px;padding:3px 9px;border-radius:6px;color:#10141f;background:#bfc6cf;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.5);}
 #speed{font-size:26px;line-height:1;color:#fff;text-shadow:0 1px 5px rgba(0,0,0,0.95);font-variant-numeric:tabular-nums;}
@@ -41,11 +41,11 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
 .barLab{display:flex;justify-content:space-between;width:100%;min-height:13px;font-size:10px;letter-spacing:1px;color:#dff1ff;text-shadow:0 1px 3px rgba(0,0,0,0.95);}
 #draftLab{color:#8896a8;}
 
-.pbtn{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(50% - 64px);height:96px;z-index:20;
-  background:rgba(10,16,28,0.55);border:2px solid rgba(255,255,255,0.22);border-radius:18px;color:#dff1ff;
+.pbtn{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:112px;height:112px;z-index:20;font-size:34px !important;
+  background:rgba(10,16,28,0.55);border:2px solid rgba(255,255,255,0.25);border-radius:50%;color:#dff1ff;
   display:flex;align-items:center;justify-content:center;font-size:40px;touch-action:none;cursor:pointer;
   -webkit-tap-highlight-color:transparent;transition:background .08s,border-color .08s;}
-#bL{left:12px;} #bR{right:12px;}
+#bL{left:14px;} #bR{right:14px;}
 .pbtn.on{background:rgba(124,201,216,0.28);border-color:#7cc9d8;}
 .pbtn.brake{background:rgba(255,80,70,0.35);border-color:#e06a5f;}
 #bA{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 30px);z-index:21;
@@ -172,6 +172,8 @@ const RECOVER_CAP=100;                 // energy can come all the way back
 const BASE_DRAIN=2.1;                  // cost of riding in the wind on the flat
 const DRAFT_NEAR=BIKE_L*1.45, DRAFT_FAR=BIKE_L*3.8, DRAFT_LAT=46;
 const COLL_S=BIKE_L*1.02, COLL_L=34;
+const DRIFT_V=250*PACE;                // braking above this speed slides the bike
+const CRASH_T=1.6;                     // time down after a crash, picking the bike up included
 const STEER_MAX=2.1*PACE, STEER_FADE=0.75, STEER_VREF=950*PACE;
 function steerRate(v){ return STEER_MAX*(1-STEER_FADE*Math.pow(Math.min(1,v/STEER_VREF),0.8)); }
 function gradeFactor(g){ return g>=0?Math.max(0.4,1-0.058*g):1+0.048*Math.min(10,-g); }
@@ -254,7 +256,7 @@ function ordinal(n){ const s=['th','st','nd','rd'],v=n%100; return n+(s[(v-20)%1
 // ── MUTED PALETTE ────────────────────────────────────
 // Every world colour goes through mute(): saturation pulled well down and the
 // extremes of light and dark eased in, for a calmer, printed-map look.
-const MUTE_SAT=0.6;
+const MUTE_SAT=0.82;
 function mute(hex,k){
   if(typeof hex!=='string'||hex[0]!=='#')return hex;
   k=k===undefined?MUTE_SAT:k;
@@ -270,7 +272,7 @@ function mute(hex,k){
 }
 const _gcCache={};
 function gradeColor(g){ const k=g<=-6?0:g<=-3?1:g<-0.5?2:g<=0.5?3:g<3?4:g<5?5:g<7?6:g<9?7:8;
-  return _gcCache[k]||(_gcCache[k]=mute(rawGradeColor(g),0.75)); }
+  return _gcCache[k]||(_gcCache[k]=mute(rawGradeColor(g),0.92)); }
 function rawGradeColor(g){
   if(g<=-6)return '#2c6fd8';
   if(g<=-3)return '#3ea2e6';
@@ -617,11 +619,15 @@ const TEAMS=[
   {j:'#f07a18',a:'#1b1b1b',h:'#f07a18'},{j:'#6b3fc8',a:'#e3c35a',h:'#ffffff'},{j:'#e8e8e8',a:'#d12a2a',h:'#d12a2a'},
   {j:'#16a3b8',a:'#ffffff',h:'#16a3b8'},{j:'#2a303b',a:'#ff4f9a',h:'#ff4f9a'},{j:'#ff4f9a',a:'#2a303b',h:'#ffffff'},
   {j:'#8bc34a',a:'#2e4d12',h:'#8bc34a'},{j:'#9c2b4a',a:'#f2c14e',h:'#9c2b4a'}];
-for(const t of TEAMS){ t.j=mute(t.j,0.72); t.a=mute(t.a,0.72); t.h=mute(t.h,0.72); }
-const NAMES=['R. Bergmann','L. Moreau','T. Okafor','J. Lindqvist','M. Rossi','A. Kowalski','D. Hughes','S. Varga','P. Ortega','K. Tanaka','E. Novak'];
+for(const t of TEAMS){ t.j=mute(t.j,0.9); t.a=mute(t.a,0.9); t.h=mute(t.h,0.9); }
+const NAMES=['R. Bergmann','L. Moreau','T. Okafor','J. Lindqvist','M. Rossi','A. Kowalski','D. Hughes','S. Varga','P. Ortega','K. Tanaka','E. Novak',
+  'B. Laurent','N. Fischer','G. Silva','O. Haugen','C. Dubois','I. Petrov','F. Costa','H. Jansen','V. Marin','Y. Sato','Z. Horvat','R. Duarte'];
 // power, sprint kick
 const AI_SPEC=[[1.05,0.9],[1.045,0.95],[1.07,1.12],[1.065,1.0],[1.06,1.05],[1.055,0.95],
-               [1.065,1.0],[1.05,1.08],[1.045,0.9],[1.06,0.98],[1.04,1.0]];
+               [1.065,1.0],[1.05,1.08],[1.045,0.9],[1.06,0.98],[1.04,1.0],
+               // the second rider of each team: a support rider, a touch weaker
+               [1.04,0.95],[1.035,0.9],[1.055,1.0],[1.05,1.05],[1.045,0.92],[1.04,1.1],
+               [1.05,0.95],[1.035,1.0],[1.03,0.9],[1.045,1.02],[1.03,0.95],[1.04,1.06]];
 let riders=[],player=null;
 // Difficulty only changes how strong the rivals are and how readily they
 // attack and chase; your own rider is the same on every level.
@@ -631,10 +637,8 @@ try{ const d=parseInt(localStorage.getItem('peloton_diff_v1'),10); if(d>=0&&d<DI
 
 function makeRiders(){
   riders=[];
-  const grid=[ // [row distance behind the line, lateral]
-    [40,-135],[40,-45],[40,45],[40,135],
-    [150,-135],[150,-45],[150,45],[150,135],
-    [260,-135],[260,-45],[260,45],[260,135]];
+  const grid=[]; // [row distance behind the line, lateral]: six rows of four
+  for(let row=0;row<6;row++)for(const l of [-135,-45,45,135])grid.push([40+row*110,l]);
   const playerSlot=6;           // second row, right of centre
   let ai=0;
   const add=(o)=>{ riders.push(o); return o; };
@@ -643,7 +647,7 @@ function makeRiders(){
       const q=spineAt(START_S-g[0]);
       player=add({isPlayer:true,name:'You',s:START_S-g[0],l:g[1],v:0,E:100,power:1,kick:1,
         x:q.x+q.nx*g[1],y:q.y+q.ny*g[1],angle:Math.atan2(q.uy,q.ux),si:q.i,
-        jersey:mute('#e3c35a',0.85),accent:'#1b1b1b',helmet:mute('#e3c35a',0.85),ph:0,draft:0,draftRaw:0,crashT:0,done:false,finishT:null,atkT:0});
+        jersey:'#ffcf3a',accent:'#1b1b1b',helmet:'#ffcf3a',ph:0,draft:0,draftRaw:0,crashT:0,done:false,finishT:null,atkT:0});
     }else add(aiRider(ai++,START_S-g[0],g[1]));
   });
 }
@@ -744,7 +748,7 @@ function rsz(){
 window.addEventListener('resize',rsz);
 
 let state='menu',raceTime=0,cdT=0,cdShown=0,cam={x:0,y:0,angle:0,zoom:0.4};
-let particles=[],bumpT=0,sprintShown=false,results=null,lastTs=0;
+let particles=[],skids=[],bumpT=0,sprintShown=false,results=null,lastTs=0;
 const ZOOM=0.42;
 
 // ── INPUT ────────────────────────────────────────────
@@ -850,7 +854,7 @@ function startRace(){
   held.L.clear();held.R.clear();kL=kR=kB=false;syncBtns();
   makeRiders();
   for(const r of riders)placeOnRoad(r);
-  raceTime=0;cdT=3;cdShown=0;particles=[];results=null;sprintShown=false;bumpT=0;
+  raceTime=0;cdT=3;cdShown=0;particles=[];skids=[];results=null;sprintShown=false;bumpT=0;
   cam={x:player.x,y:player.y,angle:player.angle,zoom:ZOOM};
   state='countdown';
   lastTs=performance.now();
@@ -901,9 +905,15 @@ function spin(r,dt,g,braking){
   r.stand=(r.stand||0)+(st-(r.stand||0))*Math.min(1,dt*3);
 }
 function placeOnRoad(r){
-  if(!r.isPlayer){ r.ld=(r.ld===undefined||state==='menu'||state==='countdown')?r.l:r.ld+(r.l-r.ld)*0.25; }
+  const fresh=state==='menu'||state==='countdown'||r.ld===undefined;
+  if(!r.isPlayer){
+    r.ld=fresh?r.l:r.ld+(r.l-r.ld)*0.25;
+    // eases out collision nudges along the road, while still moving at full speed
+    r.sd=fresh||r.done?r.s:r.sd+r.v*frameDt+(r.s-(r.sd+r.v*frameDt))*0.3;
+    if(Math.abs(r.sd-r.s)>60)r.sd=r.s;
+  }
   const L=r.isPlayer?r.l:r.ld;
-  const q=spineAt(r.s);
+  const q=spineAt(r.isPlayer?r.s:r.sd);
   r.x=q.x+q.nx*L;r.y=q.y+q.ny*L;
   if(!r.isPlayer||r.done||state==='menu'||state==='countdown'){
     // heading from a short stretch of road, so it turns smoothly through bends
@@ -926,7 +936,13 @@ function updatePlayer(dt){
     p.l+=(0-p.l)*dt*0.5;p.draft=0;placeOnRoad(p);p.pedal=false;p.stand=0;return;
   }
   if(p.crashT>0){
-    p.crashT-=dt;p.v=0;p.atkT=0;
+    p.crashT-=dt;p.v=0;p.atkT=0;p.driftI=0;p.dYaw=0;
+    // you and the bike skate on along the ground for a moment before stopping
+    if(p.crashV>4){
+      p.x+=Math.cos(p.crashA)*p.crashV*dt;p.y+=Math.sin(p.crashA)*p.crashV*dt;
+      p.crashV*=Math.exp(-dt*3.2);
+      if(Math.random()<dt*30)spawnDust(p.x,p.y,1,'rgba(200,190,160,0.75)');
+    }
     if(p.crashT<=0){
       p.l=clamp(p.l,-(ROAD_W/2-40),ROAD_W/2-40);
       const q=spineAt(p.s);
@@ -939,8 +955,17 @@ function updatePlayer(dt){
   // steering: quick when slow, heavy when fast
   // the bars come round over a fraction of a second rather than instantly
   const st=i.brake?0:i.L?-1:i.R?1:0;
+  if(st)p.lastSt=st;
   p.steer=(p.steer||0)+(st-(p.steer||0))*Math.min(1,dt*5);
   p.angle+=p.steer*steerRate(p.v)*dt;
+  // Brake hard at speed and the back steps out: the bike slides, swinging
+  // round in the direction you were last turning, and lays down rubber.
+  if(i.brake&&p.v>DRIFT_V){
+    p.brakeT=(p.brakeT||0)+dt;
+    const I=clamp((p.v-DRIFT_V)/(V0*0.55),0.15,1)*Math.min(1,p.brakeT/0.2);
+    p.driftI=I;p.driftDir=p.lastSt||p.driftDir||1;
+    p.angle+=p.driftDir*steerRate(p.v)*0.6*I*dt;
+  }else{ p.brakeT=0; p.driftI=Math.max(0,(p.driftI||0)-dt*3); }
   computeDraft(p,g);
   let tgt=targetSpeed(p,g);
   // Closing on a wheel you ease off and sit on it, the way a rider would,
@@ -973,7 +998,7 @@ function updatePlayer(dt){
   }else p.offT=0;
   if(Math.abs(p.l)>CRASH_L||p.offT>0.5){
     p.offT=0;p.steer=0;
-    p.crashT=1.3;p.E=Math.max(0,p.E-8);
+    p.crashT=CRASH_T;p.crashV=p.v*0.7;p.crashA=p.angle;p.crashSide=(p.lastSt||1);p.E=Math.max(0,p.E-8);
     spawnDust(p.x,p.y,16,'rgba(200,190,160,0.85)');
     flash('CRASH','#e06a5f',1200);
   }
@@ -1034,6 +1059,8 @@ function updateAI(r,dt){
   const braking=r.v>q.vmax+5;
   if(braking)r.v=Math.max(q.vmax,r.v-BRAKE*dt);
   else approach(r,Math.min(tgt,q.vmax),dt);
+  if(braking&&r.v>DRIFT_V){ r.driftI=Math.min(1,(r.driftI||0)+dt*4)*clamp((r.v-DRIFT_V)/(V0*0.55),0.15,1); r.driftDir=spine[q.i].turn||1; }
+  else r.driftI=Math.max(0,(r.driftI||0)-dt*3);
   energyStep(r,g,dt,braking);
   // Distance along the road depends on the line: the inside of a bend is
   // shorter than the outside, for the rivals exactly as for you.
@@ -1089,36 +1116,52 @@ function updateAI(r,dt){
   const yawT=clamp(Math.atan2(r.lv,Math.max(450*PACE,r.v)),-0.06,0.06);
   r.yaw+=(yawT-r.yaw)*Math.min(1,dt*3);
 }
+// Riders are soft ovals, long along the road and narrow across it. Overlaps
+// are eased apart a little each frame along the line between the two riders,
+// so nobody is ever snapped from one side of another to the other. The rider
+// behind can't be faster than the one in front while they're touching.
 function collide(){
-  let moved=false;
+  let pdS=0,pdL=0;
   for(let a=0;a<riders.length;a++)for(let b=a+1;b<riders.length;b++){
     const A=riders[a],B=riders[b];
     if(A.crashT>0||B.crashT>0||A.done||B.done)continue;
     const ds=B.s-A.s,dl=B.l-A.l;
     if(Math.abs(ds)>=COLL_S||Math.abs(dl)>=COLL_L)continue;
-    const penS=COLL_S-Math.abs(ds),penL=COLL_L-Math.abs(dl);
-    if(penL<penS*0.45){
-      // side by side: ease apart over a few frames; you get nudged less than they do
-      const sgn=dl>=0?1:-1,push=penL*0.15+0.1;
-      const wa=A.isPlayer?0.25:B.isPlayer?1.75:1,wb=2-wa;
-      A.l-=sgn*push*wa*0.5;B.l+=sgn*push*wb*0.5;
+    const ns=ds/COLL_S,nl=dl/COLL_L,d=Math.hypot(ns,nl);
+    if(d>=1)continue;
+    // direction to push B away from A (normalised space); dead-on: sideways
+    let us=ns,ul=nl;
+    if(d<1e-4){ us=0; ul=(A.l<=0?1:-1); } else { us/=d; ul/=d; }
+    const pen=(1-d)*0.35;                                  // ease out a third per frame
+    const wa=A.isPlayer?0.3:B.isPlayer?1.7:1,wb=2-wa;      // you get nudged less
+    const mS=us*pen*COLL_S,mL=ul*pen*COLL_L;
+    if(A.isPlayer){pdS-=mS*wa*0.5;pdL-=mL*wa*0.5;} else {A.s-=mS*wa*0.5;A.l-=mL*wa*0.5;}
+    if(B.isPlayer){pdS+=mS*wb*0.5;pdL+=mL*wb*0.5;} else {B.s+=mS*wb*0.5;B.l+=mL*wb*0.5;}
+    if(Math.abs(us)>Math.abs(ul)*0.8){
+      // one behind the other: the back rider matches the front rider's speed
+      const back=ds>=0?A:B,front=ds>=0?B:A;
+      if(back.v>front.v)back.v=front.v+(back.v-front.v)*0.5;
+    }else{
+      // side by side: stop steering into each other
+      const sgn=dl>=0?1:-1;
       if(!A.isPlayer){ A.lv*=0.6; if((A.want-B.l)*sgn>-COLL_L)A.want=B.l-sgn*(COLL_L+8); }
       if(!B.isPlayer){ B.lv*=0.6; if((B.want-A.l)*sgn<COLL_L)B.want=A.l+sgn*(COLL_L+8); }
-    }else{
-      const back=ds>=0?A:B,front=ds>=0?B:A;
-      back.s=front.s-COLL_S;
-      back.v=Math.min(back.v,front.v);
     }
-    if(A===player||B===player)moved=true;
   }
   const lim=ROAD_W/2-34;
   for(const r of riders)if(!r.isPlayer)r.l=clamp(r.l,-lim,lim);
-  if(moved&&player.crashT<=0&&!player.done){
+  if((pdS||pdL)&&player.crashT<=0&&!player.done){
+    // move your rider in the world by the same amount, rather than snapping
+    // you back onto a point of the road
     const q=spineAt(player.s);
-    player.x=q.x+q.nx*player.l;player.y=q.y+q.ny*player.l;player.si=q.i;
+    player.x+=q.ux*pdS+q.nx*pdL;player.y+=q.uy*pdS+q.ny*pdL;
+    const pr=project(player.x,player.y,player.si);
+    player.si=pr.i;player.s=pr.s;player.l=pr.l;
   }
 }
+let frameDt=1/60;
 function step(dt){
+  frameDt=dt;
   if(state==='countdown'){
     cdT-=dt;
     const n=Math.ceil(cdT);
@@ -1134,6 +1177,7 @@ function step(dt){
     for(const r of riders)if(!r.isPlayer)updateAI(r,dt);
     collide();
     for(const r of riders)if(!r.isPlayer)placeOnRoad(r);
+    for(const r of riders)pose(r,dt);
     for(const r of riders){
       if(!r.done&&r.s>=FINISH_S){
         r.done=true;r.finishT=raceTime-(r.s-FINISH_S)/Math.max(1,r.v)*1000;
@@ -1360,59 +1404,222 @@ function drawFinishBanner(){
 }
 
 // ── DRAWING: RIDERS ──────────────────────────────────
-function drawRider(r){
-  const fallen=r.crashT>0,st=r.stand||0;
-  // a gentle rock with each pedal stroke, much more when out of the saddle
-  let sway=r.pedal?Math.sin(r.ph)*(0.005+0.018*st):0;
-  if(r.E<12&&!fallen&&!r.done&&r.pedal)sway+=Math.sin(r.ph*0.5)*0.01;
-  ctx.save();ctx.translate(r.x,r.y);ctx.rotate(r.angle+(fallen?1.1:0));ctx.scale(RS,RS);
-  ctx.fillStyle='rgba(0,0,0,0.26)';ctx.beginPath();ctx.ellipse(4,5,31,9,0,0,Math.PI*2);ctx.fill();
-  ctx.rotate(sway);
-  // wheels and frame
-  ctx.fillStyle='#16181d';
-  ctx.beginPath();ctx.roundRect(10,-2.2,22,4.4,2.2);ctx.fill();
-  ctx.beginPath();ctx.roundRect(-32,-2.2,22,4.4,2.2);ctx.fill();
-  ctx.strokeStyle=r.accent;ctx.lineWidth=2.8;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(-21,0);ctx.lineTo(19,0);ctx.stroke();
-  ctx.strokeStyle='#222';ctx.lineWidth=2.4;
-  ctx.beginPath();ctx.moveTo(19,-8.5);ctx.lineTo(19,8.5);ctx.stroke();
-  const fw=st*4;                              // standing: the body moves forward
-  // legs from the saddle to the pedals
-  const c1=Math.cos(r.ph),c2=Math.cos(r.ph+Math.PI);
-  ctx.strokeStyle='#23252b';ctx.lineWidth=4.2;ctx.lineJoin='round';
-  for(const [cc,side] of [[c1,-1],[c2,1]]){
-    ctx.beginPath();ctx.moveTo(-11+fw,side*3.4);ctx.lineTo(-2+fw*0.6+cc*4,side*6.2);ctx.lineTo(-4+cc*6.5,side*3.8);ctx.stroke();
+// ── RIDER POSE ──────────────────────────────────────
+// How far each rider leans into the bend and how far the bars are turned,
+// eased so nothing snaps. Used only for drawing.
+const LEAN_A=260;
+function pose(r,dt){
+  const sp=spine[spineAt(r.s).i];
+  const dI=r.crashT>0?0:(r.driftI||0);
+  r.dYaw=(r.dYaw||0)+(((r.driftDir||1)*0.5*dI)-(r.dYaw||0))*Math.min(1,dt*8);
+  if(dI>0.05&&state!=='menu'){
+    const a=r.angle+r.dYaw,rx=r.x-Math.cos(a)*21*RS,ry=r.y-Math.sin(a)*21*RS;
+    if(r.rear)skids.push({x0:r.rear.x,y0:r.rear.y,x1:rx,y1:ry,t:raceTime,a:0.2+0.4*dI});
+    r.rear={x:rx,y:ry};
+    if(Math.random()<dt*30*dI){
+      const oa=a+(r.driftDir||1)*Math.PI/2;
+      particles.push({x:rx,y:ry,vx:Math.cos(oa)*90*(0.5+Math.random()),vy:Math.sin(oa)*90*(0.5+Math.random()),life:1,max:0.4+Math.random()*0.3,r:5+Math.random()*6,c:'rgba(160,160,160,0.6)'});
+    }
+    if(r.isPlayer)skidSound=dI;
+  }else r.rear=null;
+  const curved=sp.rad<4000;
+  let lean,own;
+  if(r.isPlayer){
+    lean=clamp(r.v*(r.steer||0)*steerRate(r.v)/LEAN_A,-1,1);
+    own=(r.steer||0)*0.22;
+  }else{
+    lean=(curved?sp.turn*Math.min(1,r.v*r.v/(LEAN_A*sp.rad)):0)+clamp((r.lv||0)/(150*PACE),-0.4,0.4);
+    own=clamp((r.lv||0)/(400*PACE),-0.12,0.12);
   }
-  ctx.fillStyle='#d9a37a';
-  ctx.beginPath();ctx.arc(-4+c1*6.5,-3.8,2,0,Math.PI*2);ctx.arc(-4+c2*6.5,3.8,2,0,Math.PI*2);ctx.fill();
-  ctx.translate(fw,0);
-  // torso: broad at the shoulders, narrowing to the waist
-  ctx.fillStyle='#23252b';ctx.beginPath();ctx.ellipse(-11,0,4.2,4.4,0,0,Math.PI*2);ctx.fill();
+  if(r.crashT>0||r.done&&r.v<60*PACE)lean=0;
+  r.lean=(r.lean||0)+(clamp(lean,-1,1)-(r.lean||0))*Math.min(1,dt*6);
+  const sa=clamp((curved?sp.turn*Math.atan(42*RS/sp.rad):0)+own,-0.5,0.5);
+  r.steerA=(r.steerA||0)+(sa-(r.steerA||0))*Math.min(1,dt*10);
+}
+
+// ── DRAWING: RIDERS ──────────────────────────────────
+// The bike, seen from above: wheels, frame and stays, and a front end that
+// turns about the head tube.
+function drawBike(r){
+  const fc=r.frame||r.accent,sa=r.steerA||0;
+  ctx.fillStyle='#16181d';
+  ctx.beginPath();ctx.roundRect(-32,-2.4,22,4.8,2.4);ctx.fill();          // back tyre
+  ctx.strokeStyle=fc;ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(17,0);ctx.stroke();
+  ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(-21,-3.2);ctx.moveTo(-12,0);ctx.lineTo(-21,3.2);ctx.stroke();
+  ctx.save();ctx.translate(18,0);ctx.rotate(sa);
+  ctx.fillStyle='#16181d';ctx.beginPath();ctx.roundRect(-8,-2.4,22,4.8,2.4);ctx.fill();
+  ctx.strokeStyle=fc;ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.moveTo(-1,0);ctx.lineTo(3,-3);ctx.moveTo(-1,0);ctx.lineTo(3,3);ctx.stroke();
+  ctx.strokeStyle='#222';ctx.lineWidth=2.4;
+  ctx.beginPath();ctx.moveTo(1,-8.5);ctx.lineTo(1,8.5);ctx.stroke();
+  ctx.restore();
+}
+// The helmet doubles as the energy gauge: team colour fills it from the back,
+// the used-up part is bare grey shell.
+function drawHelmet(r){
+  ctx.fillStyle='#565c67';ctx.beginPath();ctx.ellipse(0,0,7.4,5.6,0,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.clip();
+  ctx.fillStyle=r.helmet;ctx.fillRect(-7.6,-6,15.2*clamp(r.E/100,0,1),12);
+  ctx.restore();
+  ctx.strokeStyle=r.E<15?'rgba(224,106,95,0.9)':'rgba(0,0,0,0.4)';ctx.lineWidth=r.E<15?1.5:1.1;
+  ctx.beginPath();ctx.ellipse(0,0,7.4,5.6,0,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='rgba(0,0,0,0.28)';ctx.lineWidth=0.9;
+  ctx.beginPath();ctx.moveTo(-4.8,-2);ctx.lineTo(3.8,-2.2);ctx.moveTo(-4.8,2);ctx.lineTo(3.8,2.2);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.3)';ctx.beginPath();ctx.ellipse(-0.5,-1.8,3.6,1.3,0,0,Math.PI*2);ctx.fill();
+}
+function drawRiderOnBike(r){
+  const st=r.stand||0,ph=r.ph,sn=Math.sin(ph),c1=Math.cos(ph);
+  const moving=r.pedal&&!(r.crashT>0)?1:0;
+  // out of the saddle the bike rocks from side to side under you
+  ctx.save();ctx.rotate(sn*0.025*st*moving);
+  drawBike(r);
+  // cranks going round
+  ctx.strokeStyle='#8a8f96';ctx.lineWidth=2.2;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-3,-2);ctx.lineTo(-3+c1*7,-5.4);ctx.moveTo(-3,2);ctx.lineTo(-3-c1*7,5.4);ctx.stroke();
+  ctx.restore();
+  const fw=st*5;
+  // legs from above: thighs run forward beside the top tube, knees rise and
+  // fall with the pedals, shin and shoe show below the knee
+  for(const [c,side,ss] of [[c1,-1,sn],[-c1,1,-sn]]){
+    const hx=-10+fw,hy=side*2.8;
+    const kx=-3+fw*0.6+c*5.5,ky=side*(4.9+0.7*Math.max(0,ss));
+    const fx=-3+c*7.5,fy=side*4.4;
+    ctx.strokeStyle='#c8946c';ctx.lineWidth=2.8;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(fx,fy);ctx.stroke();
+    ctx.fillStyle='#ece8dc';ctx.beginPath();ctx.ellipse(fx+0.8,fy,3.2,1.8,0,0,Math.PI*2);ctx.fill();
+    const dx=kx-hx,dy=ky-hy,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
+    ctx.fillStyle='#1e2025';ctx.beginPath();
+    ctx.moveTo(hx+nx*2.6,hy+ny*2.6);ctx.lineTo(kx+nx*1.8,ky+ny*1.8);
+    ctx.arc(kx,ky,1.8,Math.atan2(ny,nx),Math.atan2(-ny,-nx));
+    ctx.lineTo(hx-nx*2.6,hy-ny*2.6);ctx.closePath();ctx.fill();
+  }
+  // upper body rocks with each pedal stroke, much more when standing, and
+  // shifts to the inside when leaning into a bend
+  ctx.save();
+  ctx.translate(-11+fw,(r.lean||0)*3.2);
+  ctx.rotate(sn*(0.035+0.04*st)*moving);
+  ctx.translate(11,sn*(0.4+0.5*st)*moving);
+  ctx.fillStyle='#1e2025';ctx.beginPath();ctx.ellipse(-11,0,4.4,4.6,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=r.jersey;
   ctx.beginPath();
-  ctx.moveTo(-11,-3.8);
-  ctx.quadraticCurveTo(-3,-6.2,4,-8.2);
-  ctx.quadraticCurveTo(9,-8.4,9,0);
-  ctx.quadraticCurveTo(9,8.4,4,8.2);
-  ctx.quadraticCurveTo(-3,6.2,-11,3.8);
-  ctx.quadraticCurveTo(-13,0,-11,-3.8);
+  ctx.moveTo(-11,-3.6);ctx.quadraticCurveTo(-2,-4.6,4,-8.2);ctx.quadraticCurveTo(9,-8.4,9,0);
+  ctx.quadraticCurveTo(9,8.4,4,8.2);ctx.quadraticCurveTo(-2,4.6,-11,3.6);ctx.quadraticCurveTo(-13,0,-11,-3.6);
   ctx.closePath();ctx.fill();
   ctx.strokeStyle=r.accent;ctx.lineWidth=2.4;
   ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(6,0);ctx.stroke();
-  // arms down to the bars
+  // arms reach to the bars, which turn with the front wheel
+  const sa=r.steerA||0,bx=19-fw,S_=Math.sin(sa),C_=Math.cos(sa);
+  const lx=bx+8*S_,ly=-8*C_-sn*1.2*st*moving,rx2=bx-8*S_,ry2=8*C_-sn*1.2*st*moving;
   ctx.strokeStyle=r.jersey;ctx.lineWidth=3.4;
-  ctx.beginPath();ctx.moveTo(5,-7.4);ctx.lineTo(18-fw,-8);ctx.moveTo(5,7.4);ctx.lineTo(18-fw,8);ctx.stroke();
-  ctx.fillStyle='#23252b';
-  ctx.beginPath();ctx.arc(18.5-fw,-8,1.8,0,Math.PI*2);ctx.arc(18.5-fw,8,1.8,0,Math.PI*2);ctx.fill();
-  // The helmet is the energy gauge: team colour fills it from the back
-  // towards the front, and what is used up shows as bare grey shell.
-  ctx.fillStyle='#565c67';ctx.beginPath();ctx.ellipse(11,0,7.6,5.8,0,0,Math.PI*2);ctx.fill();
-  ctx.save();ctx.clip();
-  ctx.fillStyle=r.helmet;ctx.fillRect(3.4,-6,15.2*Math.max(0,Math.min(1,r.E/100)),12);
+  ctx.beginPath();ctx.moveTo(5,-7.4);ctx.lineTo(lx-0.5,ly);ctx.moveTo(5,7.4);ctx.lineTo(rx2-0.5,ry2);ctx.stroke();
+  ctx.fillStyle='#1e2025';
+  ctx.beginPath();ctx.arc(lx,ly,1.9,0,Math.PI*2);ctx.arc(rx2,ry2,1.9,0,Math.PI*2);ctx.fill();
+  // head: bobs with each stroke and turns to look into the bend
+  const sp=spine[spineAt(r.s).i];
+  const look=clamp(sp.turn*260/Math.max(260,sp.rad),-1,1)*0.28;
+  r.look=(r.look||0)+(look-(r.look||0))*0.12;
+  const hy=-sn*(0.8+0.6*st)*moving,hx=Math.cos(ph*2)*(0.3+0.3*st)*moving;
+  ctx.save();ctx.translate(11+hx,hy);ctx.rotate(r.look-sn*0.04*moving);
+  drawHelmet(r);
   ctx.restore();
-  ctx.strokeStyle=r.E<15?'rgba(255,90,79,0.9)':'rgba(0,0,0,0.45)';ctx.lineWidth=r.E<15?1.6:1.1;
-  ctx.beginPath();ctx.ellipse(11,0,7.6,5.8,0,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle='rgba(255,255,255,0.4)';ctx.beginPath();ctx.ellipse(10.5,-1.8,3.6,1.3,0,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+// A side-view bike (x forward, z up) seen from above after rolling it over by
+// th: height lands on screen as -z*sin(th). th=0 is upright (seen from above),
+// th near 90 degrees is lying flat on its side, frame triangle and round wheels.
+function drawBikeRolled(r,th,shadow){
+  const S=Math.sin(th),C=Math.cos(th),X=0;
+  const P=(x,z)=>[x+X,-z*S];
+  const ink=shadow?'#000':null;
+  ctx.lineCap='round';ctx.lineJoin='round';
+  for(const cx of [-21,21]){
+    const c=P(cx,0);
+    ctx.strokeStyle=ink||'#16181d';ctx.lineWidth=3.4;
+    ctx.beginPath();ctx.ellipse(c[0],c[1],12,Math.max(0.6,12*S),0,0,Math.PI*2);ctx.stroke();
+    if(!shadow&&S>0.3){
+      ctx.strokeStyle='rgba(200,200,200,0.35)';ctx.lineWidth=0.7;ctx.beginPath();
+      for(let i=0;i<6;i++){ const a=i*Math.PI/6; ctx.moveTo(c[0]-Math.cos(a)*11,c[1]-Math.sin(a)*11*S); ctx.lineTo(c[0]+Math.cos(a)*11,c[1]+Math.sin(a)*11*S); }
+      ctx.stroke();
+      ctx.fillStyle='#8a8f96';ctx.beginPath();ctx.arc(c[0],c[1],1.4,0,Math.PI*2);ctx.fill();
+    }
+  }
+  const ra=P(-21,0),bb=P(-2,-1),st=P(-8,17),ht=P(15,16),hb=P(17,9),fa=P(21,0);
+  ctx.strokeStyle=ink||r.frame||r.accent;ctx.lineWidth=2.8;
+  ctx.beginPath();
+  ctx.moveTo(ra[0],ra[1]);ctx.lineTo(bb[0],bb[1]);ctx.lineTo(st[0],st[1]);ctx.lineTo(ra[0],ra[1]);
+  ctx.moveTo(st[0],st[1]);ctx.lineTo(ht[0],ht[1]);ctx.lineTo(hb[0],hb[1]);ctx.lineTo(bb[0],bb[1]);
+  ctx.stroke();
+  ctx.strokeStyle=ink||'#2a2d33';ctx.lineWidth=2.2;
+  ctx.beginPath();ctx.moveTo(hb[0],hb[1]);ctx.lineTo(fa[0],fa[1]);ctx.stroke();
+  if(!shadow){ ctx.strokeStyle='#8a8f96';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(bb[0],bb[1],4.5,Math.max(0.5,4.5*S),0,0,Math.PI*2);ctx.stroke(); }
+  const sd=P(-9,20),sp=P(-8,17);
+  ctx.strokeStyle=ink||'#2a2d33';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(sp[0],sp[1]);ctx.lineTo(sd[0],sd[1]);ctx.stroke();
+  ctx.fillStyle=ink||'#15181f';ctx.beginPath();ctx.ellipse(sd[0],sd[1],5,Math.max(1.4,2.6*C),0,0,Math.PI*2);ctx.fill();
+  const br=P(15,19),hs=P(15,16);
+  ctx.strokeStyle=ink||'#2a2d33';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(hs[0],hs[1]);ctx.lineTo(br[0],br[1]);ctx.stroke();
+  // drop bars: hooks curling back, seen more from the side as the bike rolls
+  ctx.strokeStyle=ink||'#222';ctx.lineWidth=2.4;
+  ctx.beginPath();ctx.moveTo(br[0],br[1]-8.5*C);ctx.lineTo(br[0],br[1]+8.5*C);ctx.stroke();
+  if(S>0.3){ ctx.beginPath();ctx.moveTo(br[0],br[1]);ctx.quadraticCurveTo(br[0]+6,br[1]+5*S,br[0]+1,br[1]+9*S);ctx.stroke(); }
+}
+// A rider sprawled on the ground: lying along the road, limbs out.
+function drawSprawled(r,k){
+  ctx.save();ctx.translate(-4,13);ctx.rotate(0.35);
+  ctx.strokeStyle='#1e2025';ctx.lineWidth=4.4;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-10,-3);ctx.lineTo(-24,-8-k*3);ctx.moveTo(-10,3);ctx.lineTo(-23,7);ctx.stroke();
+  ctx.strokeStyle='#c8946c';ctx.lineWidth=2.8;
+  ctx.beginPath();ctx.moveTo(-24,-8-k*3);ctx.lineTo(-32,-5);ctx.moveTo(-23,7);ctx.lineTo(-31,12);ctx.stroke();
+  ctx.fillStyle=r.jersey;ctx.beginPath();ctx.ellipse(-2,0,11,7.5,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=r.accent;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-11,0);ctx.lineTo(7,0);ctx.stroke();
+  ctx.strokeStyle=r.jersey;ctx.lineWidth=3.4;
+  ctx.beginPath();ctx.moveTo(5,-6);ctx.lineTo(15,-14);ctx.moveTo(5,6);ctx.lineTo(16,10);ctx.stroke();
+  ctx.save();ctx.translate(13,1);ctx.rotate(-0.4);drawHelmet(r);ctx.restore();
+  ctx.restore();
+}
+// Standing beside the bike, holding it by the bars and the saddle.
+function drawStanding(r){
+  ctx.save();ctx.translate(-2,15);
+  ctx.strokeStyle='#1e2025';ctx.lineWidth=4.4;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-1,-3);ctx.lineTo(-4,-4);ctx.moveTo(-1,3);ctx.lineTo(-3,4.5);ctx.stroke();
+  ctx.fillStyle=r.jersey;ctx.beginPath();ctx.ellipse(0,0,5.5,8.6,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=r.accent;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-4,0);ctx.lineTo(4,0);ctx.stroke();
+  ctx.strokeStyle=r.jersey;ctx.lineWidth=3.4;
+  ctx.beginPath();ctx.moveTo(1,-6);ctx.lineTo(14,-14);ctx.moveTo(-1,-6);ctx.lineTo(-9,-13);ctx.stroke();
+  ctx.fillStyle='#1e2025';ctx.beginPath();ctx.arc(14,-14,1.9,0,Math.PI*2);ctx.arc(-9,-13,1.9,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.translate(2,0);drawHelmet(r);ctx.restore();
+  ctx.restore();
+}
+// Down: the bike tips over onto its side and slides; you lie there a moment,
+// get up, lift the bike back onto its wheels and climb on.
+function drawCrash(r){
+  const T=r.crashDur||CRASH_T,t=clamp(1-r.crashT/T,0,1);
+  const FALL=0.18,UP=0.62;
+  let th,k=0,phase;
+  if(t<FALL){ const f=t/FALL; th=1.45*f*f; phase='fall'; k=f; }
+  else if(t<UP){ th=1.45; phase='lie'; }
+  else{ const f=(t-UP)/(1-UP),e=f*f*(3-2*f); th=1.45*(1-e); phase='lift'; k=e; }
+  const side=r.crashSide||1;
+  ctx.save();if(side<0)ctx.scale(1,-1);
+  // shadow, then the bike lying on its side
+  ctx.save();ctx.translate(4,6);ctx.globalAlpha=0.28;drawBikeRolled(r,th,true);ctx.restore();
+  if(phase==='lift')drawStanding(r);
+  drawBikeRolled(r,th,false);
+  if(phase!=='lift')drawSprawled(r,k);
+  ctx.restore();
+}
+function drawRider(r){
+  const fallen=r.crashT>0;
+  const yaw=r.angle+(fallen?0:(r.dYaw||0));
+  ctx.save();ctx.translate(r.x,r.y);
+  if(!fallen){
+    ctx.save();ctx.rotate(yaw);ctx.scale(RS,RS);
+    ctx.fillStyle='rgba(0,0,0,0.26)';ctx.beginPath();ctx.ellipse(4,5,31,9,0,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+  ctx.rotate(yaw);ctx.scale(RS,RS);
+  if(fallen)drawCrash(r); else drawRiderOnBike(r);
   ctx.restore();
 }
 // The slipstream behind each rider. It fades out on steep climbs, because that
@@ -1468,6 +1675,13 @@ function drawScene(){
   drawLayer();
   if(state!=='menu'){
     drawDraftZones();
+    while(skids.length&&(raceTime-skids[0].t>5000||skids.length>900))skids.shift();
+    ctx.lineCap='round';ctx.lineWidth=7;
+    for(const k of skids){
+      const f=1-(raceTime-k.t)/5000;
+      ctx.strokeStyle='rgba(20,20,22,'+(k.a*f).toFixed(3)+')';
+      ctx.beginPath();ctx.moveTo(k.x0,k.y0);ctx.lineTo(k.x1,k.y1);ctx.stroke();
+    }
     for(const p of particles){ ctx.globalAlpha=Math.max(0,p.life)*0.7;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);ctx.fill(); }
     ctx.globalAlpha=1;
   }
@@ -1479,7 +1693,7 @@ function drawScene(){
 }
 
 // ── HUD ──────────────────────────────────────────────
-let profBase=null;
+let profBase=null,skidSound=0;
 function curProfile(){ return {spine:spine,len:spineLen,emin:elevMin,emax:elevMax,sprint:SPRINT_S,finish:FINISH_S}; }
 function renderProfile(c2,w,h,pad,P,range){
   P=P||curProfile();
