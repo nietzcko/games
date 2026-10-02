@@ -824,13 +824,14 @@ function drawPreview(dt){
 
 // ── STATE ────────────────────────────────────────────
 const cv=document.getElementById('c');
-let ctx=cv.getContext('2d');
+let ctx=cv.getContext('2d',{alpha:false,desynchronized:true})||cv.getContext('2d');
 const strip=document.getElementById('strip'),sctx=strip.getContext('2d');
 let W=0,H=0,DPR=1;
+let quality=1;   // drops on its own if this machine can't keep up
 function rsz(){
   W=innerWidth;H=innerHeight;
   // about 1.2 million pixels at most: a phone is untouched, a desktop window renders lighter
-  DPR=Math.min(window.devicePixelRatio||1,1.5,Math.sqrt(1.2e6/(W*H)));
+  DPR=Math.min(window.devicePixelRatio||1,1.5);
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
   stripBase=null;
 }
@@ -839,7 +840,7 @@ window.addEventListener('resize',rsz);
 let state='menu',raceTime=0,cdT=0,cdShown=0,cam={x:0,y:0,angle:0,zoom:0.4};
 let particles=[],skids=[],shakeT=0,results=null,lastTs=0,finalShown=false;
 const ZOOM=0.55;
-function viewZoom(){ return ZOOM*clamp(Math.sqrt(W*H/(390*844)),1,2.6); }
+function viewZoom(){ return ZOOM; }
 const FINISH_ABS=()=>START_S+LAPS*L;
 
 // ── INPUT: joystick or slider ────────────────────────
@@ -1632,12 +1633,70 @@ function playerFinished(){
 }
 
 // ── DRAWING: THE BOARD ───────────────────────────────
+let skyG=null,skyFor='';
 function drawBackground(){
-  const g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,SKY[0]);g.addColorStop(0.55,SKY[1]);g.addColorStop(1,SKY[2]);
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(skyFor!==H+'|'+ctx){ skyFor=H+'|'+ctx; skyG=ctx.createLinearGradient(0,0,0,H);
+    skyG.addColorStop(0,SKY[0]);skyG.addColorStop(0.55,SKY[1]);skyG.addColorStop(1,SKY[2]); }
+  ctx.fillStyle=skyG;ctx.fillRect(0,0,W,H);
 }
-function near(x,y,pad){ const reach=Math.hypot(W,H)/2/cam.zoom+pad; return Math.abs(x-cam.x)<reach&&Math.abs(y-cam.y)<reach; }
+let nearBox=null;   // set while painting a cached piece of ground
+function near(x,y,pad){
+  if(nearBox)return x>nearBox.x0-pad&&x<nearBox.x1+pad&&y>nearBox.y0-pad&&y<nearBox.y1+pad;
+  const reach=Math.hypot(W,H)/2/cam.zoom+pad; return Math.abs(x-cam.x)<reach&&Math.abs(y-cam.y)<reach;
+}
+function drawSkids(){
+  while(skids.length&&(raceTime-skids[0].t>5000||skids.length>600))skids.shift();
+  if(!skids.length)return;
+  ctx.lineCap='round';ctx.lineWidth=9;ctx.strokeStyle='rgb(55,38,20)';
+  for(const k of skids){
+    ctx.globalAlpha=k.a*(1-(raceTime-k.t)/5000);
+    ctx.beginPath();ctx.moveTo(k.x0,k.y0);ctx.lineTo(k.x1,k.y1);ctx.stroke();
+  }
+  ctx.globalAlpha=1;ctx.lineCap='butt';
+}
+// ── GROUND CACHE ─────────────────────────────────────
+// Everything that never moves (tiles, track, tape, trees, crowd) is painted
+// once into square pictures of the ground, and each frame just places the
+// few that are on screen. That's the difference between thousands of drawing
+// calls a frame and a dozen.
+const GC=1000,GM=6;                 // world units per piece, overlap so no seams
+let ground=new Map(),groundScale=0,groundFor='',groundKeep=18;
+function groundPiece(ix,iy){
+  const key=ix+','+iy;
+  let g=ground.get(key);
+  if(g){ g.t=raceTime+performance.now(); return g; }
+  const px=Math.ceil((GC+2*GM)*groundScale),c=document.createElement('canvas');
+  c.width=c.height=px;
+  const keep={ctx:ctx};
+  ctx=c.getContext('2d');
+  ctx.setTransform(groundScale,0,0,groundScale,-(ix*GC-GM)*groundScale,-(iy*GC-GM)*groundScale);
+  nearBox={x0:ix*GC-GM,y0:iy*GC-GM,x1:(ix+1)*GC+GM,y1:(iy+1)*GC+GM};
+  ctx.fillStyle=TABLE;ctx.fillRect(nearBox.x0,nearBox.y0,GC+2*GM,GC+2*GM);
+  drawBoard();drawTrack();drawProps();
+  nearBox=null;ctx=keep.ctx;
+  g={c:c,t:raceTime+performance.now()};
+  ground.set(key,g);
+  if(ground.size>groundKeep){   // forget the least recently used pieces
+    const old=[...ground.entries()].sort((a,b)=>a[1].t-b[1].t);
+    for(let i=0,n=ground.size-groundKeep;i<n;i++)ground.delete(old[i][0]);
+  }
+  return g;
+}
+function drawGround(){
+  const want=Math.min(1.1,viewZoom()*DPR),forKey=courseIdx+'|'+want.toFixed(2);
+  if(forKey!==groundFor){ ground.clear();groundScale=want;groundFor=forKey; }
+  const reach=Math.hypot(W,H)/2/cam.zoom+20;
+  const x0=Math.floor((cam.x-reach)/GC),x1=Math.floor((cam.x+reach)/GC);
+  const y0=Math.floor((cam.y-reach)/GC),y1=Math.floor((cam.y+reach)/GC);
+  groundKeep=(x1-x0+1)*(y1-y0+1)+10;   // keep everything on screen plus a margin, so nothing is repainted every frame
+  for(let ix=x0;ix<=x1;ix++)for(let iy=y0;iy<=y1;iy++){
+    const g=groundPiece(ix,iy);
+    ctx.drawImage(g.c,ix*GC-GM,iy*GC-GM,GC+2*GM,GC+2*GM);
+  }
+  // paint one piece just beyond the view per frame, so new ground is ready before it's needed
+  const ax=Math.floor((cam.x+Math.cos(player.angle)*reach*1.4)/GC),ay=Math.floor((cam.y+Math.sin(player.angle)*reach*1.4)/GC);
+  if(!ground.has(ax+','+ay))groundPiece(ax,ay);
+}
 function drawBoard(){
   const vis=allTiles.filter(t=>near(t.cx,t.cy,R*1.3));
   vis.sort((a,b)=>a.cy-b.cy);
@@ -1693,13 +1752,6 @@ function drawTrack(){
   ctx.strokeStyle=SURF_COL.sand;ctx.lineWidth=TRACK_W+30;ctx.stroke(surfPaths.sand);
   ctx.strokeStyle='#2e2317';ctx.lineWidth=TRACK_W+44;ctx.stroke(surfPaths.stairs);
   ctx.strokeStyle='#5a4630';ctx.lineWidth=TRACK_W+6;ctx.stroke(surfPaths.stairs);
-  while(skids.length&&(raceTime-skids[0].t>5000||skids.length>600))skids.shift();
-  ctx.lineCap='round';ctx.lineWidth=9;
-  for(const k of skids){
-    const f=1-(raceTime-k.t)/5000;
-    ctx.strokeStyle='rgba(55,38,20,'+(k.a*f).toFixed(3)+')';
-    ctx.beginPath();ctx.moveTo(k.x0,k.y0);ctx.lineTo(k.x1,k.y1);ctx.stroke();
-  }
   ctx.lineCap='butt';
   ctx.fillStyle='rgba(22,13,5,0.55)';ctx.fill(lumpDark);
   ctx.fillStyle='rgba(120,90,55,0.35)';ctx.fill(lumpLight);
@@ -2146,9 +2198,9 @@ function drawScene(){
   ctx.rotate(-cam.angle-Math.PI/2);
   ctx.scale(cam.zoom,cam.zoom);
   ctx.translate(-cam.x,-cam.y);
-  drawBoard();
-  drawTrack();
-  if(state!=='menu')drawHopWindow();
+  drawGround();
+  drawSkids();
+  drawHopWindow();
   for(const p of particles){ ctx.globalAlpha=Math.max(0,p.life)*0.8;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);ctx.fill(); }
   ctx.globalAlpha=1;
   const order=riders.slice().sort((a,b)=>(a.isPlayer?1:0)-(b.isPlayer?1:0)||(a.mode==='air'?1:0)-(b.mode==='air'?1:0));
@@ -2156,8 +2208,7 @@ function drawScene(){
   drawStructs();
   for(const r of order)if(inStruct(r.s,'bridge'))drawRider(r);
   drawFinishBanner();
-  drawProps();
-  if(state!=='menu')drawPlayerMarker();
+  drawPlayerMarker();
   ctx.restore();
   drawWeather();
   if(joyActive())drawJoy();
@@ -2199,6 +2250,7 @@ const RAIN=[];
 const CALM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 let vign=null,vignKey='';
 function drawWeather(){
+  if(quality<0.75){ ctx.fillStyle='rgba(40,28,12,0.18)';ctx.fillRect(0,0,W,H); return; }   // lighter effects when the machine is struggling
   const key=W+'x'+H;
   if(vignKey!==key){
     vignKey=key;
@@ -2360,8 +2412,16 @@ function updHUD(){
 }
 
 // ── LOOP ─────────────────────────────────────────────
+let frameAvg=16.7,slowFor=0,fastFor=0;
 function loop(ts){
-  const dt=Math.min(0.05,Math.max(0,(ts-lastTs)/1000));lastTs=ts;
+  const raw=ts-lastTs;
+  const dt=Math.min(0.05,Math.max(0,raw/1000));lastTs=ts;
+  // watch how long frames really take; step quality down if we're not keeping up
+  if(raw>0&&raw<200){
+    frameAvg+=(raw-frameAvg)*0.05;
+    if(frameAvg>24){ slowFor+=raw; fastFor=0; } else if(frameAvg<17.5){ fastFor+=raw; slowFor=0; }
+
+  }
   step(dt);
   drawScene();
   if(state==='menu')drawPreview(dt);
