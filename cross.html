@@ -174,15 +174,20 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
       <button id="nextC" class="arr" aria-label="Next level">&#9654;</button>
     </div>
     <div class="t" id="cDesc"></div>
-    <div id="diffRow"><button onclick="setDiff(0)">Easy</button><button onclick="setDiff(1)">Normal</button><button onclick="setDiff(2)">Hard</button><button onclick="setDiff(3)">Pro</button></div>
+    <div id="diffRow" style="display:none;"></div>
     <div class="t" id="best">No result yet</div>
     <canvas id="stageStrip"></canvas>
   </div>
   <button class="ob main" id="btnStart">Start race</button>
   <div class="stage look">
-    <div class="n" style="font-size:15px;">Controls</div>
-    <div id="ctrlRow"><button data-m="buttons" onclick="setCtrl('buttons')">Buttons</button><button data-m="joy" onclick="setCtrl('joy')">Joystick</button><button data-m="slider" onclick="setCtrl('slider')">Slider</button></div>
-    <div class="t" id="ctrlTxt"></div>
+    <div class="n" style="font-size:15px;">How to ride</div>
+    <div class="t" style="margin-top:6px;">Two buttons, one for each thumb.</div>
+    <div class="t"><b style="color:#f1ecd8;font-weight:normal;">Nothing pressed:</b> pedal flat out.</div>
+    <div class="t"><b style="color:#f1ecd8;font-weight:normal;">One button:</b> steer that way. A tap is a small correction; hold it to turn more and ease to a steady pace.</div>
+    <div class="t"><b style="color:#f1ecd8;font-weight:normal;">Steer, then press the other button too:</b> brake the back wheel and skid round a hairpin.</div>
+    <div class="t"><b style="color:#f1ecd8;font-weight:normal;">Quick tap of both together:</b> bunny-hop the barriers.</div>
+    <div class="t"><b style="color:#f1ecd8;font-weight:normal;">Hold both:</b> brake. Do it just before barriers, stairs or sand and you jump off and run them; anywhere else you jump off once you're down to running pace. Let go to get back on.</div>
+    <div class="t" style="color:#a9a58f;margin-top:6px;">Keyboard: left and right arrows.</div>
   </div>
   <div class="stage look" style="margin-top:0;">
     <div class="n" style="font-size:15px;">Your rider</div>
@@ -195,15 +200,7 @@ body{background:var(--bg);overflow:hidden;font-family:'Share Tech Mono','Courier
       </div>
     </div>
   </div>
-  <p class="how">One thumb, one slider. Left is hard, right is easy. Flick all the way left to bunny-hop, all the way right to jump off and run with the bike.</p>
-  <div class="legend">
-    <div style="width:14%;background:#c8703e;">Hop</div>
-    <div style="width:36%;background:linear-gradient(90deg,#b8452e,#c89a3a);">Fast<br>burns energy</div>
-    <div style="width:36%;background:linear-gradient(90deg,#9aa048,#4a8050);">Steady<br>grips, recovers</div>
-    <div style="width:14%;background:#3f6aa8;">Run</div>
-  </div>
-  <p class="how" style="color:#ffb27a;margin-top:10px;">Barriers: hop them at speed or run them. Stairs: always run. Sand: you roll in on momentum, but pedalling in sand drains energy fast. Once you're slower than running pace, jump off and run. Mud: stay steady or your wheel spins. Go into a tight corner too hot and you drift: the faster you are, the more the slide scrubs off.</p>
-  <p class="how" style="margin-top:20px;font-size:12px;color:#a9a58f;">Keyboard: left and right arrows move the slider, 1 to 4 jump to a zone, space to hop.</p>
+  <div id="ctrlRow" style="display:none;"></div><div id="ctrlTxt" style="display:none;"></div>
 </div>
 
 <div id="finish" class="hidden"></div>
@@ -603,7 +600,7 @@ function offsetPoly(off,i0,i1,closed){
   const p=new Path2D();
   const count=closed?N:(i1-i0+1);
   for(let k=0;k<=count;k++){
-    if(!closed&&k===count)break;
+    if(!closed&&k===count)break;   // (open pieces run i0..i1 inclusive)
     const i=(i0+k)%N,q=spineAt(spine[i].d+0.01);
     const x=spine[i].x+q.nx*off,y=spine[i].y+q.ny*off;
     k?p.lineTo(x,y):p.moveTo(x,y);
@@ -611,15 +608,29 @@ function offsetPoly(off,i0,i1,closed){
   if(closed)p.closePath();
   return p;
 }
+let chunks=[];
 function buildTrackPaths(){
-  trackPath=offsetPoly(0,0,N-1,true);
-  ruts=[-62,-24,18,55].map(o=>offsetPoly(o,0,N-1,true));
-  tapeL=offsetPoly(-TAPE,0,N-1,true);tapeR=offsetPoly(TAPE,0,N-1,true);
-  stakePath=new Path2D();
-  for(let d=0;d<L;d+=150){
-    const q=spineAt(d);
-    for(const side of [-1,1]){ const x=q.x+q.nx*side*TAPE,y=q.y+q.ny*side*TAPE; stakePath.moveTo(x+6,y);stakePath.arc(x,y,6,0,Math.PI*2); }
+  // Short pieces of course with a bounding circle each. Stroking a whole
+  // course every frame was what made big screens slow.
+  chunks=[];
+  const K=40;
+  for(let i0=0;i0<N;i0+=K){
+    const i1=Math.min(N,i0+K);                      // includes the joint to the next piece
+    let cx=0,cy=0,n=0;
+    for(let i=i0;i<=i1;i++){ const sp=spine[i%N]; cx+=sp.x;cy+=sp.y;n++; }
+    cx/=n;cy/=n;let rad=0;
+    for(let i=i0;i<=i1;i++){ const sp=spine[i%N]; rad=Math.max(rad,Math.hypot(sp.x-cx,sp.y-cy)); }
+    const stake=new Path2D(),d0=spine[i0].d,d1=i1>=N?L:spine[i1].d;
+    for(let d=Math.ceil(d0/150)*150;d<d1;d+=150){
+      const q=spineAt(d);
+      for(const side of [-1,1]){ const x=q.x+q.nx*side*TAPE,y=q.y+q.ny*side*TAPE; stake.moveTo(x+6,y);stake.arc(x,y,6,0,Math.PI*2); }
+    }
+    chunks.push({x:cx,y:cy,r:rad+TAPE+80,
+      mid:offsetPoly(0,i0,i1,false),tl:offsetPoly(-TAPE,i0,i1,false),tr:offsetPoly(TAPE,i0,i1,false),
+      ruts:[-62,-24,18,55].map(o=>offsetPoly(o,i0,i1,false)),stake:stake});
   }
+  // offsetPoly(…,false) stops one short; give each piece its last point too
+  trackPath=offsetPoly(0,0,N-1,true);
   surfPaths={mud:new Path2D(),sand:new Path2D(),stairs:new Path2D()};
   for(const ev of events){
     if(ev.k==='barrier')continue;
@@ -742,8 +753,7 @@ const NAMES=['M. van der Poel','W. Van Aert','L. Pidcock','F. Brand','E. Vos','T
 // [power, skill]
 const AI_SPEC=[[1.03,0.98],[1.0,0.85],[0.98,0.95],[1.01,0.7],[0.97,0.8],[0.99,0.6],[0.96,0.75],[0.98,0.5]];
 const DIFFS=[{n:'Easy',p:-0.09,s:-0.25},{n:'Normal',p:-0.045,s:-0.08},{n:'Hard',p:-0.01,s:0.05},{n:'Pro',p:0.02,s:0.15}];
-let diff=1;
-try{ const d=parseInt(localStorage.getItem('cx_diff_v1'),10); if(d>=0&&d<DIFFS.length)diff=d; }catch(e){}
+let diff=2;   // one difficulty: Hard
 let riders=[],player=null;
 
 function baseRider(o){
@@ -818,8 +828,9 @@ let ctx=cv.getContext('2d');
 const strip=document.getElementById('strip'),sctx=strip.getContext('2d');
 let W=0,H=0,DPR=1;
 function rsz(){
-  DPR=Math.min(window.devicePixelRatio||1,1.5);
   W=innerWidth;H=innerHeight;
+  // about 1.2 million pixels at most: a phone is untouched, a desktop window renders lighter
+  DPR=Math.min(window.devicePixelRatio||1,1.5,Math.sqrt(1.2e6/(W*H)));
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
   stripBase=null;
 }
@@ -828,14 +839,14 @@ window.addEventListener('resize',rsz);
 let state='menu',raceTime=0,cdT=0,cdShown=0,cam={x:0,y:0,angle:0,zoom:0.4};
 let particles=[],skids=[],shakeT=0,results=null,lastTs=0,finalShown=false;
 const ZOOM=0.55;
+function viewZoom(){ return ZOOM*clamp(Math.sqrt(W*H/(390*844)),1,2.6); }
 const FINISH_ABS=()=>START_S+LAPS*L;
 
 // ── INPUT: joystick or slider ────────────────────────
 // Joystick: touch anywhere and that's the centre. Up and down is effort,
 // left and right steers. Push up to go harder, flick up to hop, pull down to
 // jump off and run. Let go and it springs back to steady riding.
-let ctrlMode='buttons';
-try{ const m=localStorage.getItem('cx_ctrl_v2'); if(m==='slider'||m==='joy'||m==='buttons')ctrlMode=m; }catch(e){}
+const ctrlMode='buttons';
 const joy={on:false,id:null,ox:0,oy:0,x:0,y:0,steer:0,hopReq:false,hist:[]};
 let kU=false,kD=false;
 const STEADY_SX=0.62;
@@ -1056,13 +1067,13 @@ function renderLevelCard(){
 }
 function setDiff(d){
   diff=d;
-  try{ localStorage.setItem('cx_diff_v1',String(d)); }catch(e){}
+  d=2;diff=2;
   document.querySelectorAll('#diffRow button').forEach((b,i)=>b.classList.toggle('sel',i===d));
   if(!unlocked(courseIdx)){ renderLevelCard(); return; }
   const best=curBest();
   document.getElementById('best').textContent=best.rank
-    ?'Your best on '+DIFFS[d].n+': '+ordinal(best.rank)+' place, fastest time '+fmt(best.time)
-    :'No result on '+DIFFS[d].n+' yet';
+    ?'Your best: '+ordinal(best.rank)+' place, fastest time '+fmt(best.time)
+    :'No result yet';
 }
 function setRaceUI(on){
   for(const id of ['hudTop','hudBot'])document.getElementById(id).classList.toggle('hidden',!on);
@@ -1075,7 +1086,7 @@ function setRaceUI(on){
   joy.on=false;joy.steer=0;joy.hopReq=false;pedal.g=G_BRAKE;pedal.onFoot=false;pedal.p=0.5;pedal.brakeT=0;pedal.bothT=0;pedal.obsUntil=0;pedal.tL=0;pedal.tR=0;pedal.skid=false;pedal.skidPress=false;
   for(const k in bHeld)bHeld[k].clear();syncPB();
 }
-function setCtrl(m){
+function setCtrl(m){ return;
   ctrlMode=m;
   try{ localStorage.setItem('cx_ctrl_v2',m); }catch(e){}
   document.querySelectorAll('#ctrlRow button').forEach(b=>b.classList.toggle('sel',b.dataset.m===m));
@@ -1108,7 +1119,7 @@ function startRace(){
   for(const r of riders)placeOnTrack(r,0);
   raceTime=0;cdT=3;cdShown=0;particles=[];skids=[];results=null;shakeT=0;finalShown=false;
   player.theta=player.angle;player.si=spineAt(player.s-REAR).i;player.sBefore=player.s;player.delta=0;
-  cam={x:player.x,y:player.y,angle:player.angle,zoom:ZOOM};
+  cam={x:player.x,y:player.y,angle:player.angle,zoom:viewZoom()};
   state='countdown';
   lastTs=performance.now();
 }
@@ -1124,7 +1135,7 @@ function showResults(){
       +ordinal(i+1)+'&nbsp; '+e.r.name+'</span><span>'+(i===0?fmt(e.t):'+'+((e.t-win.t)/1000).toFixed(1)+'s')+'</span></div>';
   });
   f.innerHTML='<h2>'+head+'</h2>'
-    +'<div style="font-size:12px;color:#a9a58f;letter-spacing:2px;margin-top:2px;">'+COURSES[courseIdx].name+', '+DIFFS[diff].n+'</div>'
+    +'<div style="font-size:12px;color:#a9a58f;letter-spacing:2px;margin-top:2px;">'+COURSES[courseIdx].name+'</div>'
     +'<div style="font-size:40px;color:#f1ecd8;margin-top:6px;font-variant-numeric:tabular-nums;">'+fmt(player.finishT)+'</div>'
     +'<div style="font-size:14px;color:'+(rank===1?'#7fffa8':'#c9c3a8')+';margin-top:6px;">'+gap+'</div>'
     +'<div style="font-size:12px;color:#a9a58f;margin-top:4px;">'+results.hops+' clean hops, '+results.crashes+' crashes'
@@ -1600,7 +1611,7 @@ function step(dt){
   const ahead=0;
   cam.x+=(p.x+Math.cos(p.angle)*ahead-cam.x)*k;
   cam.y+=(p.y+Math.sin(p.angle)*ahead-cam.y)*k;
-  const tz=ZOOM*(1-0.1*Math.min(1,p.v/V0));
+  const tz=viewZoom()*(1-0.1*Math.min(1,p.v/V0));
   cam.zoom+=(tz-cam.zoom)*(1-Math.exp(-dt*1.5));
 }
 function playerFinished(){
@@ -1669,10 +1680,11 @@ function drawBoard(){
 function drawTrack(){
   ctx.lineJoin='round';ctx.lineCap='round';
   // worn grass between the tapes, then the dirt line
-  ctx.strokeStyle='rgba(90,80,45,0.6)';ctx.lineWidth=TAPE*2+18;ctx.stroke(trackPath);
-  ctx.strokeStyle=SURF_COL.grass;ctx.lineWidth=TRACK_W;ctx.stroke(trackPath);
-  ctx.strokeStyle='rgba(40,25,12,0.35)';ctx.lineWidth=90;ctx.stroke(trackPath);
-  ctx.strokeStyle='rgba(25,15,6,0.3)';ctx.lineWidth=7;for(const rp of ruts)ctx.stroke(rp);
+  const vis=chunks.filter(c=>near(c.x,c.y,c.r));
+  ctx.strokeStyle='rgba(90,80,45,0.6)';ctx.lineWidth=TAPE*2+18;for(const c of vis)ctx.stroke(c.mid);
+  ctx.strokeStyle=SURF_COL.grass;ctx.lineWidth=TRACK_W;for(const c of vis)ctx.stroke(c.mid);
+  ctx.strokeStyle='rgba(40,25,12,0.35)';ctx.lineWidth=90;for(const c of vis)ctx.stroke(c.mid);
+  ctx.strokeStyle='rgba(25,15,6,0.3)';ctx.lineWidth=7;for(const c of vis)for(const rp of c.ruts)ctx.stroke(rp);
   // off-camber bends lean away: a shaded band
   ctx.lineCap='butt';
   ctx.strokeStyle='rgba(255,140,40,0.22)';ctx.lineWidth=TRACK_W;ctx.setLineDash([26,26]);ctx.stroke(camberPath);ctx.setLineDash([]);
@@ -1727,9 +1739,9 @@ function drawTrack(){
   for(const st of structs)if(st.k==='tunnel'){ ctx.lineCap='butt';ctx.strokeStyle='#2b2620';ctx.lineWidth=TRACK_W;ctx.stroke(st.path); }
   ctx.lineCap='round';
   // course tape and stakes
-  ctx.strokeStyle='rgba(214,204,178,0.9)';ctx.lineWidth=7;ctx.stroke(tapeL);ctx.stroke(tapeR);
-  ctx.strokeStyle='#a8342a';ctx.lineCap='butt';ctx.setLineDash([28,28]);ctx.stroke(tapeL);ctx.stroke(tapeR);ctx.setLineDash([]);
-  ctx.fillStyle='#3a2f22';ctx.fill(stakePath);
+  ctx.strokeStyle='rgba(214,204,178,0.9)';ctx.lineWidth=7;for(const c of vis){ctx.stroke(c.tl);ctx.stroke(c.tr);}
+  ctx.strokeStyle='#a8342a';ctx.lineCap='butt';ctx.setLineDash([28,28]);for(const c of vis){ctx.stroke(c.tl);ctx.stroke(c.tr);}ctx.setLineDash([]);
+  ctx.fillStyle='#3a2f22';for(const c of vis)ctx.fill(c.stake);
   // arrow boards
   for(const c of chevrons){
     if(!near(c.x,c.y,150))continue;
@@ -2097,7 +2109,33 @@ function drawPlayerMarker(){
   ctx.beginPath();ctx.moveTo(-17,-92);ctx.lineTo(17,-92);ctx.lineTo(0,-70);ctx.closePath();ctx.stroke();ctx.fill();
   ctx.restore();
 }
+// The menu shows the whole course turning slowly. Drawing every tile and tree
+// of it each frame is wasteful, so it's drawn once into a picture that just rotates.
+let menuCache=null;
+function drawMenuScene(){
+  const key=courseIdx+'|'+W+'x'+H+'|'+DPR.toFixed(2)+'|'+look.jersey+look.helmet+look.frame;
+  if(!menuCache||menuCache.key!==key){
+    const D=Math.ceil(Math.hypot(W,H)),c=document.createElement('canvas');
+    c.width=Math.round(D*DPR);c.height=Math.round(D*DPR);
+    const keep={ctx:ctx,W:W,H:H,a:cam.angle};
+    ctx=c.getContext('2d');W=H=D;cam.angle=-Math.PI/2;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.translate(D/2,D/2);ctx.scale(cam.zoom,cam.zoom);ctx.translate(-cam.x,-cam.y);
+    drawBoard();drawTrack();
+    for(const r of riders)drawRider(r);
+    drawStructs();drawFinishBanner();drawProps();
+    ctx=keep.ctx;W=keep.W;H=keep.H;cam.angle=keep.a;
+    menuCache={key:key,c:c,D:D};
+  }
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  drawBackground();
+  ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-cam.angle-Math.PI/2);
+  ctx.drawImage(menuCache.c,-menuCache.D/2,-menuCache.D/2,menuCache.D,menuCache.D);
+  ctx.restore();
+  drawWeather();
+}
 function drawScene(){
+  if(state==='menu'&&allTiles.length){ drawMenuScene(); return; }
   ctx.setTransform(DPR,0,0,DPR,0,0);
   drawBackground();
   if(!allTiles.length)return;
