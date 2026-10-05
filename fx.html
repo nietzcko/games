@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mic FX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --plate:#CFCAC0; --plate-hi:#E2DED6; --ink:#23211E; --ink-soft:#5E5A53;
+  --glass:#26303A; --glass-line:#3A4652; --amber:#F2A33A; --amber-dim:#F2A33A55;
+  --meter:#4757B8; --meter-hot:#C8402E;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --plate:#3B3833; --plate-hi:#47433D; --ink:#EEE9E0; --ink-soft:#B3AC9F; --glass:#1A2128; --glass-line:#2E3842; }
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0}
+body{
+  background:var(--plate); color:var(--ink); font-family:var(--body); min-height:100vh;
+  background-image:repeating-linear-gradient(90deg,transparent 0 2px,rgba(255,255,255,.035) 2px 3px);
+}
+main{max-width:880px; margin:0 auto; padding:28px 20px 40px}
+header{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px}
+h1{font-family:var(--display); font-weight:700; font-size:clamp(2.2rem,6vw,3.4rem); line-height:.9; margin:0; letter-spacing:-.02em}
+h1 small{display:block; font-size:.36em; font-weight:500; letter-spacing:0; color:var(--ink-soft); margin-top:8px}
+.controls{display:flex; gap:10px; flex-wrap:wrap}
+button{
+  font:600 .95rem var(--body); color:var(--ink); background:var(--plate-hi);
+  border:1.5px solid var(--ink); border-radius:999px; padding:10px 18px; cursor:pointer;
+}
+button[aria-pressed="true"]{background:var(--ink); color:var(--plate)}
+button.primary{background:var(--amber); color:#23211E; border-color:#23211E}
+button:focus-visible,input:focus-visible,#pad:focus-visible{outline:3px solid var(--meter); outline-offset:3px}
+button:disabled{opacity:.45; cursor:not-allowed}
+
+.rack{display:grid; grid-template-columns:auto 1fr auto; gap:22px; align-items:stretch}
+.strip{display:flex; flex-direction:column; align-items:center; gap:10px; width:84px}
+.strip h2{font:600 .9rem var(--body); margin:0}
+.strip output{font:600 .9rem var(--body); font-variant-numeric:tabular-nums}
+.fader-wrap{position:relative; flex:1; min-height:300px; display:flex; gap:10px; justify-content:center}
+.fader-wrap input[type=range]{
+  writing-mode:vertical-lr; direction:rtl; -webkit-appearance:slider-vertical; appearance:slider-vertical;
+  width:28px; height:100%; accent-color:var(--ink); cursor:ns-resize;
+}
+canvas.meter{width:14px; height:100%; border-radius:3px; background:var(--glass)}
+
+.pad-col{display:flex; flex-direction:column; gap:10px; min-width:0}
+#pad{
+  position:relative; aspect-ratio:1/1; width:100%; max-height:520px; margin:0 auto;
+  background:var(--glass); border-radius:14px; touch-action:none; cursor:crosshair; overflow:hidden;
+  box-shadow:inset 0 2px 10px rgba(0,0,0,.45), 0 0 0 6px var(--plate-hi), 0 0 0 7.5px var(--ink);
+}
+#pad canvas{position:absolute; inset:0; width:100%; height:100%}
+.corner{position:absolute; font:500 .78rem var(--body); color:#9AA6B2; pointer-events:none}
+.corner.tl{top:12px; left:14px}.corner.tr{top:12px; right:14px; text-align:right}
+.corner.bl{bottom:12px; left:14px}.corner.br{bottom:12px; right:14px; text-align:right}
+.axes{display:flex; justify-content:space-between; font-size:.9rem; color:var(--ink-soft)}
+.axes b{color:var(--ink)}
+.readout{display:flex; gap:18px; flex-wrap:wrap; font-size:.88rem; color:var(--ink-soft); font-variant-numeric:tabular-nums}
+.readout span b{color:var(--ink); font-weight:600}
+.gr{display:flex; align-items:center; gap:10px; font-size:.88rem; color:var(--ink-soft)}
+.gr canvas{flex:1; height:10px; border-radius:3px; background:var(--glass)}
+#status{margin-top:20px; font-size:.92rem; color:var(--ink-soft); max-width:60ch}
+
+@media (max-width:640px){
+  .rack{grid-template-columns:1fr 1fr; }
+  .pad-col{grid-column:1 / -1; order:-1}
+  .strip{width:100%}
+  .fader-wrap{min-height:200px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Mic FX<small>Drag the pad to shape your voice</small></h1>
+    <div class="controls">
+      <button id="start" class="primary">Turn on mic</button>
+      <button id="bypass" aria-pressed="false" disabled>Bypass</button>
+      <button id="monitor" aria-pressed="true" disabled>Monitor</button>
+    </div>
+  </header>
+
+  <section class="rack">
+    <div class="strip">
+      <h2>Input</h2>
+      <div class="fader-wrap">
+        <input id="inGain" type="range" min="-24" max="24" step="0.5" value="0" aria-label="Input gain in dB">
+        <canvas class="meter" id="inMeter" width="14" height="300"></canvas>
+      </div>
+      <output id="inVal">0.0 dB</output>
+    </div>
+
+    <div class="pad-col">
+      <div id="pad" tabindex="0" role="slider" aria-label="Color and compression pad. Left and right arrows change color, up and down change compression." aria-valuetext="">
+        <canvas id="padCanvas"></canvas>
+        <span class="corner tl">Clean<br>squashed</span>
+        <span class="corner tr">Warm<br>squashed</span>
+        <span class="corner bl">Clean<br>open</span>
+        <span class="corner br">Warm<br>open</span>
+      </div>
+      <div class="axes"><span>Compression <b>↑</b></span><span>Color <b>→</b></span></div>
+      <div class="readout">
+        <span>Color <b id="rColor">0%</b></span>
+        <span>Drive <b id="rDrive">+0 dB</b></span>
+        <span>Threshold <b id="rThr">0 dB</b></span>
+        <span>Ratio <b id="rRatio">1:1</b></span>
+      </div>
+      <div class="gr">Gain reduction <canvas id="grMeter" width="300" height="10"></canvas><b id="grVal">0 dB</b></div>
+    </div>
+
+    <div class="strip">
+      <h2>Output</h2>
+      <div class="fader-wrap">
+        <canvas class="meter" id="outMeter" width="14" height="300"></canvas>
+        <input id="outGain" type="range" min="-24" max="24" step="0.5" value="0" aria-label="Output gain in dB">
+      </div>
+      <output id="outVal">0.0 dB</output>
+    </div>
+  </section>
+
+  <p id="status">Use headphones to avoid feedback. Your audio stays on this device.</p>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const dbToGain = db => Math.pow(10, db / 20);
+
+let ctx, nodes = {}, running = false;
+let pos = { x: 0.35, y: 0.4 };   // x = color, y = compression (0 bottom, 1 top)
+
+// ---------- Audio graph ----------
+function makeCurve(drive) {
+  const n = 2048, curve = new Float32Array(n);
+  const norm = Math.tanh(drive);
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    // tanh saturation with slight asymmetry for even harmonics
+    curve[i] = (Math.tanh(drive * (x + 0.08 * x * x)) ) / norm;
+  }
+  return curve;
+}
+
+async function start() {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+  });
+  ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
+  const src = ctx.createMediaStreamSource(stream);
+
+  nodes.input   = ctx.createGain();
+  nodes.preDrive = ctx.createGain();
+  nodes.shaper  = ctx.createWaveShaper(); nodes.shaper.oversample = "4x";
+  nodes.postDrive = ctx.createGain();
+  nodes.low     = ctx.createBiquadFilter(); nodes.low.type = "lowshelf";  nodes.low.frequency.value = 180;
+  nodes.high    = ctx.createBiquadFilter(); nodes.high.type = "highshelf"; nodes.high.frequency.value = 6500;
+  nodes.presence = ctx.createBiquadFilter(); nodes.presence.type = "peaking"; nodes.presence.frequency.value = 2800; nodes.presence.Q.value = 0.8;
+  nodes.comp    = ctx.createDynamicsCompressor();
+  nodes.comp.knee.value = 8; nodes.comp.attack.value = 0.006; nodes.comp.release.value = 0.16;
+  nodes.makeup  = ctx.createGain();
+  nodes.fxOut   = ctx.createGain();
+  nodes.dry     = ctx.createGain(); nodes.dry.gain.value = 0;
+  nodes.output  = ctx.createGain();
+  nodes.monitor = ctx.createGain();
+  nodes.inAn  = ctx.createAnalyser(); nodes.inAn.fftSize = 1024;
+  nodes.outAn = ctx.createAnalyser(); nodes.outAn.fftSize = 1024;
+
+  src.connect(nodes.input);
+  nodes.input.connect(nodes.inAn);
+  nodes.input.connect(nodes.preDrive).connect(nodes.shaper).connect(nodes.postDrive)
+    .connect(nodes.low).connect(nodes.high).connect(nodes.presence)
+    .connect(nodes.comp).connect(nodes.makeup).connect(nodes.fxOut).connect(nodes.output);
+  nodes.input.connect(nodes.dry).connect(nodes.output);
+  nodes.output.connect(nodes.outAn);
+  nodes.output.connect(nodes.monitor).connect(ctx.destination);
+
+  running = true;
+  applyGains(); applyPad(true);
+  $("start").textContent = "Mic on"; $("start").disabled = true;
+  $("bypass").disabled = false; $("monitor").disabled = false;
+  $("status").textContent = "Live. Use headphones to avoid feedback.";
+  loop();
+}
+
+function applyPad(instant) {
+  const { x, y } = pos;
+  // Readouts (also before mic is on)
+  const driveDb = x * 26;
+  const thr = -y * 42;
+  const ratio = 1 + y * y * 11;
+  $("rColor").textContent = Math.round(x * 100) + "%";
+  $("rDrive").textContent = "+" + driveDb.toFixed(0) + " dB";
+  $("rThr").textContent = thr.toFixed(0) + " dB";
+  $("rRatio").textContent = ratio.toFixed(1) + ":1";
+  $("pad").setAttribute("aria-valuetext", `Color ${Math.round(x*100)} percent, compression ${Math.round(y*100)} percent`);
+  if (!running) return;
+
+  const t = ctx.currentTime, tc = instant ? 0.001 : 0.03;
+  const drive = 1 + x * 8;
+  nodes.preDrive.gain.setTargetAtTime(dbToGain(driveDb) / drive, t, tc);
+  nodes.shaper.curve = makeCurve(drive);
+  nodes.postDrive.gain.setTargetAtTime(dbToGain(-driveDb * 0.85), t, tc);
+  // Tone: warmer lows, rounder highs, a touch of presence
+  nodes.low.gain.setTargetAtTime(x * 4.5, t, tc);
+  nodes.high.gain.setTargetAtTime(-x * 5, t, tc);
+  nodes.presence.gain.setTargetAtTime(x * 1.5, t, tc);
+  // Compression
+  nodes.comp.threshold.setTargetAtTime(thr, t, tc);
+  nodes.comp.ratio.setTargetAtTime(ratio, t, tc);
+  nodes.comp.attack.setTargetAtTime(0.012 - y * 0.009, t, tc);
+  const makeupDb = (-thr) * (1 - 1 / ratio) * 0.5;
+  nodes.makeup.gain.setTargetAtTime(dbToGain(makeupDb), t, tc);
+}
+
+function applyGains() {
+  const i = +$("inGain").value, o = +$("outGain").value;
+  $("inVal").textContent = (i > 0 ? "+" : "") + i.toFixed(1) + " dB";
+  $("outVal").textContent = (o > 0 ? "+" : "") + o.toFixed(1) + " dB";
+  if (!running) return;
+  nodes.input.gain.setTargetAtTime(dbToGain(i), ctx.currentTime, 0.02);
+  nodes.output.gain.setTargetAtTime(dbToGain(o), ctx.currentTime, 0.02);
+}
+
+// ---------- Pad ----------
+const pad = $("pad"), pc = $("padCanvas"), pctx = pc.getContext("2d");
+const trail = [];
+
+function sizePad() {
+  const r = pad.getBoundingClientRect(), d = devicePixelRatio || 1;
+  pc.width = r.width * d; pc.height = r.height * d;
+  pctx.setTransform(d, 0, 0, d, 0, 0);
+}
+function setFromEvent(e) {
+  const r = pad.getBoundingClientRect();
+  pos.x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  pos.y = Math.min(1, Math.max(0, 1 - (e.clientY - r.top) / r.height));
+  applyPad();
+}
+pad.addEventListener("pointerdown", e => { pad.setPointerCapture(e.pointerId); setFromEvent(e); });
+pad.addEventListener("pointermove", e => { if (pad.hasPointerCapture(e.pointerId)) setFromEvent(e); });
+pad.addEventListener("keydown", e => {
+  const s = e.shiftKey ? 0.1 : 0.02;
+  const k = { ArrowLeft:[-s,0], ArrowRight:[s,0], ArrowUp:[0,s], ArrowDown:[0,-s] }[e.key];
+  if (!k) return; e.preventDefault();
+  pos.x = Math.min(1, Math.max(0, pos.x + k[0]));
+  pos.y = Math.min(1, Math.max(0, pos.y + k[1]));
+  applyPad();
+});
+
+function drawPad(level) {
+  const r = pad.getBoundingClientRect(), w = r.width, h = r.height;
+  pctx.clearRect(0, 0, w, h);
+  // grid
+  pctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--glass-line");
+  pctx.lineWidth = 1;
+  for (let i = 1; i < 8; i++) {
+    const gx = Math.round(w * i / 8) + .5, gy = Math.round(h * i / 8) + .5;
+    pctx.beginPath(); pctx.moveTo(gx, 0); pctx.lineTo(gx, h); pctx.stroke();
+    pctx.beginPath(); pctx.moveTo(0, gy); pctx.lineTo(w, gy); pctx.stroke();
+  }
+  const px = pos.x * w, py = (1 - pos.y) * h;
+  trail.push([px, py]); if (trail.length > 24) trail.shift();
+  // trail
+  for (let i = 0; i < trail.length; i++) {
+    pctx.fillStyle = `rgba(242,163,58,${(i / trail.length) * 0.25})`;
+    pctx.beginPath(); pctx.arc(trail[i][0], trail[i][1], 4, 0, Math.PI * 2); pctx.fill();
+  }
+  // crosshair
+  pctx.strokeStyle = "rgba(242,163,58,.35)";
+  pctx.beginPath(); pctx.moveTo(px, 0); pctx.lineTo(px, h); pctx.moveTo(0, py); pctx.lineTo(w, py); pctx.stroke();
+  // puck that breathes with the signal
+  const rad = 14 + level * 26;
+  const g = pctx.createRadialGradient(px, py, 2, px, py, rad);
+  g.addColorStop(0, "rgba(242,163,58,.9)"); g.addColorStop(1, "rgba(242,163,58,0)");
+  pctx.fillStyle = g; pctx.beginPath(); pctx.arc(px, py, rad, 0, Math.PI * 2); pctx.fill();
+  pctx.fillStyle = "#F2A33A"; pctx.beginPath(); pctx.arc(px, py, 7, 0, Math.PI * 2); pctx.fill();
+  pctx.strokeStyle = "#23211E"; pctx.lineWidth = 2; pctx.stroke();
+}
+
+// ---------- Meters ----------
+const buf = new Float32Array(1024);
+function rmsPeak(an) {
+  an.getFloatTimeDomainData(buf);
+  let s = 0, p = 0;
+  for (let i = 0; i < buf.length; i++) { s += buf[i] * buf[i]; p = Math.max(p, Math.abs(buf[i])); }
+  return { rms: Math.sqrt(s / buf.length), peak: p };
+}
+const toMeter = v => Math.max(0, Math.min(1, (20 * Math.log10(v + 1e-9) + 60) / 60));
+const holds = { in: 0, out: 0 };
+function drawMeter(canvas, key, v) {
+  const c = canvas.getContext("2d"), r = canvas.getBoundingClientRect(), d = devicePixelRatio || 1;
+  if (canvas.width !== r.width * d) { canvas.width = r.width * d; canvas.height = r.height * d; }
+  const w = canvas.width, h = canvas.height;
+  c.clearRect(0, 0, w, h);
+  const lvl = toMeter(v.rms * 1.4), pk = toMeter(v.peak);
+  holds[key] = Math.max(pk, holds[key] - 0.006);
+  const segs = 30, sh = h / segs;
+  for (let i = 0; i < segs; i++) {
+    const on = i / segs < lvl;
+    const hot = i >= segs - 3;
+    c.fillStyle = on ? (hot ? "#C8402E" : i >= segs - 8 ? "#F2A33A" : "#4757B8") : "rgba(255,255,255,.06)";
+    c.fillRect(1 * d, h - (i + 1) * sh + d, w - 2 * d, sh - 2 * d);
+  }
+  c.fillStyle = holds[key] > 0.95 ? "#C8402E" : "#E2DED6";
+  c.fillRect(0, h - holds[key] * h, w, 2 * d);
+}
+function drawGR(db) {
+  const cv = $("grMeter"), c = cv.getContext("2d"), r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
+  if (cv.width !== r.width * d) { cv.width = r.width * d; cv.height = r.height * d; }
+  c.clearRect(0, 0, cv.width, cv.height);
+  const f = Math.min(1, -db / 24);
+  c.fillStyle = "#F2A33A"; c.fillRect(cv.width * (1 - f), 0, cv.width * f, cv.height);
+  $("grVal").textContent = db.toFixed(1) + " dB";
+}
+
+let padLevel = 0;
+function loop() {
+  if (running) {
+    const iv = rmsPeak(nodes.inAn), ov = rmsPeak(nodes.outAn);
+    drawMeter($("inMeter"), "in", iv);
+    drawMeter($("outMeter"), "out", ov);
+    const red = typeof nodes.comp.reduction === "number" ? nodes.comp.reduction : nodes.comp.reduction.value;
+    drawGR($("bypass").getAttribute("aria-pressed") === "true" ? 0 : red);
+    padLevel += (toMeter(ov.rms * 1.4) - padLevel) * 0.3;
+  }
+  drawPad(padLevel);
+  requestAnimationFrame(loop);
+}
+
+// ---------- UI wiring ----------
+$("inGain").addEventListener("input", applyGains);
+$("outGain").addEventListener("input", applyGains);
+[$("inGain"), $("outGain")].forEach(el => el.addEventListener("dblclick", () => { el.value = 0; applyGains(); }));
+
+$("start").addEventListener("click", async () => {
+  try { await start(); }
+  catch (err) {
+    $("status").textContent = "Microphone blocked. Allow mic access in your browser's site settings, then reload the page. (" + err.name + ")";
+  }
+});
+$("bypass").addEventListener("click", e => {
+  const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  e.currentTarget.setAttribute("aria-pressed", on);
+  const t = ctx.currentTime;
+  nodes.fxOut.gain.setTargetAtTime(on ? 0 : 1, t, 0.02);
+  nodes.dry.gain.setTargetAtTime(on ? 1 : 0, t, 0.02);
+});
+$("monitor").addEventListener("click", e => {
+  const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  e.currentTarget.setAttribute("aria-pressed", on);
+  nodes.monitor.gain.setTargetAtTime(on ? 1 : 0, ctx.currentTime, 0.02);
+});
+
+new ResizeObserver(sizePad).observe(pad);
+sizePad(); applyGains(); applyPad(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
