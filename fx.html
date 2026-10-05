@@ -43,12 +43,22 @@ button:disabled{opacity:.45; cursor:not-allowed}
 .strip{display:flex; flex-direction:column; align-items:center; gap:10px; width:84px}
 .strip h2{font:600 .9rem var(--body); margin:0}
 .strip output{font:600 .9rem var(--body); font-variant-numeric:tabular-nums}
-.fader-wrap{position:relative; flex:1; min-height:300px; display:flex; gap:10px; justify-content:center}
+.fader-wrap{position:relative; height:320px; display:flex; gap:10px; justify-content:center}
 .fader-wrap input[type=range]{
   writing-mode:vertical-lr; direction:rtl; -webkit-appearance:slider-vertical; appearance:slider-vertical;
   width:28px; height:100%; accent-color:var(--ink); cursor:ns-resize;
 }
-canvas.meter{width:14px; height:100%; border-radius:3px; background:var(--glass)}
+.meter-box{position:relative; width:14px; height:100%; flex:none; border-radius:3px; background:var(--glass); overflow:hidden}
+.meter-box canvas,.gr-box canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+.gr-box{position:relative; flex:1; height:10px; border-radius:3px; background:var(--glass); overflow:hidden}
+
+.fx{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:28px}
+.fx fieldset{border:1.5px solid var(--ink); border-radius:14px; padding:14px 18px 18px; margin:0; background:var(--plate-hi)}
+.fx legend{font:700 1.15rem var(--display); padding:0 6px}
+.fx label{display:grid; grid-template-columns:5.5rem 1fr 4.2rem; align-items:center; gap:10px; font-size:.9rem; margin-top:10px}
+.fx input[type=range]{width:100%; accent-color:var(--amber)}
+.fx output{text-align:right; font-variant-numeric:tabular-nums; font-weight:600}
+@media (max-width:640px){ .fx{grid-template-columns:1fr} }
 
 .pad-col{display:flex; flex-direction:column; gap:10px; min-width:0}
 #pad{
@@ -65,14 +75,14 @@ canvas.meter{width:14px; height:100%; border-radius:3px; background:var(--glass)
 .readout{display:flex; gap:18px; flex-wrap:wrap; font-size:.88rem; color:var(--ink-soft); font-variant-numeric:tabular-nums}
 .readout span b{color:var(--ink); font-weight:600}
 .gr{display:flex; align-items:center; gap:10px; font-size:.88rem; color:var(--ink-soft)}
-.gr canvas{flex:1; height:10px; border-radius:3px; background:var(--glass)}
+
 #status{margin-top:20px; font-size:.92rem; color:var(--ink-soft); max-width:60ch}
 
 @media (max-width:640px){
   .rack{grid-template-columns:1fr 1fr; }
   .pad-col{grid-column:1 / -1; order:-1}
   .strip{width:100%}
-  .fader-wrap{min-height:200px}
+  .fader-wrap{height:200px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -93,7 +103,7 @@ canvas.meter{width:14px; height:100%; border-radius:3px; background:var(--glass)
       <h2>Input</h2>
       <div class="fader-wrap">
         <input id="inGain" type="range" min="-24" max="24" step="0.5" value="0" aria-label="Input gain in dB">
-        <canvas class="meter" id="inMeter" width="14" height="300"></canvas>
+        <div class="meter-box"><canvas id="inMeter"></canvas></div>
       </div>
       <output id="inVal">0.0 dB</output>
     </div>
@@ -113,17 +123,32 @@ canvas.meter{width:14px; height:100%; border-radius:3px; background:var(--glass)
         <span>Threshold <b id="rThr">0 dB</b></span>
         <span>Ratio <b id="rRatio">1:1</b></span>
       </div>
-      <div class="gr">Gain reduction <canvas id="grMeter" width="300" height="10"></canvas><b id="grVal">0 dB</b></div>
+      <div class="gr">Gain reduction <div class="gr-box"><canvas id="grMeter"></canvas></div><b id="grVal">0 dB</b></div>
     </div>
 
     <div class="strip">
       <h2>Output</h2>
       <div class="fader-wrap">
-        <canvas class="meter" id="outMeter" width="14" height="300"></canvas>
+        <div class="meter-box"><canvas id="outMeter"></canvas></div>
         <input id="outGain" type="range" min="-24" max="24" step="0.5" value="0" aria-label="Output gain in dB">
       </div>
       <output id="outVal">0.0 dB</output>
     </div>
+  </section>
+
+  <section class="fx">
+    <fieldset>
+      <legend>Reverb</legend>
+      <label>Mix <input id="revMix" type="range" min="0" max="100" value="15"><output id="revMixV">15%</output></label>
+      <label>Size <input id="revSize" type="range" min="0.3" max="6" step="0.1" value="1.8"><output id="revSizeV">1.8 s</output></label>
+      <label>Tone <input id="revTone" type="range" min="1500" max="12000" step="100" value="6000"><output id="revToneV">6.0 kHz</output></label>
+    </fieldset>
+    <fieldset>
+      <legend>Delay</legend>
+      <label>Mix <input id="dlyMix" type="range" min="0" max="100" value="0"><output id="dlyMixV">0%</output></label>
+      <label>Time <input id="dlyTime" type="range" min="40" max="1200" step="5" value="320"><output id="dlyTimeV">320 ms</output></label>
+      <label>Feedback <input id="dlyFb" type="range" min="0" max="90" value="35"><output id="dlyFbV">35%</output></label>
+    </fieldset>
   </section>
 
   <p id="status">Use headphones to avoid feedback. Your audio stays on this device.</p>
@@ -178,11 +203,31 @@ async function start() {
     .connect(nodes.low).connect(nodes.high).connect(nodes.presence)
     .connect(nodes.comp).connect(nodes.makeup).connect(nodes.fxOut).connect(nodes.output);
   nodes.input.connect(nodes.dry).connect(nodes.output);
+  // Reverb send
+  nodes.revSend = ctx.createGain();
+  nodes.conv = ctx.createConvolver();
+  nodes.revTone = ctx.createBiquadFilter(); nodes.revTone.type = "lowpass";
+  nodes.revReturn = ctx.createGain();
+  nodes.makeup.connect(nodes.revSend).connect(nodes.conv).connect(nodes.revTone).connect(nodes.revReturn).connect(nodes.fxOut);
+  buildImpulse();
+
+  // Delay send with filtered feedback
+  nodes.dlySend = ctx.createGain();
+  nodes.delay = ctx.createDelay(2);
+  nodes.dlyFb = ctx.createGain();
+  nodes.dlyFilt = ctx.createBiquadFilter(); nodes.dlyFilt.type = "lowpass"; nodes.dlyFilt.frequency.value = 4500;
+  nodes.dlyReturn = ctx.createGain();
+  nodes.makeup.connect(nodes.dlySend).connect(nodes.delay);
+  nodes.delay.connect(nodes.dlyFilt).connect(nodes.dlyFb).connect(nodes.delay);
+  nodes.delay.connect(nodes.dlyReturn).connect(nodes.fxOut);
+  // Echoes also feed the reverb a little so they sit in the same space
+  nodes.dlyReturn.connect(nodes.revSend);
+
   nodes.output.connect(nodes.outAn);
   nodes.output.connect(nodes.monitor).connect(ctx.destination);
 
   running = true;
-  applyGains(); applyPad(true);
+  applyGains(); applyPad(true); applySpace();
   $("start").textContent = "Mic on"; $("start").disabled = true;
   $("bypass").disabled = false; $("monitor").disabled = false;
   $("status").textContent = "Live. Use headphones to avoid feedback.";
@@ -217,6 +262,41 @@ function applyPad(instant) {
   nodes.comp.attack.setTargetAtTime(0.012 - y * 0.009, t, tc);
   const makeupDb = (-thr) * (1 - 1 / ratio) * 0.5;
   nodes.makeup.gain.setTargetAtTime(dbToGain(makeupDb), t, tc);
+}
+
+// Synthetic stereo impulse: decaying noise with a short pre-delay
+function buildImpulse() {
+  if (!nodes.conv) return;
+  const secs = +$("revSize").value, rate = ctx.sampleRate;
+  const len = Math.floor(rate * secs), pre = Math.floor(rate * 0.012);
+  const ir = ctx.createBuffer(2, len + pre, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      d[i + pre] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2);
+    }
+  }
+  nodes.conv.buffer = ir;
+}
+
+function applySpace() {
+  const rm = +$("revMix").value, rs = +$("revSize").value, rt = +$("revTone").value;
+  const dm = +$("dlyMix").value, dt = +$("dlyTime").value, df = +$("dlyFb").value;
+  $("revMixV").textContent = rm + "%";
+  $("revSizeV").textContent = rs.toFixed(1) + " s";
+  $("revToneV").textContent = (rt / 1000).toFixed(1) + " kHz";
+  $("dlyMixV").textContent = dm + "%";
+  $("dlyTimeV").textContent = dt + " ms";
+  $("dlyFbV").textContent = df + "%";
+  if (!running) return;
+  const t = ctx.currentTime;
+  nodes.revSend.gain.setTargetAtTime(1, t, 0.02);
+  nodes.revReturn.gain.setTargetAtTime((rm / 100) * 0.9, t, 0.03);
+  nodes.revTone.frequency.setTargetAtTime(rt, t, 0.03);
+  nodes.dlySend.gain.setTargetAtTime(dm > 0 ? 1 : 0, t, 0.02);
+  nodes.dlyReturn.gain.setTargetAtTime(dm / 100, t, 0.03);
+  nodes.delay.delayTime.setTargetAtTime(dt / 1000, t, 0.06);
+  nodes.dlyFb.gain.setTargetAtTime(df / 100, t, 0.03);
 }
 
 function applyGains() {
@@ -335,6 +415,8 @@ function loop() {
 }
 
 // ---------- UI wiring ----------
+["revMix","revSize","revTone","dlyMix","dlyTime","dlyFb"].forEach(id => $(id).addEventListener("input", applySpace));
+$("revSize").addEventListener("change", buildImpulse);   // rebuild once the slider is released
 $("inGain").addEventListener("input", applyGains);
 $("outGain").addEventListener("input", applyGains);
 [$("inGain"), $("outGain")].forEach(el => el.addEventListener("dblclick", () => { el.value = 0; applyGains(); }));
@@ -359,7 +441,7 @@ $("monitor").addEventListener("click", e => {
 });
 
 new ResizeObserver(sizePad).observe(pad);
-sizePad(); applyGains(); applyPad(); requestAnimationFrame(loop);
+sizePad(); applyGains(); applyPad(); applySpace(); requestAnimationFrame(loop);
 </script>
 </body>
 </html>
