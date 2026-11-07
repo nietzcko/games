@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Duplo Train Track Generator</title>
+<style>
+  :root{
+    --bg:#FFF6E0; --ink:#1D2340; --red:#EF233C; --yellow:#FFD60A; --blue:#2F80ED;
+    --green:#38B000; --orange:#FF9F1C; --purple:#7B2CBF; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,sans-serif;}
+  body{min-height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:12px;padding:12px 16px 6px;flex-wrap:wrap}
+  .logo{display:flex;gap:4px}
+  .logo span{width:22px;height:22px;border-radius:6px;position:relative;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+  .logo span::after{content:"";position:absolute;inset:5px;border-radius:50%;background:rgba(255,255,255,.35)}
+  h1{font-size:clamp(20px,4.5vw,30px);margin:0;letter-spacing:.5px;font-weight:900}
+  h1 em{font-style:normal;color:var(--red)}
+  .sub{font-size:13px;opacity:.7;width:100%;margin-top:-4px}
+  main{flex:1;display:grid;grid-template-columns:1fr 320px;gap:14px;padding:8px 14px 16px;align-items:start}
+  @media (max-width:860px){main{grid-template-columns:1fr}}
+  .stage{position:relative;border-radius:22px;overflow:hidden;background:#5BC236;
+    box-shadow:0 6px 0 #2E8B1E, 0 14px 30px rgba(0,0,0,.18);height:calc(100vh - 120px);min-height:420px;position:sticky;top:10px;border:4px solid #2E8B1E}
+  @media (max-width:860px){.stage{min-height:0;height:58vh;position:relative;top:0}}
+  #map{width:100%;height:100%;display:block;position:absolute;inset:0;touch-action:none;-webkit-user-select:none;user-select:none}
+  .toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:8px 14px;border-radius:999px;font-size:14px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+  .toast.show{opacity:.92}
+  .mapbtn{position:absolute;left:12px;bottom:10px;display:flex;align-items:center;gap:8px;border:0;border-radius:999px;
+    padding:7px 14px 7px 8px;background:#fff;color:var(--ink);font:inherit;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+  .mapbtn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+  .mapbtn .sw{width:40px;height:24px;border-radius:999px;background:#C9CED8;position:relative;transition:.2s}
+  .mapbtn .sw i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .mapbtn.on .sw{background:var(--green)}
+  .mapbtn.on .sw i{left:19px}
+  .mapbtn[hidden]{display:none}
+  .seed{position:absolute;right:12px;bottom:10px;font-size:12px;color:#fff;background:rgba(0,0,0,.25);padding:3px 9px;border-radius:999px;font-weight:700}
+  aside{display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--card);border-radius:18px;padding:14px;box-shadow:0 4px 0 rgba(29,35,64,.12)}
+  .card h3{margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:1px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .row:last-child{margin-bottom:0}
+  .row label{font-size:14px;font-weight:700}
+  .seg{display:flex;background:#EEF0F7;border-radius:12px;padding:3px;width:100%}
+  .seg button{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:9px;font:inherit;font-weight:800;font-size:14px;color:var(--ink);cursor:pointer}
+  .seg button.on{background:var(--blue);color:#fff;box-shadow:0 3px 0 #1B4FA0}
+  .brick{position:relative;border:0;cursor:pointer;font:inherit;font-weight:900;font-size:16px;color:#fff;
+    padding:14px 14px 11px;border-radius:12px;margin-top:8px;transition:transform .08s}
+  .brick::before,.brick::after{content:"";position:absolute;top:-7px;width:22px;height:9px;border-radius:6px 6px 0 0;background:inherit;filter:brightness(1.08)}
+  .brick::before{left:18%}.brick::after{right:18%}
+  .brick:active{transform:translateY(3px)}
+  .b-red{background:var(--red);box-shadow:0 5px 0 #9B1022}
+  .b-yellow{background:var(--yellow);color:#3a2e00;box-shadow:0 5px 0 #B89400}
+  .b-blue{background:var(--blue);box-shadow:0 5px 0 #1B4FA0}
+  .b-green{background:var(--green);box-shadow:0 5px 0 #1F6B00}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btns.three{grid-template-columns:1fr 1fr 1fr}
+  .brick:disabled{opacity:.45;cursor:default}
+  .btns .wide{grid-column:1/-1;font-size:19px}
+  input[type=range]{width:100%;accent-color:var(--red)}
+  .num{width:64px;padding:7px;border-radius:10px;border:2px solid #E1E4EE;font:inherit;font-weight:800;text-align:center}
+  .toggle{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;cursor:pointer;user-select:none}
+  .toggle input{width:20px;height:20px;accent-color:var(--green)}
+  .parts{display:flex;flex-direction:column;gap:8px}
+  .part{display:flex;align-items:center;gap:10px;font-weight:800}
+  .part svg{width:58px;height:40px;flex:none}
+  .part .n{margin-left:auto;font-size:22px;min-width:44px;text-align:right}
+  .part small{display:block;font-weight:600;opacity:.6;font-size:12px}
+  details summary{cursor:pointer;font-weight:800;font-size:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;max-height:160px;overflow:auto}
+  .chip{font-size:11px;font-weight:800;color:#fff;border-radius:6px;padding:3px 6px}
+  .stepper{display:flex;align-items:center;gap:4px}
+  .stepper button{width:38px;height:38px;border:0;border-radius:10px;background:#EEF0F7;font:inherit;font-size:22px;font-weight:900;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 #D3D7E4}
+  .stepper button:active{transform:translateY(2px);box-shadow:none}
+  .pn{font-weight:700;opacity:.5;font-size:11px;margin-left:4px}
+  .bom{width:100%;border-collapse:collapse;font-size:14px}
+  .bom th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;opacity:.6;text-align:right;padding:0 4px 6px;font-weight:800}
+  .bom th:first-child{text-align:left}
+  .bom td{padding:6px 4px;border-top:2px solid #F0F2F8;text-align:right;font-weight:800;vertical-align:middle}
+  .bom td:first-child{text-align:left}
+  .bom .ico{display:flex;align-items:center;gap:8px}
+  .bom .ico svg{width:44px;height:30px;flex:none}
+  .bom small{display:block;font-weight:600;opacity:.6;font-size:11px}
+  .bom .need{font-size:20px}
+  .bom .sub td{border-top:0;padding-top:0;font-size:12px;font-weight:600;opacity:.75}
+  .bom tfoot td{font-size:15px}
+  .tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:800;white-space:nowrap}
+  .ok{background:#DDF7D3;color:#1F6B00}.short{background:#FFE0E3;color:#9B1022}.exact{background:#FFF3C4;color:#7A5C00}
+  .hint{font-size:12px;opacity:.65;line-height:1.35}
+  .grid2{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;width:100%}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span style="background:#EF233C"></span><span style="background:#FFD60A"></span><span style="background:#2F80ED"></span><span style="background:#38B000"></span></div>
+  <h1>Duplo <em>Train Track</em> Generator</h1>
+  <div class="sub">Straights, 30° curves and the 10872 bridge, always snapping into a closed loop.</div>
+</header>
+<main>
+  <div class="stage" id="stage">
+    <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="toast" id="toast"></div>
+    <div class="seed" id="seed"></div>
+    <button class="mapbtn" id="crossBtn"><span class="sw"><i></i></span><span id="crossTxt">Under bridge</span></button>
+  </div>
+  <aside>
+    <div class="card">
+      <h3>🧱 My pieces</h3>
+      <div class="row grid2"><label>Straights <small class="pn">6377</small></label>
+        <div class="stepper"><button data-for="maxS" data-d="-1">−</button><input class="num" type="number" id="maxS" min="0" max="99" value="16" inputmode="numeric"><button data-for="maxS" data-d="1">+</button></div></div>
+      <div class="row grid2"><label>Curves <small class="pn">6378</small></label>
+        <div class="stepper"><button data-for="maxC" data-d="-1">−</button><input class="num" type="number" id="maxC" min="12" max="99" value="24" inputmode="numeric"><button data-for="maxC" data-d="1">+</button></div></div>
+      <div class="row"><label class="toggle"><input type="checkbox" id="bridge" checked> I have the 10872 bridge</label></div>
+      <div class="row"><label class="toggle"><input type="checkbox" id="useAll"> Use as many of my pieces as possible</label></div>
+      <div class="hint">The generator never uses more than you own. A loop needs at least 12 curves; going under the bridge needs about 8 straights and 24 curves.</div>
+    </div>
+    <div class="card">
+      <div class="btns three">
+        <button class="brick b-red wide" id="gen">🎲 New track!</button>
+        <button class="brick b-yellow" id="play">⏸ Train</button>
+        <button class="brick b-green" id="undo" disabled>↶ Undo</button>
+        <button class="brick b-blue" id="dl">⬇ SVG</button>
+      </div>
+      <div class="hint" style="margin-top:12px">✋ Drag any piece to reshape the track. The rest re-solves with as few changes as possible.</div>
+    </div>
+    <div class="card">
+      <h3>📋 Bill of materials</h3>
+      <div id="bom"></div>
+      <div class="btns" style="margin-top:6px">
+        <button class="brick b-green" id="copyBom">📋 Copy</button>
+        <button class="brick b-blue" id="csvBom">⬇ CSV</button>
+      </div>
+      <details style="margin-top:14px"><summary>Build order</summary><div class="chips" id="chips"></div></details>
+    </div>
+    <div class="card">
+      <h3>Layout</h3>
+      <div class="row"><label>🌉 Track goes under the bridge?</label></div>
+      <div class="row"><div class="seg" id="mode">
+        <button data-v="mix" class="on">Surprise</button>
+        <button data-v="loop">Never</button>
+        <button data-v="cross">Always</button>
+      </div></div>
+      <div class="row" style="flex-direction:column;align-items:stretch">
+        <div class="grid2"><label for="size">Size</label><span id="sizeV" style="font-weight:800"></span></div>
+        <input type="range" id="size" min="20" max="70" value="38">
+      </div>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="nums"> Show piece numbers</label>
+      </div>
+      <div class="row"><div class="seg" id="theme">
+        <button data-v="rainbow" class="on">Rainbow</button>
+        <button data-v="classic">Classic grey</button>
+      </div></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+// ===== Duplo layout engine (shared by test + html) =====
+const ENG = (() => {
+  const R = 2.1;            // curve radius in straight-lengths
+  const A30 = Math.PI / 6;
+  const BRIDGE_LEN = 4;     // end ramp, half arch, half arch, end ramp
+  const MIN_SEP = 0.74;
+  const TOWERS = [0.95, 3.05]; // support brick towers along the bridge (t)     // min centre-line separation of two ground tracks
+  const STEP = 0.14;
+
+  function mulberry(seed) {
+    return function () {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const turnOf = p => (p === 'L' ? 1 : p === 'R' ? -1 : 0);
+  const lenOf = p => (p === 'B' ? BRIDGE_LEN : p === 'S' ? 1 : R * A30);
+
+  function headings(pcs) { // heading (0..11) before each index, plus final
+    const h = [0]; let c = 0;
+    for (const p of pcs) { c += turnOf(p); h.push(c); }
+    return h;
+  }
+  const mod12 = h => ((h % 12) + 12) % 12;
+
+  // walk pieces -> poses
+  function walk(pcs) {
+    let x = 0, y = 0, h = 0; const segs = [];
+    for (const p of pcs) {
+      const th = h * A30, s = { type: p, x0: x, y0: y, h0: h };
+      if (p === 'S' || p === 'B') {
+        const l = lenOf(p);
+        x += Math.cos(th) * l; y += Math.sin(th) * l;
+      } else {
+        const d = turnOf(p);
+        const cx = x - d * R * Math.sin(th), cy = y + d * R * Math.cos(th);
+        s.cx = cx; s.cy = cy; s.dir = d;
+        h += d; const t2 = h * A30;
+        x = cx + d * R * Math.sin(t2); y = cy - d * R * Math.cos(t2);
+      }
+      s.x1 = x; s.y1 = y; s.h1 = h; segs.push(s);
+    }
+    return { segs, x, y, h };
+  }
+
+  function isClosed(pcs) {
+    const w = walk(pcs);
+    return Math.hypot(w.x, w.y) < 1e-6 && mod12(w.h) === 0;
+  }
+
+  // bridge height profile, t in [0,5] -> 0..1
+  const bridgeH = t => (t < 1.5 ? t / 1.5 : t < 2.5 ? 1 : Math.max(0, (4 - t) / 1.5));
+
+  // point at local distance t along segment
+  function pointOn(s, t) {
+    if (s.type === 'S' || s.type === 'B') {
+      const th = s.h0 * A30;
+      return { x: s.x0 + Math.cos(th) * t, y: s.y0 + Math.sin(th) * t, a: th };
+    }
+    const a0 = s.h0 * A30, da = s.dir * t / R, a = a0 + da;
+    return { x: s.cx + s.dir * R * Math.sin(a), y: s.cy - s.dir * R * Math.cos(a), a };
+  }
+
+  function samples(segs) {
+    const out = []; let S = 0;
+    segs.forEach((s, i) => {
+      const l = lenOf(s.type), n = Math.max(2, Math.ceil(l / STEP));
+      for (let k = 0; k < n; k++) {
+        const t = (k + 0.5) * l / n, p = pointOn(s, t);
+        const hgt = s.type === 'B' ? bridgeH(t) : 0;
+        out.push({ x: p.x, y: p.y, s: S + t, i, hgt, elev: hgt > 0.55 });
+      }
+      S += l;
+    });
+    return { pts: out, total: S };
+  }
+
+  // returns {ok, crossings}
+  function validate(pcs) {
+    if (!isClosed(pcs)) return { ok: false, why: 'open' };
+    const w = walk(pcs), { pts, total } = samples(w.segs);
+    const cell = MIN_SEP, grid = new Map();
+    const key = (a, b) => a * 100003 + b;
+    pts.forEach((p, idx) => {
+      const k = key(Math.floor(p.x / cell), Math.floor(p.y / cell));
+      if (!grid.has(k)) grid.set(k, []); grid.get(k).push(idx);
+    });
+    let crossings = 0;
+    const crossPts = [];
+    for (let a = 0; a < pts.length; a++) {
+      const p = pts[a], gx = Math.floor(p.x / cell), gy = Math.floor(p.y / cell);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        const arr = grid.get(key(gx + dx, gy + dy)); if (!arr) continue;
+        for (const b of arr) {
+          if (b <= a) continue; const q = pts[b];
+          let gap = Math.abs(p.s - q.s); gap = Math.min(gap, total - gap);
+          if (gap < 1.05) continue;
+          const d = Math.hypot(p.x - q.x, p.y - q.y);
+          if (d >= MIN_SEP) continue;
+          if (p.elev !== q.elev) {
+            // the crossing ground track must not be (nearly) parallel to the bridge
+            crossings++; crossPts.push(p.elev ? q : p); continue;
+          }
+          return { ok: false, why: 'collide' };
+        }
+      }
+    }
+    // brick towers next to the bridge must not sit on a ground track
+    for (const s of w.segs) {
+      if (s.type !== 'B') continue;
+      for (const t of TOWERS) {
+        const p = pointOn(s, t), h = bridgeH(t);
+        for (const sd of [-1, 1]) {
+          const o = sd * (0.3 * (1 + 0.22 * h) + 0.14);
+          const tx = p.x - o * Math.sin(p.a), ty = p.y + o * Math.cos(p.a);
+          for (const q of pts) if (q.hgt === 0 && Math.hypot(q.x - tx, q.y - ty) < 0.56) return { ok: false, why: 'tower' };
+        }
+      }
+    }
+    return { ok: true, crossings, crossPts, segs: w.segs, pts, total };
+  }
+
+  function counts(pcs) {
+    const c = { S: 0, L: 0, R: 0, B: 0 };
+    pcs.forEach(p => c[p]++);
+    return { straight: c.S, curve: c.L + c.R, bridge: c.B, left: c.L, right: c.R };
+  }
+
+  // ---------- generation ----------
+  function randPattern(rnd) {
+    const r = rnd();
+    const flip = rnd() < 0.5;
+    const A = flip ? 'R' : 'L', B = flip ? 'L' : 'R';
+    const S = n => 'S'.repeat(n);
+    let p;
+    if (r < 0.30) { const a = 1 + Math.floor(rnd() * 2); p = A.repeat(a) + S(Math.floor(rnd() * 3)) + B.repeat(a); }
+    else if (r < 0.60) { const a = 2 + Math.floor(rnd() * 2); p = A.repeat(a) + S(Math.floor(rnd() * 2)) + B.repeat(2 * a) + S(Math.floor(rnd() * 2)) + A.repeat(a); }
+    else if (r < 0.7) { p = A + S(1 + Math.floor(rnd() * 3)) + B; }
+    else { const a = 3; p = A.repeat(a) + S(Math.floor(rnd() * 3)) + B.repeat(a); }
+    return p.split('');
+  }
+
+  // insert sequences at several positions (positions in original indexing)
+  function insertMany(pcs, ins) {
+    ins = ins.slice().sort((u, v) => v.pos - u.pos);
+    const out = pcs.slice();
+    for (const it of ins) out.splice(it.pos, 0, ...it.seq);
+    return out;
+  }
+
+  // choose positions whose headings form a balanced set (offsets e.g. [0,6] or [0,4,8] or [0,3,6,9])
+  function balancedPositions(pcs, rnd, offs) {
+    const hs = headings(pcs), n = pcs.length;
+    const byH = Array.from({ length: 12 }, () => []);
+    for (let i = 0; i <= n; i++) {
+      // don't insert inside a bridge neighbourhood? allowed anywhere
+      byH[mod12(hs[i])].push(i);
+    }
+    // try a few random base headings
+    for (let tries = 0; tries < 12; tries++) {
+      const h = Math.floor(rnd() * 12);
+      const res = [];
+      for (const o of offs) {
+        const arr = byH[mod12(h + o)]; if (!arr.length) { res.length = 0; break; }
+        res.push({ pos: arr[Math.floor(rnd() * arr.length)], h: mod12(h + o) });
+      }
+      if (res.length === offs.length) {
+        // positions must be distinct
+        const set = new Set(res.map(r => r.pos)); if (set.size === res.length) return res;
+      }
+    }
+    return null;
+  }
+
+  function mutate(pcs, rnd) {
+    const r = rnd();
+    const offsSet = [[0, 6], [0, 6], [0, 6], [0, 4, 8], [0, 3, 6, 9]];
+    const offs = offsSet[Math.floor(rnd() * offsSet.length)];
+    const pos = balancedPositions(pcs, rnd, offs);
+    if (!pos) return null;
+    let seq;
+    if (r < 0.45) seq = Array(1 + Math.floor(rnd() * 3)).fill('S');
+    else seq = randPattern(rnd);
+    return insertMany(pcs, pos.map(p => ({ pos: p.pos, seq })));
+  }
+
+  function rotateStart(pcs, k) { return pcs.slice(k).concat(pcs.slice(0, k)); }
+
+  function withinInv(pcs, inv) {
+    const c = counts(pcs);
+    return c.straight <= inv.maxS && c.curve <= inv.maxC && c.bridge <= inv.maxB;
+  }
+
+  // Loop mode
+  function genLoop(opts, rnd) {
+    const { size, inv, bridge } = opts;
+    const target = size;
+    let base = bridge
+      ? ['B', ...'LLLLLL', ...Array(BRIDGE_LEN).fill('S'), ...'LLLLLL']
+      : ['S', 'S', ...'LLLLLL', 'S', 'S', ...'LLLLLL'];
+    if (!withinInv(base, inv)) base = bridge ? null : [...'LLLLLLLLLLLL'];
+    if (!base || !withinInv(base, inv)) return null;
+    let cur = base, best = base;
+    for (let it = 0; it < 900 && cur.length < target; it++) {
+      const m = mutate(cur, rnd); if (!m) continue;
+      if (m.length > target + 6) continue;
+      if (!withinInv(m, inv)) continue;
+      const v = validate(m);
+      if (!v.ok) continue;
+      if (opts.mode === 'loop' && v.crossings) continue; // plain loop: never under the bridge
+      cur = m; best = m;
+    }
+    return best;
+  }
+
+  // Crossing mode: search for layouts where track passes under the bridge
+  function genCross(opts, rnd, timeMs = 1500) {
+    const { size, inv } = opts;
+    const t0 = Date.now();
+    let found = null;
+    let tries = 0;
+    while (Date.now() - t0 < timeMs) {
+      tries++;
+      // seed: bridge + skeleton of two laps or figure eight
+      const kind = rnd();
+      let base;
+      if (kind < 0.5) {
+        // two-lap spiral: B, then 24 left turns with straight runs
+        base = ['B', ...'L'.repeat(24).split('')];
+        // compensate bridge: 5 straights at a heading-6 position
+      } else {
+        // figure eight like: L^a R^12 L^(12-a)
+        const a = 2 + Math.floor(rnd() * 9);
+        base = ['B', ...'L'.repeat(a), ...'R'.repeat(12), ...'L'.repeat(12 - a)];
+      }
+      // add compensation 5 straights at a heading 6 position
+      const hs = headings(base);
+      const cand = []; for (let i = 1; i <= base.length; i++) if (mod12(hs[i]) === 6) cand.push(i);
+      if (!cand.length) continue;
+      let pcs = insertMany(base, [{ pos: cand[Math.floor(rnd() * cand.length)], seq: Array(BRIDGE_LEN).fill('S') }]);
+      // random mutations, accepting anything closed (validity checked at end)
+      const nm = 2 + Math.floor(rnd() * 6);
+      for (let k = 0; k < nm; k++) { const m = mutate(pcs, rnd); if (m) pcs = m; }
+      if (!withinInv(pcs, inv)) continue;
+      if (pcs.length > size + 14) continue;
+      const v = validate(pcs);
+      if (v.ok && v.crossings > 0) { found = pcs; break; }
+    }
+    return { pcs: found, tries };
+  }
+
+  // ---------- drag solver ----------
+  const ENG_MP = { v: 0.4, w: 8 }; // cost per moved piece, weight of reaching the target
+  // centre point of every piece (local frame, piece 0 starts at origin)
+  function centers(pcs) {
+    const out = new Array(pcs.length);
+    let x = 0, y = 0, h = 0;
+    for (let i = 0; i < pcs.length; i++) {
+      const p = pcs[i], th = h * A30;
+      if (p === 'S' || p === 'B') {
+        const l = lenOf(p);
+        out[i] = { x: x + Math.cos(th) * l / 2, y: y + Math.sin(th) * l / 2 };
+        x += Math.cos(th) * l; y += Math.sin(th) * l;
+      } else {
+        const d = turnOf(p), cx = x - d * R * Math.sin(th), cy = y + d * R * Math.cos(th);
+        const am = th + d * A30 / 2;
+        out[i] = { x: cx + d * R * Math.sin(am), y: cy - d * R * Math.cos(am) };
+        h += d; const t2 = h * A30;
+        x = cx + d * R * Math.sin(t2); y = cy - d * R * Math.cos(t2);
+      }
+    }
+    return out;
+  }
+
+  // every edit keeps the loop closed: moved straights keep their heading,
+  // added/removed straights or jogs come in balanced pairs/triples
+  function* edits(pcs, ids, inv, nextId) {
+    const n = pcs.length, hs = headings(pcs).slice(0, n).map(mod12);
+    const byH = Array.from({ length: 12 }, () => []);
+    for (let i = 0; i < n; i++) byH[hs[i]].push(i);
+    const c = counts(pcs);
+    const ins = (list) => { // list of {pos, seq}
+      const P2 = pcs.slice(), I2 = ids.slice();
+      list.slice().sort((a, b) => b.pos - a.pos).forEach(it => {
+        P2.splice(it.pos, 0, ...it.seq);
+        I2.splice(it.pos, 0, ...it.seq.map(() => nextId.v++));
+      });
+      return [P2, I2];
+    };
+    const del = (idxs) => {
+      const s = new Set(idxs);
+      return [pcs.filter((_, i) => !s.has(i)), ids.filter((_, i) => !s.has(i))];
+    };
+    // 1) slide a straight or the bridge to another spot with the same heading
+    for (let i = 0; i < n; i++) {
+      if (pcs[i] !== 'S' && pcs[i] !== 'B') continue;
+      for (const q of byH[hs[i]]) {
+        if (q === i || q === i + 1) continue;
+        { // skip no-op slides within the same run of straights
+          const a = Math.min(i, q), b = Math.max(i, q); let same = true;
+          for (let k = a; k < b; k++) if (k !== i && pcs[k] !== 'S' && pcs[k] !== 'B') { same = false; break; }
+          if (same) continue;
+        }
+        const P2 = pcs.slice(), I2 = ids.slice();
+        const [pp] = P2.splice(i, 1), [ii] = I2.splice(i, 1);
+        const qq = q > i ? q - 1 : q;
+        P2.splice(qq, 0, pp); I2.splice(qq, 0, ii);
+        yield { pcs: P2, ids: I2, cost: pcs[i] === 'B' ? 2 : 1 };
+      }
+    }
+    // 2) add / remove balanced straights
+    const groups = [[0, 6], [0, 4, 8]];
+    for (const g of groups) {
+      for (let h = 0; h < (g.length === 2 ? 6 : 4); h++) {
+        const sets = g.map(o => byH[mod12(h + o)]);
+        if (sets.some(s => !s.length)) continue;
+        const combos = [[]];
+        for (const s of sets) { const nx = []; for (const cmb of combos) for (const v of s) nx.push(cmb.concat(v)); combos.length = 0; combos.push(...nx); if (combos.length > 400) break; }
+        for (const cmb of combos) {
+          if (cmb.length !== g.length) continue;
+          if (c.straight + g.length <= inv.maxS) {
+            const [P2, I2] = ins(cmb.map(p => ({ pos: p, seq: ['S'] })));
+            yield { pcs: P2, ids: I2, cost: g.length };
+          }
+          if (cmb.every(i => pcs[i] === 'S')) {
+            const [P2, I2] = del(cmb);
+            yield { pcs: P2, ids: I2, cost: g.length };
+          }
+        }
+      }
+    }
+    // 3) add a balanced pair of jogs (L R / R L)
+    if (c.curve + 4 <= inv.maxC) {
+      for (let h = 0; h < 6; h++) {
+        for (const p of byH[h]) for (const q of byH[h + 6]) for (const pat of [['L', 'R'], ['R', 'L']]) {
+          const [P2, I2] = ins([{ pos: p, seq: pat }, { pos: q, seq: pat }]);
+          yield { pcs: P2, ids: I2, cost: 5 };
+        }
+      }
+    }
+    // 4) remove a balanced pair of jogs
+    const jogs = [];
+    for (let i = 0; i < n - 1; i++) if ((pcs[i] === 'L' && pcs[i + 1] === 'R') || (pcs[i] === 'R' && pcs[i + 1] === 'L')) jogs.push(i);
+    for (const a of jogs) for (const b of jogs) {
+      if (b <= a + 1 || pcs[a] !== pcs[b] || mod12(hs[a] - hs[b]) !== 6) continue;
+      const [P2, I2] = del([a, a + 1, b, b + 1]);
+      yield { pcs: P2, ids: I2, cost: 4 };
+    }
+  }
+
+  // old: Map id -> {x,y} world positions of current layout.
+  // The translation is chosen so that as many pieces as possible stay exactly where they were.
+  function scoreLayout(pcs, ids, dragId, target, old, W) {
+    const cs = centers(pcs);
+    const di = ids.indexOf(dragId);
+    if (di < 0) return null;
+    const MOVE = 0.08, MP = ENG_MP.v;
+    const clusters = new Map();
+    const offs = new Array(ids.length);
+    for (let i = 0; i < ids.length; i++) {
+      if (i === di) continue; const o = old.get(ids[i]); if (!o) continue;
+      const dx = o.x - cs[i].x, dy = o.y - cs[i].y; offs[i] = [dx, dy];
+      const k = Math.round(dx * 20) + ',' + Math.round(dy * 20);
+      const c = clusters.get(k); if (c) c.n++; else clusters.set(k, { n: 1, x: dx, y: dy });
+    }
+    let best = null;
+    const tryT = (T) => {
+      let moved = 0;
+      for (let i = 0; i < ids.length; i++) {
+        if (i === di) continue;
+        if (!offs[i]) { moved++; continue; }
+        if (Math.abs(offs[i][0] - T.x) > MOVE || Math.abs(offs[i][1] - T.y) > MOVE) moved++;
+      }
+      const err = W * ((cs[di].x + T.x - target.x) ** 2 + (cs[di].y + T.y - target.y) ** 2);
+      const sc = err + MP * moved + (moved > 0.5 * ids.length ? 1e3 : 0);
+      if (!best || sc < best.sc) best = { sc, err, moved, T };
+    };
+    const cl = [...clusters.values()].sort((a, b) => b.n - a.n).slice(0, 6);
+    cl.forEach(c => tryT({ x: c.x, y: c.y }));
+    if (!cl.length) tryT({ x: target.x - cs[di].x, y: target.y - cs[di].y });
+    return { err: best.err, disp: MP * best.moved + (best.moved > 0.5 * ids.length ? 1e3 : 0), moved: best.moved, T: best.T };
+  }
+
+  // returns best {pcs, ids, T, changes} or null
+  function dragSolve(pcs, ids, dragId, target, old, inv, opt = {}) {
+    const beamW = opt.beam || 14, depth = opt.depth || 3, maxEval = opt.maxEval || 30000;
+    const W = ENG_MP.w || 2, C = 0.22;
+    const nextId = { v: Math.max(...ids) + 1 };
+    const start = scoreLayout(pcs, ids, dragId, target, old, W);
+    const all = [{ pcs, ids, changes: 0, ...start, total: start.err + start.disp }];
+    const seen = new Set([ids.join(',')]);
+    let beam = [all[0]], evals = 0;
+    for (let d = 0; d < depth && evals < maxEval; d++) {
+      const next = [];
+      for (const st of beam) {
+        for (const e of edits(st.pcs, st.ids, inv, nextId)) {
+          if (++evals > maxEval) break;
+          const key = e.ids.join(','); if (seen.has(key)) continue; seen.add(key);
+          const sc = scoreLayout(e.pcs, e.ids, dragId, target, old, W); if (!sc) continue;
+          const changes = st.changes + e.cost;
+          const cand = { pcs: e.pcs, ids: e.ids, changes, ...sc, total: sc.err + sc.disp + C * changes };
+          next.push(cand);
+        }
+      }
+      next.sort((a, b) => a.total - b.total);
+      beam = next.slice(0, beamW);
+      all.push(...next.slice(0, beamW * 4));
+    }
+    all.sort((a, b) => a.total - b.total);
+    let tested = 0;
+    for (const cand of all) {
+      if (tested++ > 60) break;
+      if (!withinInv(cand.pcs, inv)) continue;
+      const v = validate(cand.pcs);
+      if (v.ok && opt.cross === 'never' && v.crossings) continue;
+      if (v.ok && opt.cross === 'always' && !v.crossings) continue;
+      if (v.ok) return { pcs: cand.pcs, ids: cand.ids, T: cand.T, changes: cand.changes, err: cand.err, total: cand.total };
+    }
+    return null;
+  }
+
+  return { ENG_MP, dragSolve, centers, TOWERS, R, A30, BRIDGE_LEN, mulberry, walk, validate, samples, pointOn, counts, genLoop, genCross, headings, isClosed, bridgeH, lenOf, mutate, withinInv };
+})();
+
+
+(() => {
+const NS = 'http://www.w3.org/2000/svg';
+const U = 100;                 // px per straight length
+const svg = document.getElementById('map');
+const $ = id => document.getElementById(id);
+
+const THEMES = {
+  rainbow: {
+    S: { bed: '#2F80ED', edge: '#17468F', tie: '#7DB2FF', chip: '#2F80ED' },
+    C: { bed: '#FF9F1C', edge: '#B85F00', tie: '#FFD08A', chip: '#FF9F1C' },
+    B: { low: [181, 23, 43], high: [255, 77, 94], edge: '#7A0A19', tie: '#FFB3BC', guard: '#FFD60A', chip: '#EF233C' },
+    rail: '#1D2340', railHi: 'rgba(255,255,255,.55)'
+  },
+  classic: {
+    S: { bed: '#C3CAD3', edge: '#6F7A87', tie: '#E3E7EC', chip: '#8894A3' },
+    C: { bed: '#C3CAD3', edge: '#6F7A87', tie: '#E3E7EC', chip: '#A3ADB9' },
+    B: { low: [150, 158, 168], high: [214, 220, 228], edge: '#55606C', tie: '#EEF1F4', guard: '#FFD60A', chip: '#EF233C' },
+    rail: '#3A4250', railHi: 'rgba(255,255,255,.6)'
+  }
+};
+const BRICK_COLS = ['#EF233C', '#FFD60A', '#2F80ED', '#38B000', '#FF9F1C', '#7B2CBF', '#00B4D8', '#FF4FA3'];
+
+const state = {
+  mode: 'mix', theme: 'rainbow', size: 38, bridge: true, nums: false,
+  maxS: 16, maxC: 24, useAll: false, ids: [], ox: 0, oy: 0, view: null, sceneBox: null, playing: true, pcs: null, seed: 0, rot: 0
+};
+
+// ---------- helpers ----------
+function el(name, attrs, parent) {
+  const e = document.createElementNS(NS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+let ROT = 0, COS = 1, SIN = 0, OX = 0, OY = 0;
+function P(x, y) { // local track coords -> screen px
+  x += OX; y += OY;
+  const xr = x * COS - y * SIN, yr = x * SIN + y * COS;
+  return [xr * U, -yr * U];
+}
+const f = n => Math.round(n * 10) / 10;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); }
+
+function offPt(s, t, o) {
+  const p = ENG.pointOn(s, t);
+  return P(p.x - o * Math.sin(p.a), p.y + o * Math.cos(p.a));
+}
+function segD(s, o) {
+  const l = ENG.lenOf(s.type);
+  const a = offPt(s, 0, o), b = offPt(s, l, o);
+  if (s.type === 'S' || s.type === 'B') return `M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}`;
+  const r = (ENG.R - s.dir * o) * U, sweep = s.dir === 1 ? 0 : 1;
+  return `M${f(a[0])} ${f(a[1])}A${f(r)} ${f(r)} 0 0 ${sweep} ${f(b[0])} ${f(b[1])}`;
+}
+const lerpC = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',')})`;
+
+// ---------- generation ----------
+function targetSize() { return state.useAll ? state.maxS + state.maxC + (state.bridge ? 1 : 0) : state.size; }
+function generate(opt) {
+  const SIZE = (opt && opt.size) || targetSize();
+  const inv = { maxS: state.maxS, maxC: state.maxC, maxB: state.bridge ? 1 : 0 };
+  const seed = Math.floor(Math.random() * 1e9);
+  const rnd = ENG.mulberry(seed);
+  let pcs = null;
+  const wantCross = state.mode === 'cross' || (state.mode === 'mix' && state.bridge && rnd() < 0.6);
+  if (wantCross) {
+    if (!state.bridge) { toast('Going under needs the bridge, switched it on'); state.bridge = true; $('bridge').checked = true; inv.maxB = 1; }
+    const cands = []; const t0 = Date.now();
+    while (Date.now() - t0 < 1600 && cands.length < 4) {
+      const r = ENG.genCross({ size: SIZE, inv }, rnd, 700);
+      if (r.pcs) cands.push(r.pcs);
+    }
+    if (cands.length) {
+      cands.sort((a, b) => Math.abs(a.length - SIZE) - Math.abs(b.length - SIZE));
+      pcs = cands[0];
+    } else { if (state.mode === 'cross') toast('Going under the bridge needs about 8+ straights and 24+ curves, here is a loop'); }
+  }
+  if (!pcs) {
+    const cands = [];
+    for (let k = 0; k < 6; k++) {
+      const p = ENG.genLoop({ size: SIZE, inv, bridge: state.bridge, mode: state.mode }, rnd);
+      if (p) cands.push(p);
+    }
+    if (!cands.length) {
+      // try without bridge / minimal circle
+      if (state.maxC >= 12) pcs = 'LLLLLLLLLLLL'.split('');
+      toast(state.maxC < 12 ? 'You need at least 12 curves for a loop' : 'Not enough straights for the bridge, made a circle');
+    } else {
+      cands.sort((a, b) => Math.abs(a.length - SIZE) - Math.abs(b.length - SIZE) + (rnd() - 0.5) * 6);
+      pcs = cands[0];
+    }
+  }
+  if (!pcs) return;
+  // start the build at the bridge (or random) and pick a nice rotation
+  state.pcs = pcs; state.seed = seed; state.ids = pcs.map((_, i) => i + 1);
+  state.ox = 0; state.oy = 0; history.length = 0; updateUndo();
+  $('seed').textContent = '#' + seed.toString(36).toUpperCase();
+  render();
+}
+
+// ---------- rendering ----------
+let geo = null; // walk + samples
+let train = null;
+
+function chooseRotation(pts) {
+  const box = svg.getBoundingClientRect();
+  const aspect = (box.width || 800) / (box.height || 500);
+  let best = 0, bestScale = -1;
+  for (let k = 0; k < 24; k++) {
+    const a = k * Math.PI / 12, c = Math.cos(a), s = Math.sin(a);
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of pts) { const X = p.x * c - p.y * s, Y = p.x * s + p.y * c; x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y); }
+    const w = x1 - x0 + 2.4, h = y1 - y0 + 2.4;
+    const sc = Math.min(aspect / w, 1 / h);
+    if (sc > bestScale + 1e-6) { bestScale = sc; best = a; }
+  }
+  return best;
+}
+
+function render(mode) {
+  mode = mode || 'new';
+  const rnd = ENG.mulberry(state.seed + 7);
+  const pcs = state.pcs;
+  OX = state.ox; OY = state.oy;
+  const v = ENG.validate(pcs);
+  const segs = v.segs || ENG.walk(pcs).segs;
+  const smp = ENG.samples(segs);
+  if (mode === 'new') { ROT = chooseRotation(smp.pts); COS = Math.cos(ROT); SIN = Math.sin(ROT); }
+  const cum = []; let acc = 0; segs.forEach(s => { cum.push(acc); acc += ENG.lenOf(s.type); });
+  geo = { segs, smp, cum, total: acc };
+
+  const th = THEMES[state.theme];
+  svg.innerHTML = '';
+  // bounds
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  const scr = smp.pts.map(p => { const q = P(p.x, p.y); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); return q; });
+  const box = svg.getBoundingClientRect();
+  const aspect = (box.width || 800) / (box.height || 500);
+  const m = 1.2 * U;
+  let vx = x0 - m, vy = y0 - m, vw = x1 - x0 + 2 * m, vh = y1 - y0 + 2 * m;
+  if (mode === 'freeze' && state.view) { ({ vx, vy, vw, vh } = state.view); }
+  else if (mode === 'keep' && state.view) { // keep the camera still, only grow if the track leaves it
+    const o = state.view, mm = 0.45 * U;
+    vx = x0 - mm; vy = y0 - mm; vw = x1 - x0 + 2 * mm; vh = y1 - y0 + 2 * mm;
+    const nx0 = Math.min(o.vx, vx), ny0 = Math.min(o.vy, vy), nx1 = Math.max(o.vx + o.vw, vx + vw), ny1 = Math.max(o.vy + o.vh, vy + vh);
+    vx = nx0; vy = ny0; vw = nx1 - nx0; vh = ny1 - ny0;
+    if (nx0 === o.vx && ny0 === o.vy && nx1 === o.vx + o.vw && ny1 === o.vy + o.vh) mode = 'freeze';
+  }
+  if (mode !== 'freeze') { if (vw / vh < aspect) { const nw = vh * aspect; vx -= (nw - vw) / 2; vw = nw; } else { const nh = vw / aspect; vy -= (nh - vh) / 2; vh = nh; } }
+  state.view = { vx, vy, vw, vh };
+  const sbx = state.sceneBox;
+  if (mode === 'new' || !sbx || vx < sbx.vx || vy < sbx.vy || vx + vw > sbx.vx + sbx.vw || vy + vh > sbx.vy + sbx.vh)
+    state.sceneBox = { vx: vx - vw * .4, vy: vy - vh * .4, vw: vw * 1.8, vh: vh * 1.8 };
+  svg.setAttribute('viewBox', `${f(vx)} ${f(vy)} ${f(vw)} ${f(vh)}`);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  // defs: baseplate studs
+  const defs = el('defs', {}, svg);
+  const pat = el('pattern', { id: 'studs', width: 25, height: 25, patternUnits: 'userSpaceOnUse' }, defs);
+  el('rect', { width: 25, height: 25, fill: '#5BC236' }, pat);
+  el('circle', { cx: 13.5, cy: 13.5, r: 7, fill: '#3FA324', opacity: .55 }, pat);
+  el('circle', { cx: 12.5, cy: 12.5, r: 7, fill: '#6BD047' }, pat);
+  el('circle', { cx: 11.2, cy: 11.2, r: 2.6, fill: '#8BE36A' }, pat);
+  el('rect', { x: vx - 2000, y: vy - 2000, width: vw + 4000, height: vh + 4000, fill: 'url(#studs)' }, svg);
+
+  // scenery
+  const scen = el('g', {}, svg);
+  drawScenery(scen, scr, { vx, vy, vw, vh }, rnd);
+
+  // drag highlight
+  const dIdx = drag ? state.ids.indexOf(drag.id) : -1;
+  if (dIdx >= 0) {
+    el('path', { d: segD(segs[dIdx], 0), stroke: '#FFF36B', 'stroke-width': 110, 'stroke-linecap': 'round', fill: 'none', opacity: .75 }, svg);
+  }
+  // ground track layers
+  const ground = segs.filter(s => s.type !== 'B');
+  const gShadow = el('g', { transform: 'translate(5,7)', opacity: .22 }, svg);
+  const gEdge = el('g', { fill: 'none', 'stroke-linecap': 'butt' }, svg);
+  const gBed = el('g', { fill: 'none' }, svg);
+  const gTie = el('g', { fill: 'none' }, svg);
+  const gRail = el('g', { fill: 'none', 'stroke-linecap': 'round' }, svg);
+  const gJoint = el('g', {}, svg);
+  for (const s of ground) {
+    const c = s.type === 'S' ? th.S : th.C;
+    const d0 = segD(s, 0);
+    el('path', { d: d0, stroke: '#000', 'stroke-width': 64, fill: 'none' }, gShadow);
+    el('path', { d: d0, stroke: c.edge, 'stroke-width': 60 }, gEdge);
+    el('path', { d: d0, stroke: c.bed, 'stroke-width': 51 }, gBed);
+    el('path', { d: d0, stroke: c.tie, 'stroke-width': 40, 'stroke-dasharray': '7 11', 'stroke-dashoffset': 3 }, gTie);
+    for (const o of [-0.135, 0.135]) {
+      el('path', { d: segD(s, o), stroke: th.rail, 'stroke-width': 7 }, gRail);
+      el('path', { d: segD(s, o + 0.012), stroke: th.railHi, 'stroke-width': 2 }, gRail);
+    }
+  }
+  // joints (piece boundaries)
+  segs.forEach(s => {
+    const a = offPt(s, 0, -0.3), b = offPt(s, 0, 0.3);
+    el('line', { x1: f(a[0]), y1: f(a[1]), x2: f(b[0]), y2: f(b[1]), stroke: 'rgba(29,35,64,.55)', 'stroke-width': 5, 'stroke-linecap': 'round' }, gJoint);
+    const c = offPt(s, 0, 0);
+    el('circle', { cx: f(c[0]), cy: f(c[1]), r: 5, fill: '#fff', stroke: 'rgba(29,35,64,.55)', 'stroke-width': 2 }, gJoint);
+  });
+
+  // train layers + bridge
+  const carsLow = el('g', {}, svg);
+  const bridgeG = el('g', {}, svg);
+  segs.filter(s => s.type === 'B').forEach(s => drawBridge(bridgeG, s, th));
+  const carsHigh = el('g', {}, svg);
+
+  // numbers
+  const numG = el('g', { 'font-family': 'Trebuchet MS, sans-serif', 'font-weight': 900, 'font-size': 22, 'text-anchor': 'middle', display: state.nums ? '' : 'none' }, svg);
+  numG.id = 'numbers';
+  segs.forEach((s, i) => {
+    const l = ENG.lenOf(s.type), mid = offPt(s, l / 2, 0);
+    const col = s.type === 'S' ? th.S.chip : s.type === 'B' ? th.B.chip : th.C.chip;
+    el('circle', { cx: f(mid[0]), cy: f(mid[1]), r: 17, fill: '#fff', stroke: col, 'stroke-width': 4 }, numG);
+    const t = el('text', { x: f(mid[0]), y: f(mid[1] + 8), fill: '#1D2340' }, numG); t.textContent = i + 1;
+  });
+
+  if (dIdx >= 0 && drag.target) {
+    const ghost = el('g', { 'pointer-events': 'none' }, svg);
+    const cs = ENG.centers(pcs)[dIdx], a = P(cs.x, cs.y);
+    const tx = drag.target, b = P(tx.x - OX, tx.y - OY);
+    el('line', { x1: f(a[0]), y1: f(a[1]), x2: f(b[0]), y2: f(b[1]), stroke: '#fff', 'stroke-width': 5, 'stroke-dasharray': '10 10', 'stroke-linecap': 'round' }, ghost);
+    el('circle', { cx: f(b[0]), cy: f(b[1]), r: 30, fill: 'rgba(255,255,255,.35)', stroke: '#fff', 'stroke-width': 5, 'stroke-dasharray': '10 8' }, ghost);
+  }
+  buildTrain(carsLow, carsHigh);
+  updateParts(th);
+  const crosses = !!(v.ok && v.crossings);
+  state.crosses = crosses;
+  $('crossBtn').hidden = !ENG.counts(pcs).bridge;
+  $('crossBtn').classList.toggle('on', crosses);
+  $('crossTxt').textContent = crosses ? 'Goes under the bridge' : 'Doesn’t go under';
+}
+
+function drawBridge(g, s, th) {
+  const N = 50, L = ENG.BRIDGE_LEN, pts = [];
+  for (let k = 0; k <= N; k++) {
+    const t = k / N * L, p = ENG.pointOn(s, t), h = ENG.bridgeH(t);
+    pts.push({ t, x: p.x, y: p.y, a: p.a, h, w: 0.3 * (1 + 0.22 * h) });
+  }
+  const side = (p, o, lift) => { const q = P(p.x - o * Math.sin(p.a), p.y + o * Math.cos(p.a)); return [q[0] + (lift || 0), q[1] + (lift || 0)]; };
+  const SH = 38; // shadow offset at full height
+  // shadow
+  const shPoly = pts.map(p => side(p, p.w, p.h * SH)).concat(pts.slice().reverse().map(p => side(p, -p.w, p.h * SH)));
+  el('polygon', { points: shPoly.map(q => q.map(f).join(',')).join(' '), fill: 'rgba(0,0,0,.25)' }, g);
+  // support towers (duplo bricks) beside the deck
+  const towers = ENG.TOWERS.map(t => ({ t }));
+  let ci = 0;
+  for (const tw of towers) {
+    const p = ENG.pointOn(s, tw.t), h = ENG.bridgeH(tw.t);
+    for (const sd of [-1, 1]) {
+      const o = sd * (0.3 * (1 + 0.22 * h) + 0.14);
+      const c = P(p.x - o * Math.sin(p.a), p.y + o * Math.cos(p.a));
+      const deg = -(p.a + ROT) * 180 / Math.PI;
+      // shadow of tower
+      el('rect', { x: -19, y: -19, width: 38, height: 38, rx: 6, fill: 'rgba(0,0,0,.25)', transform: `translate(${f(c[0] + h * SH * .9)},${f(c[1] + h * SH * .9)}) rotate(${f(deg)})` }, g);
+      const col = BRICK_COLS[(ci++) % BRICK_COLS.length];
+      drawBrick(g, c[0], c[1], deg, 2, 2, col, 1 + 0.2 * h);
+    }
+  }
+  // deck quads with height gradient
+  for (let k = 0; k < N; k++) {
+    const a = pts[k], b = pts[k + 1];
+    const poly = [side(a, a.w), side(b, b.w), side(b, -b.w), side(a, -a.w)];
+    const hh = (a.h + b.h) / 2;
+    el('polygon', { points: poly.map(q => q.map(f).join(',')).join(' '), fill: lerpC(th.B.low, th.B.high, hh), stroke: lerpC(th.B.low, th.B.high, hh), 'stroke-width': 1 }, g);
+  }
+  // ties
+  for (let t = 0.12; t < L; t += 0.2) {
+    const p = ENG.pointOn(s, t), h = ENG.bridgeH(t), w = 0.21 * (1 + 0.22 * h);
+    const pp = { x: p.x, y: p.y, a: p.a };
+    const a1 = side(pp, w), a2 = side(pp, -w);
+    el('line', { x1: f(a1[0]), y1: f(a1[1]), x2: f(a2[0]), y2: f(a2[1]), stroke: th.B.tie, 'stroke-width': 7, 'stroke-linecap': 'round', opacity: .8 }, g);
+  }
+  // edges, guard rails, rails
+  const line = (o, extra) => el('polyline', Object.assign({ points: pts.map(p => side(p, o * (1 + 0.22 * p.h)).map(f).join(',')).join(' '), fill: 'none', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, extra), g);
+  for (const sd of [-1, 1]) {
+    line(sd * 0.3, { stroke: th.B.edge, 'stroke-width': 7 });
+    // yellow guard rail only over the high part
+    const hp = pts.filter(p => p.h > 0.45);
+    el('polyline', { points: hp.map(p => side(p, sd * 0.3 * (1 + 0.22 * p.h)).map(f).join(',')).join(' '), fill: 'none', stroke: th.B.guard, 'stroke-width': 9, 'stroke-linecap': 'round' }, g);
+    line(sd * 0.135, { stroke: th.rail, 'stroke-width': 7 });
+    line(sd * 0.135 + 0.012, { stroke: th.railHi, 'stroke-width': 2 });
+  }
+  // ramp chevrons showing uphill direction
+  for (const t of [0.7, 4.3]) {
+    const p = ENG.pointOn(s, t), dir = t < 2.5 ? 1 : -1;
+    const tip = P(p.x + dir * 0.12 * Math.cos(p.a), p.y + dir * 0.12 * Math.sin(p.a));
+    const l = side({ x: p.x - dir * 0.08 * Math.cos(p.a), y: p.y - dir * 0.08 * Math.sin(p.a), a: p.a }, 0.09);
+    const r = side({ x: p.x - dir * 0.08 * Math.cos(p.a), y: p.y - dir * 0.08 * Math.sin(p.a), a: p.a }, -0.09);
+    el('polyline', { points: [l, tip, r].map(q => q.map(f).join(',')).join(' '), fill: 'none', stroke: '#fff', 'stroke-width': 6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: .85 }, g);
+  }
+}
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  r = Math.max(0, Math.min(255, r + amt)); g = Math.max(0, Math.min(255, g + amt)); b = Math.max(0, Math.min(255, b + amt));
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+// top view of a duplo brick (studs nx x ny), centred at x,y
+function drawBrick(g, x, y, deg, nx, ny, col, sc) {
+  const p = 19, w = nx * p, h = ny * p;
+  const gg = el('g', { transform: `translate(${f(x)},${f(y)}) rotate(${f(deg)}) scale(${f(sc || 1)})` }, g);
+  el('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 5, fill: col, stroke: shade(col, -60), 'stroke-width': 2.5 }, gg);
+  for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
+    const cx = -w / 2 + p / 2 + i * p, cy = -h / 2 + p / 2 + j * p;
+    el('circle', { cx: cx + 1, cy: cy + 1.5, r: 6.5, fill: shade(col, -45) }, gg);
+    el('circle', { cx, cy, r: 6.5, fill: shade(col, 25) }, gg);
+    el('circle', { cx: cx - 1.8, cy: cy - 1.8, r: 2.2, fill: 'rgba(255,255,255,.55)' }, gg);
+  }
+  return gg;
+}
+
+function drawScenery(g, scr, vb, rnd) {
+  // spatial hash of track points
+  const cell = 60, grid = new Map();
+  scr.forEach(q => { const k = Math.floor(q[0] / cell) + ',' + Math.floor(q[1] / cell); (grid.get(k) || grid.set(k, []).get(k)).push(q); });
+  const near = (x, y, r) => {
+    const gx = Math.floor(x / cell), gy = Math.floor(y / cell), rr = Math.ceil(r / cell);
+    for (let i = -rr; i <= rr; i++) for (let j = -rr; j <= rr; j++) {
+      const a = grid.get((gx + i) + ',' + (gy + j)); if (!a) continue;
+      for (const q of a) if (Math.hypot(q[0] - x, q[1] - y) < r) return true;
+    }
+    return false;
+  };
+  const placed = [];
+  const free = (x, y, r) => !near(x, y, r + 58) && placed.every(p => Math.hypot(p.x - x, p.y - y) > p.r + r + 6);
+  const sb = state.sceneBox;
+  const area = sb.vw * sb.vh / (U * U);
+  const items = [];
+  const want = Math.min(150, Math.round(area * 0.75));
+  for (let tries = 0; tries < want * 6; tries++) {
+    const x = sb.vx + rnd() * sb.vw, y = sb.vy + rnd() * sb.vh;
+    const r0 = rnd(); let it;
+    if (r0 < 0.30) it = { k: 'tree', r: 30 + rnd() * 16 };
+    else if (r0 < 0.48) it = { k: 'bush', r: 18 + rnd() * 8 };
+    else if (r0 < 0.72) it = { k: 'flower', r: 10 };
+    else if (r0 < 0.84) it = { k: 'brick', r: 30 };
+    else if (r0 < 0.93) it = { k: 'house', r: 48 };
+    else it = { k: 'pond', r: 46 + rnd() * 20 };
+    it.seed = Math.floor(rnd() * 1e9);
+    if (items.length >= want || !free(x, y, it.r)) continue;
+    it.x = x; it.y = y; placed.push(it); items.push(it);
+  }
+  items.sort((a, b) => a.y - b.y);
+  const greens = ['#1E9E3E', '#2BB34B', '#169136', '#3CC15A'];
+  for (const it of items) {
+    const { x, y, r } = it, rnd = ENG.mulberry(it.seed);
+    if (it.k === 'tree') {
+      el('circle', { cx: x + 8, cy: y + 10, r, fill: 'rgba(0,0,0,.2)' }, g);
+      const c = greens[Math.floor(rnd() * greens.length)];
+      el('circle', { cx: x, cy: y, r, fill: shade(c, -25) }, g);
+      el('circle', { cx: x - r * .12, cy: y - r * .12, r: r * .82, fill: c }, g);
+      el('circle', { cx: x - r * .3, cy: y - r * .32, r: r * .35, fill: shade(c, 40) }, g);
+      if (rnd() < .5) for (let k = 0; k < 3; k++) { const a = rnd() * 6.28; el('circle', { cx: x + Math.cos(a) * r * .5, cy: y + Math.sin(a) * r * .5, r: 4.5, fill: '#EF233C', stroke: '#9B1022', 'stroke-width': 1.5 }, g); }
+    } else if (it.k === 'bush') {
+      for (let k = 0; k < 3; k++) { const a = k * 2.1 + rnd(); el('circle', { cx: x + Math.cos(a) * r * .45, cy: y + Math.sin(a) * r * .45, r: r * .62, fill: k ? '#2BB34B' : '#1E9E3E', stroke: '#14732C', 'stroke-width': 2 }, g); }
+    } else if (it.k === 'flower') {
+      const c = ['#FF4FA3', '#FFD60A', '#FFFFFF', '#7B2CBF', '#FF9F1C'][Math.floor(rnd() * 5)];
+      for (let k = 0; k < 5; k++) { const a = k * 1.2566; el('circle', { cx: x + Math.cos(a) * 6, cy: y + Math.sin(a) * 6, r: 5, fill: c, stroke: shade(c, -50), 'stroke-width': 1 }, g); }
+      el('circle', { cx: x, cy: y, r: 4, fill: '#FFB703', stroke: '#B07A00', 'stroke-width': 1 }, g);
+    } else if (it.k === 'brick') {
+      const col = BRICK_COLS[Math.floor(rnd() * BRICK_COLS.length)], deg = rnd() * 360, long = rnd() < .5;
+      el('rect', { x: -(long ? 38 : 19) + 5, y: -19 + 6, width: long ? 76 : 38, height: 38, rx: 6, fill: 'rgba(0,0,0,.2)', transform: `translate(${f(x)},${f(y)}) rotate(${f(deg)})` }, g);
+      drawBrick(g, x, y, deg, long ? 4 : 2, 2, col, 1);
+    } else if (it.k === 'house') {
+      const deg = (rnd() - .5) * 40, col = BRICK_COLS[Math.floor(rnd() * 4)], roof = rnd() < .5 ? '#EF233C' : '#2F80ED';
+      const hg = el('g', { transform: `translate(${f(x)},${f(y)}) rotate(${f(deg)})` }, g);
+      el('rect', { x: -40, y: -30, width: 88, height: 68, rx: 6, fill: 'rgba(0,0,0,.22)' }, hg);
+      el('rect', { x: -46, y: -36, width: 88, height: 68, rx: 6, fill: col, stroke: shade(col, -60), 'stroke-width': 3 }, hg);
+      el('polygon', { points: '-50,-2 -2,-42 46,-2 46,4 -50,4', fill: roof, stroke: shade(roof, -60), 'stroke-width': 3, 'stroke-linejoin': 'round' }, hg);
+      el('polygon', { points: '-50,4 -2,-36 46,4', fill: shade(roof, 30) }, hg);
+      el('rect', { x: -14, y: 10, width: 22, height: 22, rx: 3, fill: '#FFFFFF', stroke: shade(col, -60), 'stroke-width': 2 }, hg);
+      el('rect', { x: 20, y: -26, width: 10, height: 18, fill: '#555', stroke: '#333', 'stroke-width': 2 }, hg);
+    } else if (it.k === 'pond') {
+      el('ellipse', { cx: x, cy: y, rx: r, ry: r * .68, fill: '#2C9AD6', stroke: '#1B6FA0', 'stroke-width': 4 }, g);
+      el('ellipse', { cx: x - r * .2, cy: y - r * .15, rx: r * .55, ry: r * .3, fill: '#5EC6F2' }, g);
+      el('ellipse', { cx: x + r * .35, cy: y + r * .2, rx: 9, ry: 6, fill: '#2BB34B' }, g);
+    }
+  }
+}
+
+
+// ---------- drag & drop editing ----------
+let drag = null;
+const history = [];
+function crossRule() { return state.mode === 'loop' ? 'never' : state.mode === 'cross' ? 'always' : 'any'; }
+function setMode(m) { state.mode = m; $('mode').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === m)); }
+function updateUndo() { const b = $('undo'); if (b) b.disabled = !history.length; }
+function invNow() { return { maxS: state.maxS, maxC: state.maxC, maxB: state.bridge ? 1 : 0 }; }
+function toWorld(ev) {
+  const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+  const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+  const xr = q.x / U, yr = -q.y / U;
+  return { x: xr * COS + yr * SIN, y: -xr * SIN + yr * COS };
+}
+svg.addEventListener('pointerdown', ev => {
+  if (!state.pcs || drag) return;
+  const w = toWorld(ev), cs = ENG.centers(state.pcs);
+  let best = -1, bd = 0.75;
+  cs.forEach((c, i) => { const d = Math.hypot(c.x + state.ox - w.x, c.y + state.oy - w.y); if (d < bd) { bd = d; best = i; } });
+  if (best < 0) return;
+  ev.preventDefault();
+  svg.setPointerCapture(ev.pointerId);
+  const old = new Map(state.ids.map((id, i) => [id, { x: cs[i].x + state.ox, y: cs[i].y + state.oy }]));
+  const c = old.get(state.ids[best]);
+  drag = {
+    id: state.ids[best], pointer: ev.pointerId, grab: { x: c.x - w.x, y: c.y - w.y }, start: w,
+    old, base: { pcs: state.pcs, ids: state.ids, ox: state.ox, oy: state.oy }, target: null, pending: false, key: '', moved: false
+  };
+  svg.style.cursor = 'grabbing';
+  render('freeze');
+});
+svg.addEventListener('pointermove', ev => {
+  if (drag && ev.pointerId === drag.pointer) {
+    const w = toWorld(ev);
+    if (!drag.moved && Math.hypot(w.x - drag.start.x, w.y - drag.start.y) < 0.25) return;
+    drag.moved = true;
+    drag.target = { x: w.x + drag.grab.x, y: w.y + drag.grab.y };
+    if (!drag.pending) { drag.pending = true; requestAnimationFrame(liveSolve); }
+    return;
+  }
+  if (!drag && state.pcs && ev.pointerType === 'mouse') { // hover cursor
+    const w = toWorld(ev), cs = ENG.centers(state.pcs);
+    svg.style.cursor = cs.some(c => Math.hypot(c.x + state.ox - w.x, c.y + state.oy - w.y) < 0.75) ? 'grab' : 'default';
+  }
+});
+function applyLayout(r) { state.pcs = r.pcs; state.ids = r.ids; state.ox = r.T.x; state.oy = r.T.y; }
+function liveSolve() {
+  if (!drag) return;
+  drag.pending = false;
+  const b = drag.base;
+  const r = ENG.dragSolve(b.pcs, b.ids, drag.id, drag.target, drag.old, invNow(), { beam: 8, depth: 2, maxEval: 8000, cross: crossRule() });
+  drag.last = r;
+  if (r) applyLayout(r); else Object.assign(state, { pcs: b.pcs, ids: b.ids, ox: b.ox, oy: b.oy });
+  render('freeze');
+}
+function endDrag(ev) {
+  if (!drag || (ev && ev.pointerId !== drag.pointer)) return;
+  const d = drag; drag = null; svg.style.cursor = '';
+  const b = d.base;
+  if (!d.moved || !d.target) { Object.assign(state, { pcs: b.pcs, ids: b.ids, ox: b.ox, oy: b.oy }); render('keep'); return; }
+  let r = ENG.dragSolve(b.pcs, b.ids, d.id, d.target, d.old, invNow(), { beam: 14, depth: 3, maxEval: 30000, cross: crossRule() });
+  if (d.last && (!r || d.last.total <= r.total + 1e-9)) r = d.last; // keep what the user saw if it was as good
+  if (r && r.changes > 0) {
+    history.push(b); if (history.length > 50) history.shift(); updateUndo();
+    applyLayout(r);
+    toast(`Moved! ${r.changes} piece${r.changes > 1 ? 's' : ''} changed`);
+  } else {
+    Object.assign(state, { pcs: b.pcs, ids: b.ids, ox: b.ox, oy: b.oy });
+    toast(r ? 'Already as close as it can get' : 'The track can’t stretch there with your pieces');
+  }
+  render('keep');
+}
+svg.addEventListener('pointerup', endDrag);
+svg.addEventListener('pointercancel', endDrag);
+function undo() {
+  const h = history.pop(); if (!h) return;
+  Object.assign(state, { pcs: h.pcs, ids: h.ids, ox: h.ox, oy: h.oy });
+  if (h.seed != null) { state.seed = h.seed; setMode(h.mode); $('seed').textContent = '#' + h.seed.toString(36).toUpperCase(); }
+  updateUndo(); render(h.seed != null ? 'fit' : 'keep'); toast('Undone');
+}
+
+// ---------- train ----------
+function buildTrain(low, high) {
+  const cars = [];
+  const mk = (kind) => {
+    const shadow = el('g', {}, low);
+    el('rect', { x: -38, y: -24, width: 76, height: 48, rx: 12, fill: 'rgba(0,0,0,.28)' }, shadow);
+    const g = el('g', {}, low);
+    if (kind === 'engine') {
+      el('rect', { x: -38, y: -25, width: 76, height: 50, rx: 12, fill: '#EF233C', stroke: '#8D0F1F', 'stroke-width': 3 }, g);
+      el('rect', { x: -34, y: -21, width: 30, height: 42, rx: 6, fill: '#FFD60A', stroke: '#B89400', 'stroke-width': 2.5 }, g);
+      for (const yy of [-10, 10]) { el('circle', { cx: -19, cy: yy, r: 6, fill: '#FFE45C', stroke: '#B89400', 'stroke-width': 1.5 }, g); }
+      el('rect', { x: -2, y: -15, width: 34, height: 30, rx: 9, fill: '#2F80ED', stroke: '#17468F', 'stroke-width': 2.5 }, g);
+      el('circle', { cx: 20, cy: 0, r: 9, fill: '#1D2340' }, g);
+      el('circle', { cx: 20, cy: 0, r: 4.5, fill: '#5A6380' }, g);
+      el('rect', { x: 36, y: -18, width: 6, height: 36, rx: 3, fill: '#1D2340' }, g);
+      el('circle', { cx: 40, cy: -12, r: 3.5, fill: '#FFF7AE' }, g); el('circle', { cx: 40, cy: 12, r: 3.5, fill: '#FFF7AE' }, g);
+    } else if (kind === 'cargo') {
+      el('rect', { x: -36, y: -24, width: 72, height: 48, rx: 10, fill: '#2F80ED', stroke: '#17468F', 'stroke-width': 3 }, g);
+      drawBrick(g, -14, 0, 0, 2, 2, '#FFD60A', .8);
+      drawBrick(g, 17, 0, 0, 2, 2, '#FF4FA3', .8);
+    } else {
+      el('rect', { x: -36, y: -24, width: 72, height: 48, rx: 10, fill: '#38B000', stroke: '#1F6B00', 'stroke-width': 3 }, g);
+      for (const xx of [-18, 0, 18]) { el('circle', { cx: xx, cy: 0, r: 9, fill: '#FF9F1C', stroke: '#B85F00', 'stroke-width': 2 }, g); el('circle', { cx: xx, cy: 0, r: 3.5, fill: '#B85F00' }, g); }
+    }
+    return { g, shadow };
+  };
+  ['engine', 'cargo', 'barrel'].forEach(k => cars.push(mk(k)));
+  train = { cars, s: train ? Math.min(train.s, geo.total) : 0.5, low, high };
+  placeTrain();
+}
+
+function pointAt(S) {
+  const T = geo.total; S = ((S % T) + T) % T;
+  let lo = 0, hi = geo.cum.length - 1;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (geo.cum[mid] <= S) lo = mid; else hi = mid - 1; }
+  const s = geo.segs[lo], t = S - geo.cum[lo], p = ENG.pointOn(s, t);
+  return { x: p.x, y: p.y, h: s.type === 'B' ? ENG.bridgeH(t) : 0, bridge: s.type === 'B' };
+}
+
+function placeTrain() {
+  if (!train) return;
+  train.cars.forEach((c, i) => {
+    const sc = train.s - i * 0.86;
+    const a = pointAt(sc + 0.3), b = pointAt(sc - 0.3), m = pointAt(sc);
+    const A = P(a.x, a.y), B = P(b.x, b.y);
+    const cx = (A[0] + B[0]) / 2, cy = (A[1] + B[1]) / 2;
+    const deg = Math.atan2(A[1] - B[1], A[0] - B[0]) * 180 / Math.PI;
+    const h = m.h, k = 1 + 0.22 * h, off = 6 + h * 38;
+    const onB = m.bridge || a.bridge || b.bridge;
+    const layer = onB ? train.high : train.low;
+    if (c.g.parentNode !== layer) { layer.appendChild(c.shadow); layer.appendChild(c.g); }
+    c.g.setAttribute('transform', `translate(${f(cx)},${f(cy)}) rotate(${f(deg)}) scale(${k.toFixed(3)})`);
+    c.shadow.setAttribute('transform', `translate(${f(cx + off)},${f(cy + off)}) rotate(${f(deg)}) scale(${k.toFixed(3)})`);
+  });
+}
+
+let last = performance.now();
+function tick(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (state.playing && train && geo) { train.s = (train.s + dt * 1.7) % geo.total; placeTrain(); }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// ---------- parts panel ----------
+function iconSVG(kind, th) {
+  const c = kind === 'S' ? th.S : th.C;
+  if (kind === 'B') {
+    return `<svg viewBox="0 0 120 80"><polygon points="8,62 40,30 80,30 112,62" fill="rgba(0,0,0,.15)" transform="translate(3,4)"/><rect x="40" y="36" width="10" height="30" rx="2" fill="#FFD60A" stroke="#B89400" stroke-width="2"/><rect x="70" y="36" width="10" height="30" rx="2" fill="#2F80ED" stroke="#17468F" stroke-width="2"/><polyline points="8,62 40,30 80,30 112,62" fill="none" stroke="${th.B.edge}" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"/><polyline points="8,62 40,30 80,30 112,62" fill="none" stroke="${th.B.chip}" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/><polyline points="40,30 80,30" stroke="${th.B.guard}" stroke-width="4" stroke-linecap="round"/></svg>`;
+  }
+  if (kind === 'S') return `<svg viewBox="0 0 120 80"><rect x="10" y="22" width="100" height="36" rx="4" fill="${c.edge}"/><rect x="10" y="26" width="100" height="28" fill="${c.bed}"/><line x1="12" y1="40" x2="108" y2="40" stroke="${c.tie}" stroke-width="22" stroke-dasharray="6 9"/><line x1="10" y1="32" x2="110" y2="32" stroke="${th.rail}" stroke-width="4"/><line x1="10" y1="48" x2="110" y2="48" stroke="${th.rail}" stroke-width="4"/></svg>`;
+  return `<svg viewBox="0 0 120 80"><path d="M14 72 A90 90 0 0 1 96 22" fill="none" stroke="${c.edge}" stroke-width="36"/><path d="M14 72 A90 90 0 0 1 96 22" fill="none" stroke="${c.bed}" stroke-width="29"/><path d="M14 72 A90 90 0 0 1 96 22" fill="none" stroke="${c.tie}" stroke-width="22" stroke-dasharray="6 9"/><path d="M6 66 A98 98 0 0 1 91 14" fill="none" stroke="${th.rail}" stroke-width="4"/><path d="M22 78 A82 82 0 0 1 101 30" fill="none" stroke="${th.rail}" stroke-width="4"/></svg>`;
+}
+function bomRows() {
+  const c = ENG.counts(state.pcs);
+  const rows = [
+    { key: 'S', name: 'Straight track', pn: '6377', need: c.straight, have: state.maxS, note: '' },
+    { key: 'C', name: 'Curved track 30°', pn: '6378', need: c.curve, have: state.maxC, note: `${c.left} turning left, ${c.right} turning right (same piece, flipped)` },
+  ];
+  if (c.bridge) rows.push({ key: 'B', name: '10872 bridge', pn: 'set 10872', need: c.bridge, have: state.bridge ? 1 : 0, note: '2 end ramps + 2 middle half-arches', sub: [['End ramp section', 2], ['Middle half-arch', 2]] });
+  return rows;
+}
+function statusTag(r) {
+  const d = r.have - r.need;
+  if (d < 0) return `<span class="tag short">short ${-d}</span>`;
+  if (d === 0) return `<span class="tag exact">all used</span>`;
+  return `<span class="tag ok">${d} spare</span>`;
+}
+function updateParts(th) {
+  const rows = bomRows();
+  const total = rows.reduce((a, r) => a + (r.key === 'B' ? 4 : r.need), 0);
+  let h = `<table class="bom"><thead><tr><th>Part</th><th>Need</th><th>Have</th><th></th></tr></thead><tbody>`;
+  for (const r of rows) {
+    h += `<tr><td><div class="ico">${iconSVG(r.key, th)}<div>${r.name}<small>#${r.pn}${r.note ? ' · ' + r.note : ''}</small></div></div></td><td class="need">${r.need}</td><td>${r.have}</td><td>${statusTag(r)}</td></tr>`;
+    if (r.sub) for (const s of r.sub) h += `<tr class="sub"><td style="padding-left:52px">↳ ${s[0]}</td><td>${s[1]}</td><td></td><td></td></tr>`;
+  }
+  h += `</tbody><tfoot><tr><td>Total track pieces</td><td class="need">${total}</td><td></td><td></td></tr></tfoot></table>`;
+  $('bom').innerHTML = h;
+  const chipCol = { S: th.S.chip, L: th.C.chip, R: th.C.chip, B: th.B.chip };
+  const lab = { S: 'Straight', L: '↺ Left', R: '↻ Right', B: 'Bridge' };
+  $('chips').innerHTML = state.pcs.map((p, i) => `<span class="chip" style="background:${chipCol[p]}">${i + 1} ${lab[p]}</span>`).join('');
+}
+function bomText() {
+  const rows = bomRows();
+  let s = `Duplo track ${$('seed').textContent}\n`;
+  for (const r of rows) {
+    s += `${r.need} × ${r.name} (#${r.pn}), have ${r.have}${r.note ? ' – ' + r.note : ''}\n`;
+    if (r.sub) for (const x of r.sub) s += `   ${x[1]} × ${x[0]}\n`;
+  }
+  s += `Build order: ${state.pcs.map(p => ({ S: 'S', L: 'L', R: 'R', B: 'BRIDGE' })[p]).join(' ')}\n`;
+  return s;
+}
+$('copyBom').onclick = async () => {
+  const txt = bomText();
+  try { await navigator.clipboard.writeText(txt); toast('Bill of materials copied'); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Bill of materials copied'); } catch (_) { toast('Copy not allowed here'); } ta.remove(); }
+};
+$('csvBom').onclick = () => {
+  const rows = bomRows();
+  let csv = 'Part,Part number,Need,Have,Spare,Note\n';
+  for (const r of rows) csv += `"${r.name}","${r.pn}",${r.need},${r.have},${r.have - r.need},"${r.note}"\n`;
+  rows.filter(r => r.sub).forEach(r => r.sub.forEach(x => { csv += `"  ${x[0]} (in 10872)","",${x[1]},,,\n`; }));
+  csv += `\n"Build order","${state.pcs.join(' ')}"\n`;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `duplo-bom-${$('seed').textContent.slice(1)}.csv`; document.body.appendChild(a); a.click(); a.remove();
+};
+
+// ---------- download ----------
+$('dl').onclick = () => {
+  const clone = svg.cloneNode(true);
+  clone.setAttribute('xmlns', NS);
+  const vb = svg.getAttribute('viewBox').split(' ').map(Number);
+  { const lines = bomText().split('\n').filter(l => l && !l.startsWith('Build order'));
+    const sc = vb[2] / 1200, lg = el('g', { transform: `translate(${vb[0] + 20 * sc},${vb[1] + 20 * sc}) scale(${sc})`, 'font-family': 'Trebuchet MS, sans-serif' }, clone);
+    el('rect', { width: 470, height: 26 + lines.length * 26, rx: 14, fill: '#fff', opacity: .92 }, lg);
+    lines.forEach((l, i) => { const tx = el('text', { x: 16, y: 32 + i * 26, 'font-size': i ? 17 : 19, 'font-weight': i ? 700 : 900, fill: '#1D2340' }, lg); tx.textContent = l; }); }
+  clone.setAttribute('width', Math.round(vb[2])); clone.setAttribute('height', Math.round(vb[3]));
+  const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `duplo-track-${$('seed').textContent.slice(1)}.svg`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+
+// ---------- controls ----------
+function segCtl(id, key, cb) {
+  $(id).querySelectorAll('button').forEach(b => b.onclick = () => {
+    $(id).querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    state[key] = b.dataset.v; cb && cb();
+  });
+}
+segCtl('mode', 'mode', generate);
+segCtl('theme', 'theme', () => render('keep'));
+const sizeLabel = () => { if (state.useAll) { $('sizeV').textContent = 'Using my pieces'; return; } const v = +$('size').value; $('sizeV').textContent = v < 32 ? `Small · ~${v} pcs` : v < 50 ? `Medium · ~${v} pcs` : `Large · ~${v} pcs`; };
+$('size').oninput = sizeLabel; $('size').onchange = () => { state.size = +$('size').value; generate(); };
+$('bridge').onchange = () => { state.bridge = $('bridge').checked; if (!state.bridge && state.mode === 'cross') { $('mode').querySelector('[data-v=loop]').click(); } else generate(); };
+$('nums').onchange = () => { state.nums = $('nums').checked; const n = document.getElementById('numbers'); if (n) n.setAttribute('display', state.nums ? '' : 'none'); };
+let gdeb; const regen = () => { clearTimeout(gdeb); gdeb = setTimeout(generate, 350); };
+$('maxS').onchange = () => { state.maxS = Math.max(0, +$('maxS').value || 0); $('maxS').value = state.maxS; regen(); };
+$('maxC').onchange = () => { state.maxC = Math.max(12, +$('maxC').value || 12); $('maxC').value = state.maxC; regen(); };
+$('gen').onclick = generate;
+$('undo').onclick = undo;
+$('crossBtn').onclick = () => {
+  const want = !state.crosses;
+  const before = { pcs: state.pcs, ids: state.ids, ox: state.ox, oy: state.oy, seed: state.seed, mode: state.mode };
+  setMode(want ? 'cross' : 'loop');
+  generate({ size: Math.max(20, state.pcs.length) });
+  if (want && !state.crosses) return;
+  history.push(before); updateUndo();
+  toast(want ? 'Now the track goes under the bridge' : 'Now it’s a plain loop, nothing goes under the bridge');
+};
+document.querySelectorAll('.stepper button').forEach(b => b.onclick = () => {
+  const inp = $(b.dataset.for); inp.value = Math.max(+inp.min, Math.min(+inp.max, (+inp.value || 0) + +b.dataset.d)); inp.onchange();
+});
+$('useAll').onchange = () => { state.useAll = $('useAll').checked; $('size').disabled = state.useAll; sizeLabel(); generate(); };
+$('play').onclick = () => { state.playing = !state.playing; $('play').textContent = state.playing ? '⏸ Train' : '▶ Train'; };
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (state.pcs) render('fit'); }, 200); });
+
+sizeLabel();
+generate();
+})();
+</script>
+</body>
+</html>
