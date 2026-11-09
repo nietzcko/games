@@ -1139,6 +1139,27 @@ document.addEventListener('touchend', e => {                                   /
   if (now - lastTouchEnd < 320 && !(e.target.closest && e.target.closest('button, input, select, label, .sheet-body, .pop-card'))) e.preventDefault();
   lastTouchEnd = now;
 }, {passive: false});
+/* ---- back-swipe guard: a back swipe only steps back to the same page, then we re-arm ----
+   Some iOS back swipes (e.g. a second finger starting at the screen edge while a chord is held)
+   are decided by the browser before the page can cancel them. With a "#play" history entry on top,
+   such a swipe just removes that entry and the player stays on screen. */
+let guardOn = false;
+function armBackGuard() {
+  try {
+    if (location.hash === '#play') location.replace('#strum');
+    location.hash = 'play';
+    guardOn = true;
+  } catch (e) {}
+}
+let lastBack = 0;
+window.addEventListener('hashchange', () => {
+  if (!guardOn || location.hash === '#play') return;
+  const now = Date.now();
+  if (now - lastBack < 1500) { guardOn = false; try { history.back(); } catch (e) {} return; }   // two backs in a row = really leave
+  lastBack = now;
+  try { location.hash = 'play'; } catch (e) {}
+  toast('Back blocked · go back twice quickly to leave');
+});
 function goFullscreen() {
   const el = document.documentElement, fs = el.requestFullscreen || el.webkitRequestFullscreen;
   if (!fs || document.fullscreenElement || document.webkitFullscreenElement) return;
@@ -1330,6 +1351,7 @@ $('#edSave').addEventListener('click', () => {
 $('#startBtn').addEventListener('click', () => {
   AudioEng.init();
   if (matchMedia('(pointer: coarse)').matches) goFullscreen();
+  armBackGuard();
   $('#splash').classList.add('hide');
   warmKey();
 });
