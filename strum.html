@@ -14,12 +14,12 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;touch-action:manipulation}
 body{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:hidden}
 button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer}
 input,select{font:inherit;user-select:text;-webkit-user-select:text}
 
-#app{height:100vh;height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;
+#app{touch-action:none;overscroll-behavior:none;height:100vh;height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;
   padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 
 /* header */
@@ -69,7 +69,7 @@ input,select{font:inherit;user-select:text;-webkit-user-select:text}
 #flavorBtn{flex:0 0 92px;height:42px;border-radius:12px}
 .pop{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .pop.open{opacity:1;pointer-events:auto}
-.pop-card{width:100%;max-width:560px;max-height:92vh;overflow-y:auto;background:var(--bg);border-top:1px solid var(--line);border-radius:20px 20px 0 0;
+.pop-card{touch-action:pan-y;overscroll-behavior:contain;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;background:var(--bg);border-top:1px solid var(--line);border-radius:20px 20px 0 0;
   padding:14px 14px calc(env(safe-area-inset-bottom) + 18px);transform:translateY(40px);transition:transform .22s}
 .pop.open .pop-card{transform:none}
 .pop-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
@@ -128,7 +128,7 @@ input,select{font:inherit;user-select:text;-webkit-user-select:text}
 #editor{z-index:30}
 .sheet-head{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 10px) 12px 10px;border-bottom:1px solid var(--line)}
 .sheet-head .title{flex:1;text-align:center;font-weight:700;font-size:17px}
-.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+.sheet-body{overscroll-behavior:contain;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;
   padding:12px 14px calc(env(safe-area-inset-bottom) + 28px)}
 .btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;font-size:15px}
 .btn:active{background:var(--panel2)}
@@ -277,7 +277,7 @@ input,select{font:inherit;user-select:text;-webkit-user-select:text}
       <div class="field"><label for="thudT">Muted (×) strings make a dead “thud”</label><label class="switch"><input type="checkbox" id="thudT"><i></i></label></div>
       <div class="field"><label for="hapT">Vibrate on pluck (Android)</label><label class="switch"><input type="checkbox" id="hapT"><i></i></label></div>
       <p class="note">With no hexagon held, every string is muted (×). Switch off the thud above if you'd rather it stay silent.</p>
-      <div class="row" style="margin-top:10px"><button class="btn" id="testStrum">▶ Test strum (C)</button></div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="fsBtn">⛶ Fullscreen</button><button class="btn" id="testStrum">▶ Test strum (C)</button></div>
     </div>
   </div>
 </div>
@@ -1111,9 +1111,35 @@ function warmKey() {        // pre-render the notes of all 12 chords, a bit at a
   warmTimer = setTimeout(step, 30);
 }
 
-$('#strumDown').addEventListener('click', () => strumAll(currentFrets(), 1));
-$('#strumUp').addEventListener('click', () => strumAll(currentFrets(), -1));
-$('#muteBtn').addEventListener('click', () => { AudioEng.damp(0.02); vib.forEach(v => v.amp *= 0.1); ensureAnim(); });
+const tapBtn = (sel, fn) => $(sel).addEventListener('pointerdown', e => { e.preventDefault(); AudioEng.init(); fn(); });
+tapBtn('#strumDown', () => strumAll(currentFrets(), 1));
+tapBtn('#strumUp', () => strumAll(currentFrets(), -1));
+tapBtn('#muteBtn', () => { AudioEng.damp(0.02); vib.forEach(v => v.amp *= 0.1); ensureAnim(); });
+
+/* ---- stop the browser from zooming or swiping back while playing ---- */
+const inScroller = el => el && el.closest && el.closest('.sheet-body, .pop-card');
+document.addEventListener('dblclick', e => e.preventDefault(), {passive: false});
+['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), {passive: false}));
+document.addEventListener('touchstart', e => {
+  const t = e.changedTouches[0]; if (!t) return;
+  const isCtl = e.target.closest && e.target.closest('button, input, select, label');
+  const atEdge = t.clientX < 24 || t.clientX > window.innerWidth - 24;      // iOS back / forward swipe zone
+  if (!isCtl && !inScroller(e.target) && (atEdge || e.touches.length > 1)) e.preventDefault();
+}, {passive: false});
+document.addEventListener('touchmove', e => {
+  if (!inScroller(e.target) || e.touches.length > 1) e.preventDefault();        // no pinch-zoom, no page drag
+}, {passive: false});
+let lastTouchEnd = 0;
+document.addEventListener('touchend', e => {                                   // old-iOS double-tap zoom fallback
+  const now = Date.now();
+  if (now - lastTouchEnd < 320 && !(e.target.closest && e.target.closest('button, input, select, label, .sheet-body, .pop-card'))) e.preventDefault();
+  lastTouchEnd = now;
+}, {passive: false});
+function goFullscreen() {
+  const el = document.documentElement, fs = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!fs || document.fullscreenElement || document.webkitFullscreenElement) return;
+  try { const r = fs.call(el, {navigationUI: 'hide'}); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+}
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let toastT;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1600); }
@@ -1180,6 +1206,7 @@ $('#bri').addEventListener('change', e => { state.bright = +e.target.value; Audi
 $('#dampT').addEventListener('change', e => { state.damp = e.target.checked; save(); });
 $('#thudT').addEventListener('change', e => { state.thud = e.target.checked; save(); });
 $('#hapT').addEventListener('change', e => { state.haptic = e.target.checked; save(); });
+$('#fsBtn').addEventListener('click', goFullscreen);
 $('#testStrum').addEventListener('click', () => { AudioEng.init(); strumAll(getShape(0, ''), 1, false); });
 
 /* ---------------- Chord shape editor ---------------- */
@@ -1298,6 +1325,7 @@ $('#edSave').addEventListener('click', () => {
 /* ---------------- Boot ---------------- */
 $('#startBtn').addEventListener('click', () => {
   AudioEng.init();
+  if (matchMedia('(pointer: coarse)').matches) goFullscreen();
   $('#splash').classList.add('hide');
   warmKey();
 });
