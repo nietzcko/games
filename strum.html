@@ -109,7 +109,7 @@ input,select{font:inherit;user-select:text;-webkit-user-select:text}
 .sq svg{width:20px;height:20px}
 
 /* strings */
-.strings-wrap{position:relative;flex:1;min-height:200px;margin:0 8px 8px;border-radius:18px;overflow:hidden;
+.strings-wrap{position:relative;flex:1;min-height:200px;margin:0 0 4px;border-radius:14px;overflow:hidden;
   background:
     radial-gradient(circle closest-side at var(--hx,58%) var(--hy,50%), #0c0907 0 62%, #d2ae74 62.6% 64.2%, #2a1d13 64.8% 68%, #c59f66 68.6% 69.8%, #2a1d13 70.4% 72%, #d2ae74 72.6% 73.6%, transparent 74.2%),
     repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 2px, rgba(0,0,0,.03) 2px 7px),
@@ -1123,8 +1123,12 @@ document.addEventListener('dblclick', e => e.preventDefault(), {passive: false})
 document.addEventListener('touchstart', e => {
   const t = e.changedTouches[0]; if (!t) return;
   const isCtl = e.target.closest && e.target.closest('button, input, select, label');
-  const atEdge = t.clientX < 24 || t.clientX > window.innerWidth - 24;      // iOS back / forward swipe zone
-  if (!isCtl && !inScroller(e.target) && (atEdge || e.touches.length > 1)) e.preventDefault();
+  const atEdge = t.clientX < 30 || t.clientX > window.innerWidth - 30;      // iOS back / forward swipe zone
+  // Cancel the browser's handling of EVERY touch on the playing surface (hexagons, strings, bars).
+  // If even the chord-holding finger is left to the browser, iOS can turn a second finger
+  // that starts at the edge into a back-swipe. Our controls use pointer events, so nothing is lost.
+  if (isCtl) return;
+  if (!inScroller(e.target) || atEdge || e.touches.length > 1) e.preventDefault();
 }, {passive: false});
 document.addEventListener('touchmove', e => {
   if (!inScroller(e.target) || e.touches.length > 1) e.preventDefault();        // no pinch-zoom, no page drag
