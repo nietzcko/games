@@ -275,6 +275,7 @@ input,select{font:inherit;user-select:text;-webkit-user-select:text}
       <div class="field"><label for="bri">Brightness</label><input type="range" id="bri" min="0" max="1" step="0.01"></div>
       <div class="field"><label for="dampT">Stop ringing when you change chord</label><label class="switch"><input type="checkbox" id="dampT"><i></i></label></div>
       <div class="field"><label for="thudT">Muted (×) strings make a dead “thud”</label><label class="switch"><input type="checkbox" id="thudT"><i></i></label></div>
+      <div class="field"><label for="mixT">Play along with music from other apps<br><small style="color:var(--muted)">iPhone: when on, the silent switch also mutes this player</small></label><label class="switch"><input type="checkbox" id="mixT"><i></i></label></div>
       <div class="field"><label for="hapT">Vibrate on pluck (Android)</label><label class="switch"><input type="checkbox" id="hapT"><i></i></label></div>
       <p class="note">With no hexagon held, every string is muted (×). Switch off the thud above if you'd rather it stay silent.</p>
       <div class="row" style="margin-top:10px"><button class="btn" id="fsBtn">⛶ Fullscreen</button><button class="btn" id="testStrum">▶ Test strum (C)</button></div>
@@ -512,7 +513,7 @@ const SCALES = {
 };
 const DEFAULTS = {
   shapes: {}, key: 0, scale: 'major', flavor: 'triad', showOut: true, hexOrder: 'key',
-  tuning:'std', capo:0, volume:0.8, sustain:0.6, bright:0.55, damp:true, thud:true, haptic:false, orient:'vertical', oneHand:false
+  tuning:'std', capo:0, volume:0.8, sustain:0.6, bright:0.55, damp:true, thud:true, haptic:false, orient:'vertical', oneHand:false, mixOthers:true
 };
 const clone = o => JSON.parse(JSON.stringify(o));
 function load() {
@@ -630,13 +631,18 @@ function ksBuffer(ctx, freq, {t60, bright, dur, pick}) {
   for (let k = 0; k < fl; k++) out[L - 1 - k] *= k / fl;
   return buf;
 }
+// iPhone audio mode: 'ambient' plays along with music from other apps (but follows the silent switch);
+// 'playback' ignores the silent switch but pauses other apps' audio.
+function setAudioSession() {
+  try { if (navigator.audioSession) navigator.audioSession.type = state.mixOthers ? 'ambient' : 'playback'; } catch (e) {}
+}
 const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 
 const AudioEng = {
   ctx: null, voices: Array(8).fill(null), pans: [], cache: new Map(),
   init() {
     if (this.ctx) { if (this.ctx.state !== 'running') this.ctx.resume().catch(()=>{}); return; }
-    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    setAudioSession();
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const c = this.ctx = new AC({latencyHint: 'interactive'});
@@ -1211,7 +1217,7 @@ function renderSound() {
   $('#capoVal').textContent = state.capo;
   $('#orientSel').value = isVert() ? 'vertical' : 'horizontal';
   $('#vol').value = state.volume; $('#sus').value = state.sustain; $('#bri').value = state.bright;
-  $('#dampT').checked = state.damp; $('#thudT').checked = state.thud; $('#hapT').checked = state.haptic;
+  $('#dampT').checked = state.damp; $('#thudT').checked = state.thud; $('#hapT').checked = state.haptic; $('#mixT').checked = state.mixOthers;
 }
 $('#orientSel').addEventListener('change', e => { state.orient = e.target.value; applyOrient(); save(); });
 function applyOrient() { $('#stringsWrap').classList.toggle('vert', isVert()); pointers.clear(); resize(); }
@@ -1231,6 +1237,7 @@ $('#bri').addEventListener('change', e => { state.bright = +e.target.value; Audi
 $('#dampT').addEventListener('change', e => { state.damp = e.target.checked; save(); });
 $('#thudT').addEventListener('change', e => { state.thud = e.target.checked; save(); });
 $('#hapT').addEventListener('change', e => { state.haptic = e.target.checked; save(); });
+$('#mixT').addEventListener('change', e => { state.mixOthers = e.target.checked; setAudioSession(); save(); });
 $('#fsBtn').addEventListener('click', goFullscreen);
 $('#testStrum').addEventListener('click', () => { AudioEng.init(); strumAll(getShape(0, ''), 1, false); });
 
