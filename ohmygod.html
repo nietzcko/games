@@ -34,7 +34,8 @@ button.primary{background:#ef8354;color:#fff}button.danger{background:#b3362e;co
 #raidChip{background:#b3362e;animation:pulse 1.2s infinite}
 #terrChip{background:rgba(63,138,124,.9)}
 @keyframes pulse{50%{filter:brightness(1.25)}}
-#mini{width:120px;height:120px;border-radius:12px;border:3px solid rgba(46,36,28,.85);background:#1d2230;flex:none;image-rendering:pixelated}
+#bigMap{display:block;margin:0 auto 10px;border-radius:12px;border:3px solid #e6d6b0;background:#1d2230;image-rendering:pixelated;max-width:100%}
+#mini{pointer-events:auto;cursor:pointer;width:120px;height:120px;border-radius:12px;border:3px solid rgba(46,36,28,.85);background:#1d2230;flex:none;image-rendering:pixelated}
 #toasts{display:flex;flex-direction:column;gap:5px;max-width:min(380px,100%);transition:opacity .3s}#toasts.dim{opacity:.12}
 .toast{background:rgba(46,36,28,.86);border-left:4px solid #8ecae6;border-radius:10px;padding:7px 10px;font-size:12.5px;line-height:1.35;font-weight:600;transition:opacity .5s}
 .toast.good{border-color:#9bdeac}.toast.warn{border-color:#ffd166}.toast.bad{border-color:#e5484d}.toast.out{opacity:0}
@@ -82,7 +83,7 @@ input[type=file]{width:100%;margin-bottom:8px;font-size:13px}
   <div id="top">
     <div class="pill" id="res" aria-label="Warehouse stock"></div>
     <div class="pill" id="stat"><span><small>Folk</small> <span id="pop">0/0</span></span><span id="msn">Camp</span></div>
-    <div id="btns"><button id="bPause">Pause</button><button id="bFolk">Folk</button><button id="bFac">Factions</button><button id="bMenu">Menu</button></div>
+    <div id="btns"><button id="bMap">Map</button><button id="bPause">Pause</button><button id="bFolk">Folk</button><button id="bFac">Factions</button><button id="bMenu">Menu</button></div>
   </div>
   <div id="row2">
     <div id="left"><div id="obj"></div><div id="raidChip" class="hidden"></div><div id="terrChip" class="hidden"></div><div id="toasts"></div></div>
@@ -597,14 +598,15 @@ function updHauler(v,b,dt){
   case 'idle':
     if(v.carry&&v.carry.n){v.st='toStore';return;}
     v.t-=dt;if(v.t>0){wander(v,b.zone.x,b.zone.y,2,dt);return;}
-    {let best=null,bn=3;                                   // fullest unclaimed pile in this district
+    {let best=null,bn=0;                                   // fullest unclaimed pile in this district
      for(const id in G.B){const s=G.B[id];if(!s.built||!PILE_RES[s.type]||s.p.district!==b.p.district)continue;
-       let n=s.pile;for(const o of G.villagers)if(o!==v&&o.src===id)n-=10;if(n>bn){bn=n;best=s;}}
+       let n=s.pile;for(const o of G.villagers)if(o!==v&&o.src===id)n-=12;if(n<4)continue;
+       const r=PILE_RES[s.type],sc=n*(r==='planks'||r==='bread'?2:1)*100/(G.wh[r]+30);if(sc>bn){bn=sc;best=s;}}      // fetch what the warehouse is shortest of, crafted goods first
      if(best){v.src=best.id;v.st='toPile';}else v.t=1.5;}
     return;
   case 'toPile':{const s=G.B[v.src];if(!s||s.pile<=0){release(v);v.st='idle';v.t=0.5;return;}
     const r=travel(v,s.zone.x+14,s.zone.y-6,dt,V_SPEED);
-    if(r===1){const n=Math.min(10,s.pile);s.pile-=n;v.carry={res:PILE_RES[s.type],n};release(v);v.st='toStore';}
+    if(r===1){const n=Math.min(12,s.pile);s.pile-=n;v.carry={res:PILE_RES[s.type],n};release(v);v.st='toStore';}
     else if(r===-1){release(v);v.st='idle';v.t=1;}return;}
   case 'toStore':deliver(v,dt,b);return;
   default:v.st='idle';v.t=0;
@@ -1556,7 +1558,7 @@ function closeModal(){ui.modal=null;$('modal').classList.add('hidden');if(ui.not
 function notice(title,html){if(ui.modal){ui.noticeQ.push([title,html]);return;}openModal('<h2>'+title+'</h2>'+html+'<div class="foot"><button data-a="close" class="primary">Understood</button></div>','notice');}
 function saveInfo(){if(!ui.saveOK)return 'Browser storage is unavailable here, so automatic saving is off. Use Export save to keep your progress.';return ui.lastSave?'Last saved '+Math.max(0,Math.round((Date.now()-ui.lastSave)/1000))+'s ago. Autosaves every 20 seconds.':'Autosaves every 20 seconds.';}
 function menuPanel(){
-  openModal('<h2>Oh My God</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. There are no action buttons — everything is done by walking and standing. Villagers near you work faster. If you are badly hurt, 35 faith is spent by itself to drive attackers away. Stand at a border stone to offer tribute, in a market ring to trade, and in a small ring at a free plot to choose its building (the pink side ring clears it again). Every building also has a small green <b>Upgrade</b> ring beside it: pay there to add one more worker or bed, up to level 3. Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
+  openModal('<h2>Oh My God</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. Tap <b>Map</b> (or the little map, or press M) to see everything you have discovered and to travel straight back to the city. There are no action buttons — everything is done by walking and standing. Villagers near you work faster. If you are badly hurt, 35 faith is spent by itself to drive attackers away. Stand at a border stone to offer tribute, in a market ring to trade, and in a small ring at a free plot to choose its building (the pink side ring clears it again). Every building also has a small green <b>Upgrade</b> ring beside it: pay there to add one more worker or bed, up to level 3. Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
     '<label class="row"><input type="checkbox" id="optRaids" '+(G.settings.raids?'checked':'')+'><span>Raids enabled <small>— off by default; tick for occasional raids once you have met a hostile camp</small></span></label>'+
     '<div class="grid"><button data-a="save">Save now</button><button data-a="export">Export save</button><button data-a="import">Import save</button><button data-a="new" class="danger">New game</button></div>'+
     '<p class="sm">'+saveInfo()+'</p><p class="sm">World seed '+G.seed+' · '+G.found+' discoveries. The game only runs while this tab is open; there is no offline progress.</p>'+
@@ -1568,6 +1570,44 @@ function folkPanel(){
     rows+='<div class="jrow"><i class="dot" style="background:'+ROLE_LOOK[r].body+'"></i><span class="jn">'+ROLE_NAME[r]+'</span><span class="jc">'+o.used+'/'+o.cap+'</span><button data-a="rm" data-r="'+r+'" '+(o.used?'':'disabled')+' aria-label="Remove one">&minus;</button><button data-a="add" data-r="'+r+'" '+(o.used<o.cap&&idle?'':'disabled')+' aria-label="Add one">+</button></div>';}
   openModal('<h2>Villagers</h2><p class="sm">Population <b>'+G.villagers.length+'/'+popCap()+'</b> · <b>'+idle+'</b> idle. New villagers take useful open jobs on their own. Use &minus; and + to move people between roles.</p>'+
     (rows||'<p class="sm">No workplaces yet — build the lumber camp first.</p>')+'<div class="foot"><button data-a="auto">Auto-assign idle</button><button data-a="close" class="primary">Done</button></div>','folk');
+}
+/* Full map of everything discovered so far, with travel back to the city. */
+function mapPanel(){
+  const R=G.raid,canGo=!G.enemies.some(e=>isHostileNow(e)&&hyp(e.x-G.player.x,e.y-G.player.y)<7*TILE);
+  openModal('<h2>Map</h2><canvas id="bigMap"></canvas><p class="xs">White dot: you · orange: sacred fire · cream: buildings · yellow: travellers, caches and ruins nearby · green, purple and red: the peoples you have met. Pale land is still withered.</p>'+
+    (canGo?'':'<p class="xs err">You cannot travel while enemies are close.</p>')+
+    '<div class="foot"><button data-a="tpHome" '+(canGo?'':'disabled')+'>Return to city</button>'+(G.B.outpost.built?'<button data-a="tpOut" '+(canGo?'':'disabled')+'>Go to outpost</button>':'')+'<button data-a="close" class="primary">Close</button></div>','map');
+  const cs=FOGC*TILE,P=G.player;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const k of G.fog.keys()){const [cx,cy]=k.split(',').map(Number);x0=Math.min(x0,cx);y0=Math.min(y0,cy);x1=Math.max(x1,cx);y1=Math.max(y1,cy);}
+  if(x0>x1){x0=y0=-1;x1=y1=0;}
+  x0-=1;y0-=1;x1+=1;y1+=1;const w=(x1-x0+1)*4,h=(y1-y0+1)*4;
+  const off=document.createElement('canvas');off.width=w;off.height=h;const og=off.getContext('2d'),img=og.createImageData(w,h),d=img.data;
+  const rgb=c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)],pal=MMCOL.map(rgb),dry=[rgb('#c1b584'),rgb('#a69f74')];
+  for(let i=0;i<d.length;i+=4){d[i]=29;d[i+1]=34;d[i+2]=48;d[i+3]=255;}
+  if(mmCache.size>6000)mmCache.clear();
+  for(const [k,m] of G.fog){const [cx,cy]=k.split(',').map(Number);let a=mmCache.get(k);if(!a){a=new Int8Array(16).fill(-1);mmCache.set(k,a);}
+    for(let bit=0;bit<16;bit++){if(!((m>>bit)&1))continue;const li=bit%4,lj=bit>>2,cc=cx*4+li,rw=cy*4+lj;if(a[bit]<0)a[bit]=biomeAt(cc*4+2,rw*4+2);
+      const c=(a[bit]<2&&!lifeAt(cc*4+2,rw*4+2))?dry[a[bit]]:pal[a[bit]],o=((rw-y0*4)*w+(cc-x0*4))*4;d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];}}
+  og.putImageData(img,0,0);
+  const cv=$('bigMap'),maxW=Math.min(410,window.innerWidth-70),maxH=Math.max(160,window.innerHeight*0.5),sc=Math.min(maxW/w,maxH/h,7),dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.style.width=Math.round(w*sc)+'px';cv.style.height=Math.round(h*sc)+'px';cv.width=Math.round(w*sc*dpr);cv.height=Math.round(h*sc*dpr);
+  const g=cv.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(off,0,0,cv.width,cv.height);
+  const k=sc*dpr,mx=x=>(x/cs-x0*4)*k,my=y=>(y/cs-y0*4)*k;
+  const dot=(x,y,col,r,name)=>{g.fillStyle='rgba(29,34,48,0.85)';g.beginPath();g.arc(mx(x),my(y),(r+1.3)*dpr,0,TAU);g.fill();g.fillStyle=col;g.beginPath();g.arc(mx(x),my(y),r*dpr,0,TAU);g.fill();
+    if(name){g.font='bold '+(10*dpr)+'px system-ui,sans-serif';g.textAlign='center';g.lineWidth=3*dpr;g.strokeStyle='rgba(29,34,48,0.85)';g.strokeText(name,mx(x),my(y)-(r+5)*dpr);g.fillStyle='#fff8e8';g.fillText(name,mx(x),my(y)-(r+5)*dpr);}};
+  for(const id in G.B){const b=G.B[id];if(b.built&&b.type!=='bridge')dot(b.zone.x,b.zone.y,'#f3e4c6',2);}
+  for(const c of G.chunks.values())if(c.poi&&!c.poi.done&&isSeen(c.poi.x,c.poi.y))dot(c.poi.x,c.poi.y,'#fff3a8',2.2);
+  const S=L.sites,F=G.factions;if(F.fern.disc)dot(S.fern.x,S.fern.y,'#7be08a',4,'Fernhollow');if(F.thorn.disc)dot(S.thorn.x,S.thorn.y,'#b58be0',4,'Thornbacks');if(F.bandit.disc)dot(S.bandit.x,S.bandit.y,'#e5484d',4,'Rustcloaks');
+  if(G.B.outpost.built)dot(G.B.outpost.zone.x,G.B.outpost.zone.y,'#8ecae6',3.5,'Outpost');
+  dot(HOME.x,HOME.y,'#ef8354',4.5,'City');
+  if(R.state!=='none')dot(R.sx,R.sy,'#ff3b30',4,'Raid');
+  dot(P.x,P.y,'#ffffff',3.5,'You');
+}
+function travelTo(x,y,name){
+  const P=G.player;if(G.enemies.some(e=>isHostileNow(e)&&hyp(e.x-P.x,e.y-P.y)<7*TILE)){toast('You cannot travel while enemies are close.','warn');return;}
+  if(G.rings.length<8)G.rings.push({x:P.x,y:P.y,t:0,r:2.5*TILE,col:'#fff3c4'});
+  P.x=x;P.y=y;P.target=null;P.ftarget=null;P.foe=null;camSnap=true;ensureChunks(true);revealAt(x,y,10);
+  if(G.rings.length<8)G.rings.push({x,y,t:0,r:2.5*TILE,col:'#fff3c4'});closeModal();toast('You step through the light and arrive at '+name+'. Everything you carried came with you.','good');
 }
 function fmtTime(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 function facPanel(){
@@ -1611,6 +1651,8 @@ function tryImport(txt){
 function onCardClick(e){
   const el=e.target.closest('[data-a]');if(!el)return;const a=el.dataset.a;
   if(a==='close')closeModal();
+  else if(a==='tpHome')travelTo(HOME.x+30,HOME.y+34,'the sacred fire');
+  else if(a==='tpOut'){const z=G.B.outpost.zone;travelTo(z.x,z.y,'the frontier outpost');}
   else if(a==='menu')menuPanel();
   else if(a==='save'){saveGame(true);menuPanel();}
   else if(a==='export')exportPanel();
@@ -1667,6 +1709,7 @@ function bindInput(){
     if(e.code==='Escape'){if(ui.modal)closeModal();else menuPanel();return;}
     if(ui.modal)return;
     if(e.code==='KeyP'){ui.paused=!ui.paused;updateHud();return;}
+    if(e.code==='KeyM'){mapPanel();return;}
     const k=KEY[e.code];if(k){input.keys[k]=true;e.preventDefault();}else if(e.code==='Space')e.preventDefault();});
   window.addEventListener('keyup',e=>{const k=KEY[e.code];if(k)input.keys[k]=false;});
   window.addEventListener('blur',()=>{input.keys={};input.joy=null;});
@@ -1681,6 +1724,7 @@ function bindInput(){
   for(const ev of ['touchstart','touchmove'])canvas.addEventListener(ev,e=>e.preventDefault(),{passive:false});
   for(const ev of ['gesturestart','contextmenu','dblclick'])document.addEventListener(ev,e=>{if(!e.target.closest||!e.target.closest('#card'))e.preventDefault();});
   $('bPause').addEventListener('click',()=>{ui.paused=!ui.paused;$('bPause').textContent=ui.paused?'Resume':'Pause';updateHud();});
+  $('mini').addEventListener('click',mapPanel);$('bMap').addEventListener('click',mapPanel);
   $('bFolk').addEventListener('click',folkPanel);$('bFac').addEventListener('click',facPanel);$('bMenu').addEventListener('click',menuPanel);
   $('card').addEventListener('click',onCardClick);
   $('card').addEventListener('change',e=>{if(e.target.id==='optRaids'){G.settings.raids=e.target.checked;toast(G.settings.raids?'Raids enabled.':'Raids disabled — a fully peaceful game.','info');requestSave();}});
