@@ -434,7 +434,7 @@ function unassignRole(role){const v=G.villagers.find(v=>v.job&&v.job.role===role
 function assignRole(role){const v=G.villagers.find(v=>!v.job),s=jobSlots().find(s=>s.role===role&&s.used<s.cap);if(v&&s){setJob(v,s.b,s.role);v.manualIdle=false;return true;}return false;}
 const MS_REQ=[[['b','warehouse'],['b','house1'],['b','lumber'],['pop',2]],[['b','quarry'],['b','farm'],['pop',5]],[['b','sawmill'],['b','bakery'],['b','tower'],['pop',9]],[['b','bridge'],['b','outpost'],['pop',14]]];
 const MS_UNLOCK=['',
-  'Unlocked: Quarry, Farm and a second House. Backpack 30. New miracle: Stone, which refills spent rock. The anvil can now forge an Iron axe.',
+  'Unlocked: Quarry, Farm and a second House. Backpack 30. Spent rock now mends faster while you are near. The anvil can now forge an Iron axe.',
   'Unlocked: Sawmill, Bakery, Watchtower, a third House and the Old Bridge to the east. New miracles: Bless and Awe. Guards, backpack 40, Steel axe at the anvil.',
   'Unlocked: Frontier Outpost beyond the bridge, two more Houses and two free-choice plots. Backpack 55, Master axe at the anvil.',
   'Unlocked: a final free-choice plot and backpack 70. Lanterns light every road.'];
@@ -442,7 +442,6 @@ const reqDone=r=>r[0]==='b'?G.B[r[1]].built:G.villagers.length>=r[1];
 function checkMilestone(){if(G.ms>=4||!MS_REQ[G.ms].every(reqDone))return;G.ms++;banner('Your settlement is now a '+MS_NAMES[G.ms]+'!',MS_UNLOCK[G.ms]);celebrate(HOME.x,HOME.y);assignIdle();requestSave();}
 /* ----- Faith and miracles ----- */
 const MIRACLES=[
-  {id:'stone',name:'Stone',cost:30,ms:1,col:'#cfd6dc'},
   {id:'bless',name:'Bless',cost:20,ms:2,col:'#ffe9a3'},{id:'awe',name:'Awe',cost:35,ms:2,col:'#f7a8b8'}];
 const faithMax=()=>100+25*G.ms;
 function lifeCost(){let c=Math.min(80,30+G.recruits*4);if(G.factions.fern.disc)c=Math.ceil(c*0.7);return c;}
@@ -1104,7 +1103,7 @@ function renderChunk(c){
 function drawNode(n){
   drawNodeBody(n);
   if(n.rainUntil>G.time&&n.res==='wood'){                    // a little rain cloud over a tree that is growing
-    const t=G.time,k=Math.min(1,(n.rainUntil-t)/0.4),x=n.x,y=n.y-56;C.globalAlpha=0.9*k;
+    const t=G.time,k=Math.min(1,(n.rainUntil-t)/0.4),x=n.x,y=n.y-56;C.globalAlpha=0.42*k;
     C.strokeStyle='#cfe6fb';C.lineWidth=1.5;C.beginPath();for(let i=0;i<5;i++){const ph=(t*1.8+i*0.37)%1,rx=x-12+i*6,ry=y+6+ph*30;C.moveTo(rx,ry);C.lineTo(rx-1.5,ry+7);}C.stroke();
     fs('#f1f4f8');ell(x,y,15,7.5);ell(x+11,y+3,10,6);ell(x-11,y+3,10,6);fs('#dfe6ee');ell(x,y+5,14,4);C.globalAlpha=1;}
 }
@@ -1203,7 +1202,7 @@ function drawPlot(b){
     const r=PILE_RES[b.type],px=b.zone.x+16,py=b.zone.y-14,n=Math.min(9,Math.ceil(b.pile/4));
     shadow(px+6,py+5,16,5);for(let i=0;i<n;i++)icon(r,px+(i%3)*7-1+(Math.floor(i/3)%2)*3,py-Math.floor(i/3)*6,1.15);
     label(b.pile>=PILE_CAP?'pile full '+b.pile:''+b.pile,px+6,py+14,10,b.pile>=PILE_CAP?'#ffb4a2':'#fff8e8');}
-  if(t-b.starved<4&&(b.type==='lumber'||b.type==='quarry'))label(b.type==='lumber'?'No living trees in reach — walk there to wake them':'Rock is spent — cast Stone',cx,y-h*0.3-12,10,'#ffe9a8');
+  if(t-b.starved<4&&(b.type==='lumber'||b.type==='quarry'))label(b.type==='lumber'?'No living trees in reach — walk there to wake them':'Rock is spent — it mends faster while you stand near',cx,y-h*0.3-12,10,'#ffe9a8');
   if(b.disabledUntil>t){label('Damaged — repairing',cx,y-h*0.3-14,10,'#ffb4a2');fs('rgba(70,60,60,'+(0.35+0.2*Math.sin(t*5))+')');circ(cx+Math.sin(t*2)*6,y-h*0.3,8);circ(cx+8,y-h*0.3-10,6);}
 }
 function drawFields(b){
@@ -1485,7 +1484,7 @@ function closeModal(){ui.modal=null;$('modal').classList.add('hidden');if(ui.not
 function notice(title,html){if(ui.modal){ui.noticeQ.push([title,html]);return;}openModal('<h2>'+title+'</h2>'+html+'<div class="foot"><button data-a="close" class="primary">Understood</button></div>','notice');}
 function saveInfo(){if(!ui.saveOK)return 'Browser storage is unavailable here, so automatic saving is off. Use Export save to keep your progress.';return ui.lastSave?'Last saved '+Math.max(0,Math.round((Date.now()-ui.lastSave)/1000))+'s ago. Autosaves every 20 seconds.':'Autosaves every 20 seconds.';}
 function menuPanel(){
-  openModal('<h2>Emberwick</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. Miracles unlock as you grow (buttons above your backpack, keys 1–3): <b>Stone</b> refills rock, <b>Bless</b> speeds villagers up, <b>Awe</b> drives enemies off. Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
+  openModal('<h2>Emberwick</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. Miracles unlock as you grow (buttons above your backpack, keys 1–2): <b>Bless</b> speeds villagers up, <b>Awe</b> drives enemies off. Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
     '<label class="row"><input type="checkbox" id="optRaids" '+(G.settings.raids?'checked':'')+'><span>Raids enabled <small>— untick for a fully peaceful game</small></span></label>'+
     '<div class="grid"><button data-a="save">Save now</button><button data-a="export">Export save</button><button data-a="import">Import save</button><button data-a="new" class="danger">New game</button></div>'+
     '<p class="sm">'+saveInfo()+'</p><p class="sm">World seed '+G.seed+' · '+G.found+' discoveries. The game only runs while this tab is open; there is no offline progress.</p>'+
@@ -1721,7 +1720,7 @@ function update(dt){
   for(let i=G.flies.length-1;i>=0;i--){G.flies[i].t+=dt/0.3;if(G.flies[i].t>=1)G.flies.splice(i,1);}
   G.fastT-=dt;if(G.fastT<=0){G.fastT=0.25;ensureChunks(false);revealAt(P.x,P.y,10);
     bringLife(P.x,P.y,AURA,true);                                                     // your rain wakes withered land as you walk
-    nodesNear(P.x,P.y,AURA*TILE,n=>{if(n.dead&&!n.wither&&n.res==='wood'&&n.readyAt<1e9){n.rainUntil=G.time+0.6;n.readyAt-=0.75;const m=G.mods[n.c.k];if(m&&m[n.i]!==undefined)m[n.i]=n.readyAt;}});}   // stumps near you regrow 4x faster
+    nodesNear(P.x,P.y,AURA*TILE,n=>{if(n.dead&&!n.wither&&n.readyAt<1e9){n.rainUntil=G.time+0.6;n.readyAt-=0.75;const m=G.mods[n.c.k];if(m&&m[n.i]!==undefined)m[n.i]=n.readyAt;}});}   // stumps near you regrow 4x faster
   G.slowT-=dt;
   if(G.slowT<=0){G.slowT=1;tickRegrow();tickFactions();checkMilestone();
     if(G.pending>0&&G.villagers.length<popCap()){G.pending--;spawnVillager();toast('A Fernhollow settler has arrived to join you.','good');}
