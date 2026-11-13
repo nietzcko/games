@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Emberwick</title>
+<title>Oh My God</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:#1d2230;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff8e8}
@@ -48,7 +48,7 @@ button.primary{background:#ef8354;color:#fff}button.danger{background:#b3362e;co
 #ctx button small{display:block;font-weight:600;font-size:10.5px;opacity:.75}
 .ctxT small{font-weight:600;opacity:.75}
 #mir{background:rgba(46,36,28,.86);border-radius:14px;padding:7px 8px;pointer-events:auto;max-width:96vw}
-#faithRow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-bottom:6px}#faithBar{flex:1;height:7px;border-radius:5px;background:rgba(255,248,232,.2);overflow:hidden;min-width:90px}#faithFill{height:100%;width:0;background:linear-gradient(90deg,#ffd166,#fff3c4);border-radius:5px}
+#faithRow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}#mir{pointer-events:none!important;min-width:210px}#faithBar{flex:1;height:7px;border-radius:5px;background:rgba(255,248,232,.2);overflow:hidden;min-width:90px}#faithFill{height:100%;width:0;background:linear-gradient(90deg,#ffd166,#fff3c4);border-radius:5px}
 #mirBtns{display:flex;gap:5px;justify-content:center}#mirBtns button{min-width:58px;padding:6px 6px;line-height:1.15;border-bottom:3px solid var(--c,#ffd166)}#mirBtns button small{display:block;font-weight:600;font-size:10.5px;opacity:.75}
 .mirNone{font-size:11.5px;font-weight:600;opacity:.75}
 #pack{background:rgba(46,36,28,.86);border-radius:14px;padding:7px 10px;min-width:210px;max-width:96vw;font-size:13px;font-weight:700}
@@ -92,7 +92,7 @@ input[type=file]{width:100%;margin-bottom:8px;font-size:13px}
   <div id="paused" class="hidden">Paused</div>
   <div id="bottom">
     <div id="ctx" class="hidden"></div>
-    <div id="mir"><div id="faithRow"><span>Faith</span><div id="faithBar"><div id="faithFill"></div></div><span id="faithN">60/100</span></div><div id="mirBtns"></div></div>
+    <div id="mir"><div id="faithRow"><span>Faith</span><div id="faithBar"><div id="faithFill"></div></div><span id="faithN">60/100</span></div></div>
     <div id="pack"><div id="packTop"><span>Backpack <small id="toolN"></small></span><span id="packN">0/20</span></div><div id="packBar"><div id="packFill"></div></div><div id="packItems" class="hidden"></div></div>
   </div>
 </div>
@@ -100,7 +100,7 @@ input[type=file]{width:100%;margin-bottom:8px;font-size:13px}
 <script>
 'use strict';
 /* =====================================================================
-   EMBERWICK — a cosy gather-and-build game. One file, vanilla JS + Canvas.
+   OH MY GOD — a cosy, unhurried god game. One file, vanilla JS + Canvas.
    Sections: 1 Config/Utils · 2 Layout · 3 World/Chunks · 4 Navigation
              5 State · 6 Buildings/Jobs · 7 Villagers · 8 Combat/Enemies
              9 Factions/Raids · 10 Player · 11 Render · 12 UI · 13 Save · 14 Main
@@ -112,7 +112,7 @@ const SAVE_KEY='emberwick-save', SAVE_VERSION=4;
 const RES=['wood','stone','grain','planks','bread'];
 const RES_COL={wood:'#a8703d',stone:'#9aa2ab',grain:'#e6c34c',planks:'#e2b072',bread:'#c8843f'};
 const MS_NAMES=['Camp','Hamlet','Village','Town','City'];
-const PACK=[20,30,40,55,70], HIT_T=[0.5,0.42,0.36,0.3,0.26];
+const PACK=[30,40,55,70,90], HIT_T=[0.5,0.42,0.36,0.3,0.26];
 const HARV_R=46, WEAPON=64, PICK_R=84, DWELL=0.7, ATK_T=0.55;
 const B_GRASS=0,B_FOREST=1,B_ROCKY=2,B_FROST=3,B_WATER=4,B_SAND=5,B_GROVE=6;
 const HOME={x:16,y:16};
@@ -144,16 +144,16 @@ const BT={
   garden:{name:'Garden',w:3,h:2,pop:1},
 };
 const CHOICES=['house','farm','lumber','quarry','tower','garden'];
-const CHOICE_COST={house:{planks:30,stone:20,bread:8},farm:{wood:40,planks:20},lumber:{wood:30,planks:15},quarry:{wood:30,planks:20},tower:{stone:40,planks:20},garden:{wood:20,stone:20}};
+const CHOICE_COST={house:{planks:20,stone:14,bread:5},farm:{wood:28,planks:14},lumber:{wood:20,planks:10},quarry:{wood:20,planks:14},tower:{stone:28,planks:14},garden:{wood:14,stone:14}};
 /* Workplaces stack what they make beside the door; you or a hauler carry it to storage. */
-const PILE_RES={lumber:'wood',quarry:'stone',farm:'grain',sawmill:'planks',bakery:'bread'}, PILE_CAP=40;
+const PILE_RES={lumber:'wood',quarry:'stone',farm:'grain',sawmill:'planks',bakery:'bread'}, PILE_CAP=80;
 const TOOLS=[{name:'Flint axe',hit:0.5,pow:1,dmg:10,col:'#aab2ba'},{name:'Copper axe',hit:0.4,pow:1,dmg:14,col:'#d98a4a'},{name:'Iron axe',hit:0.32,pow:1,dmg:18,col:'#dfe5ea'},{name:'Steel axe',hit:0.48,pow:2,dmg:23,col:'#8ecae6'},{name:'Master axe',hit:0.34,pow:2,dmg:28,col:'#ffd166'}];
-const TOOL_COST=[{wood:25,stone:15},{wood:40,stone:40,planks:10},{stone:60,planks:40,bread:10},{stone:100,planks:80,bread:30}];
+const TOOL_COST=[{wood:18,stone:10},{wood:28,stone:28,planks:8},{stone:40,planks:28,bread:8},{stone:70,planks:55,bread:20}];
 /* Fighting has its own track, separate from the axe: trained at the staff rack, ending in lightning. */
 const WEAPONS=[{name:'Walking staff',dmg:10,cd:0.55,range:64,col:'#b98a5e'},{name:'Ironwood staff',dmg:14,cd:0.5,range:66,col:'#8d959e'},{name:'Blessed staff',dmg:19,cd:0.46,range:70,col:'#ffe9a3'},
   {name:'Sunfire staff',dmg:25,cd:0.42,range:80,col:'#ffb347'},{name:'Lightning',dmg:32,cd:0.6,range:150,col:'#bfe3ff',bolt:true}];
-const WEAPON_COST=[{wood:20,stone:20},{wood:30,stone:40,planks:10},{stone:50,planks:40,bread:10},{stone:80,planks:70,bread:30}];
-const NODE={tree:{res:'wood',hp:4,regen:80},pine:{res:'wood',hp:4,regen:90},elder:{res:'wood',hp:8,regen:220,prot:true},rock:{res:'stone',hp:4,regen:140},ice:{res:'stone',hp:5,regen:160}};
+const WEAPON_COST=[{wood:14,stone:14},{wood:20,stone:28,planks:8},{stone:35,planks:28,bread:8},{stone:55,planks:50,bread:20}];
+const NODE={tree:{res:'wood',hp:4,regen:50},pine:{res:'wood',hp:4,regen:60},elder:{res:'wood',hp:8,regen:220,prot:true},rock:{res:'stone',hp:4,regen:90},ice:{res:'stone',hp:5,regen:160}};
 
 function buildLayout(seed){
   L={seed,solid:new Map(),reserved:new Set(),road:new Set(),plots:[],patches:[],sites:{},bridge:{x0:0,x1:0},lamps:[]};
@@ -187,7 +187,9 @@ function buildLayout(seed){
   ];
   const reserve=(x,y,w,h,m)=>{for(let j=y-m;j<y+h+m;j++)for(let i=x-m;i<x+w+m;i++)L.reserved.add(tkey(i,j));};
   const solid=(x,y,w,h,ref)=>{for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)L.solid.set(tkey(i,j),ref);reserve(x,y,w,h,1);};
+  const ease=c=>{for(const r in c)c[r]=Math.max(3,Math.round(c[r]*0.7));};        // everything costs about a third less: no rush
   for(const d of defs){
+    if(d.cost)ease(d.cost);
     const t=BT[d.type]||{w:3,h:2};d.w=d.type?t.w:3;d.h=d.type?t.h:2;d.district=d.district||'home';
     if(d.type==='bridge'){d.x=x0;d.y=0;d.zone={x:(x0-0.5)*TILE,y:1*TILE,r:1.3*TILE};reserve(x0-3,-1,x1-x0+7,4,0);}
     else{d.zone={x:(d.x+d.w/2)*TILE,y:(d.y+d.h+0.8)*TILE,r:1.25*TILE};solid(d.x,d.y,d.w,d.h,d.id);reserve(Math.floor(d.x+d.w/2)-1,d.y+d.h,3,2,0);}
@@ -377,7 +379,7 @@ function newState(seed){
     up:{speed:0,dmg:0,pack:0,hp:0},wh:zeroRes(),B:{},villagers:[],enemies:[],drops:[],particles:[],floats:[],flies:[],shots:[],
     chunks:new Map(),fog:new Map(),mods:{},pois:{},
     factions:{fern:{disc:false,h:0},thorn:{disc:false,h:0,entered:false,pact:false},bandit:{disc:false,h:0}},
-    raid:{state:'none',cd:0,t:0,chk:0},settings:{raids:true},faith:60,faithRate:0,life:new Map(),lifeAll:false,rains:[],rings:[],fedT:5,fed:false,praying:false,
+    raid:{state:'none',cd:0,t:0,chk:0},settings:{raids:false},faith:60,faithRate:0,life:new Map(),lifeAll:false,rains:[],rings:[],fedT:5,fed:false,praying:false,
     decor:0,pending:0,recruits:0,nextId:1,tool:0,anvil:{cost:TOOL_COST[0],paid:{},dwell:0,dt:0,hintT:-9},weapon:0,rack:{cost:WEAPON_COST[0],paid:{},dwell:0,dt:0,hintT:-9},bolts:[],tips:{},fly:0,ctx:null,terr:null,
     respawn:{thorn:[],bandit:[]},slowT:0,fastT:0,saveT:20,driftT:0,pathBudget:0,bellDwell:0,found:0,smokeT:0};
   for(const p of L.plots){
@@ -432,19 +434,21 @@ function assignIdle(force){
 }
 function unassignRole(role){const v=G.villagers.find(v=>v.job&&v.job.role===role);if(v){setJob(v,null);v.manualIdle=true;}}
 function assignRole(role){const v=G.villagers.find(v=>!v.job),s=jobSlots().find(s=>s.role===role&&s.used<s.cap);if(v&&s){setJob(v,s.b,s.role);v.manualIdle=false;return true;}return false;}
-const MS_REQ=[[['b','warehouse'],['b','house1'],['b','lumber'],['pop',2]],[['b','quarry'],['b','farm'],['pop',5]],[['b','sawmill'],['b','bakery'],['b','tower'],['pop',9]],[['b','bridge'],['b','outpost'],['pop',14]]];
+const MS_REQ=[[['b','warehouse'],['b','house1'],['b','lumber'],['pop',2]],[['b','quarry'],['b','farm'],['pop',4]],[['b','sawmill'],['b','bakery'],['b','tower'],['pop',7]],[['b','bridge'],['b','outpost'],['pop',11]]];
 const MS_UNLOCK=['',
-  'Unlocked: Quarry, Farm and a second House. Backpack 30. Spent rock now mends faster while you are near. The anvil can now forge an Iron axe.',
-  'Unlocked: Sawmill, Bakery, Watchtower, a third House and the Old Bridge to the east. New miracles: Bless and Awe. Guards, backpack 40, Steel axe at the anvil.',
-  'Unlocked: Frontier Outpost beyond the bridge, two more Houses and two free-choice plots. Backpack 55, Master axe at the anvil.',
-  'Unlocked: a final free-choice plot and backpack 70. Lanterns light every road.'];
+  'Unlocked: Quarry, Farm and a second House. Backpack 40.',
+  'Unlocked: Sawmill, Bakery, Watchtower, a third House and the Old Bridge to the east. Guards, backpack 55.',
+  'Unlocked: Frontier Outpost beyond the bridge, two more Houses and two free-choice plots. Backpack 70.',
+  'Unlocked: a final free-choice plot and backpack 90. Lanterns light every road.'];
 const reqDone=r=>r[0]==='b'?G.B[r[1]].built:G.villagers.length>=r[1];
 function checkMilestone(){if(G.ms>=4||!MS_REQ[G.ms].every(reqDone))return;G.ms++;banner('Your settlement is now a '+MS_NAMES[G.ms]+'!',MS_UNLOCK[G.ms]);celebrate(HOME.x,HOME.y);assignIdle();requestSave();}
 /* ----- Faith and miracles ----- */
 const MIRACLES=[
-  {id:'bless',name:'Bless',cost:20,ms:2,col:'#ffe9a3'},{id:'awe',name:'Awe',cost:35,ms:2,col:'#f7a8b8'}];
+  {id:'awe',name:'Awe',cost:35,ms:0,col:'#f7a8b8'}];      // no buttons: awe fires by itself when you are badly hurt
+const choiceSpot=(b,i)=>({x:b.zone.x+(i-2.5)*1.4*TILE,y:b.zone.y,r:0.62*TILE});
+const tradeSpot=i=>({x:L.sites.fern.stall.x+(i-1)*2.3*TILE,y:L.sites.fern.stall.y+0.6*TILE,r:0.8*TILE});
 const faithMax=()=>100+25*G.ms;
-function lifeCost(){let c=Math.min(80,30+G.recruits*4);if(G.factions.fern.disc)c=Math.ceil(c*0.7);return c;}
+function lifeCost(){let c=Math.min(60,20+G.recruits*3);if(G.factions.fern.disc)c=Math.ceil(c*0.7);return c;}
 const miracleCost=m=>m.cost;
 const AURA=4.5;                 // tiles: your rain follows you and wakes the land for free
 function castMiracle(id){
@@ -468,7 +472,7 @@ function updFaith(dt){
   const pop=G.villagers.length;G.fedT-=dt;
   if(G.fedT<=0){G.fedT=45;const need=Math.ceil(pop/4);if(pop&&G.wh.bread>=need){G.wh.bread-=need;G.fed=true;}else G.fed=false;}     // bread strengthens belief; running out costs nothing else
   const P=G.player;for(const id in G.B){const b=G.B[id];if(b.built&&b.fields&&b.type==='farm')for(const f of b.fields)if(f.grow<1&&hyp(f.x-P.x,f.y-P.y)<AURA*TILE)f.grow=Math.min(1,f.grow+dt/14);}      // fields ripen faster in your rain
-  G.faithRate=(0.5+0.09*pop)*(G.fed?1.5:1)+(G.praying?1.6:0);G.faith=Math.min(faithMax(),G.faith+G.faithRate*dt);
+  G.faithRate=(0.8+0.1*pop)*(G.fed?1.5:1)+(G.praying?1.6:0);G.faith=Math.min(faithMax(),G.faith+G.faithRate*dt);
   for(let i=G.rains.length-1;i>=0;i--){const r=G.rains[i];r.t-=dt;r.chk-=dt;
     if(r.chk<=0){r.chk=0.6;nodesNear(r.x,r.y,r.r,n=>{if(n.dead&&n.res==='wood'&&hyp(n.x-r.x,n.y-r.y)<r.r&&lifeAt(n.tx,n.ty))reviveNode(n);});}
     for(const id in G.B){const b=G.B[id];if(b.built&&b.fields&&b.type==='farm')for(const f of b.fields)if(f.grow<1&&hyp(f.x-r.x,f.y-r.y)<r.r)f.grow=Math.min(1,f.grow+dt/6);}
@@ -485,17 +489,23 @@ function rebalance(){
     setJob(v,s.b,s.role);
   }
 }
+function lifeObjective(why){
+  const hs=Object.values(G.B).filter(b=>b.built&&b.type==='house'),P=G.player;let h=hs[0];for(const b of hs)if(hyp(b.zone.x-P.x,b.zone.y-P.y)<hyp(h.zone.x-P.x,h.zone.y-P.y))h=b;
+  return G.faith>=lifeCost()&&h?{t:'Create a villager: stand in the ring at a house door '+why+' — '+lifeCost()+' faith',x:h.zone.x,y:h.zone.y}
+    :{t:'Gather '+lifeCost()+' faith to create a villager '+why+'. Praying at the altar is faster.',x:L.bell.x,y:L.bell.y};
+}
 function objective(){
+  {const pop=G.villagers.length;                              // a free bed and a workplace with nobody in it: suggest a new villager first
+   if(pop>0&&pop<popCap()){const tot=roleTotals(),r=ROLES.find(r=>r!=='guard'&&tot[r]&&tot[r].used===0);if(r)return lifeObjective('— the '+ROLE_NAME[r].toLowerCase()+' job is empty');}}
   const open=()=>Object.values(G.B).find(b=>!b.built&&isUnlocked(b));
   if(G.ms>=4){const b=open();if(!b)return {t:'Your city thrives. Explore, restore ruins and tend the frontier.'};
     return b.type?{t:'Keep growing: '+BT[b.type].name+' needs '+needText(b),x:b.zone.x,y:b.zone.y}:{t:'A free plot awaits — stand in its ring to choose a building.',x:b.zone.x,y:b.zone.y};}
   for(const r of MS_REQ[G.ms]){if(reqDone(r))continue;
     if(r[0]==='b'){const b=G.B[r[1]];
       if(!isUnlocked(b))continue;
-      return {t:(b.type==='bridge'?'Restore the ':'Build the ')+BT[b.type].name+' — needs '+needText(b),x:b.zone.x,y:b.zone.y};}
+      return {t:'Whenever you like: '+(b.type==='bridge'?'restore the ':'build the ')+BT[b.type].name+' — '+needText(b),x:b.zone.x,y:b.zone.y};}
     const pop=G.villagers.length;
-    if(pop<popCap()){const hs=Object.values(G.B).filter(b=>b.built&&b.type==='house'),P=G.player;let h=hs[0];for(const b of hs)if(hyp(b.zone.x-P.x,b.zone.y-P.y)<hyp(h.zone.x-P.x,h.zone.y-P.y))h=b;
-      return G.faith>=lifeCost()&&h?{t:'Create a villager: stand in the ring at a house door ('+pop+'/'+r[1]+' villagers) — '+lifeCost()+' faith',x:h.zone.x,y:h.zone.y}:{t:'Gather faith to create a villager ('+pop+'/'+r[1]+') — needs '+lifeCost()+'. Praying at the altar is faster.',x:L.bell.x,y:L.bell.y};}
+    if(pop<popCap())return lifeObjective('('+pop+'/'+r[1]+' villagers)');
     const h=Object.values(G.B).find(b=>!b.built&&isUnlocked(b)&&b.type==='house');
     return h?{t:'Build a House for more villagers ('+pop+'/'+r[1]+') — needs '+needText(h),x:h.zone.x,y:h.zone.y}:{t:'Make room for more villagers: free-choice plots can become houses.'};}
   return {t:''};
@@ -649,7 +659,8 @@ function updGuard(v,b,dt){
 }
 function updVillager(v,dt){
   if(hyp(v.x-G.player.x,v.y-G.player.y)>45*TILE){v.acc+=dt;if(v.acc<0.25)return;dt=v.acc;v.acc=0;}   // distant districts tick at 4 Hz
-  if(v.bless>G.time)dt*=1.7;
+  if(hyp(v.x-G.player.x,v.y-G.player.y)<3.5*TILE)v.bless=G.time+1.5;      // your presence inspires: villagers near you work faster
+  if(v.bless>G.time)dt*=1.4;
   v.repath-=dt;v.atkCd-=dt;v.moving=false;v.working=false;
   if(v.fail>=5)warpHome(v);
   const b=v.job?G.B[v.job.b]:null,role=v.job?v.job.role:null;
@@ -692,6 +703,7 @@ function hurtPlayer(d){
   const P=G.player;if(P.invuln>0)return;P.hp-=d;P.lastHurt=G.time;P.flash=0.15;floatT(P.x,P.y-42,'-'+d,'#ff9a8a');
   if(P.hp<=0){P.x=HOME.x+30;P.y=HOME.y+34;P.hp=maxHp();P.invuln=4;P.target=null;P.foe=null;camSnap=true;
     toast('You were knocked out and carried back to the campfire. Nothing you carried was lost.','warn');}
+  if(P.hp>0&&P.hp<maxHp()*0.4&&G.faith>=35&&G.time-(P.aweT||-99)>10){P.aweT=G.time;if(castMiracle('awe'))tip('awe','Your faith shields you: when you are badly hurt, 35 faith is spent to drive attackers away.');}
 }
 function steer(e,tx,ty,sp,dt){const dx=tx-e.x,dy=ty-e.y,d=hyp(dx,dy);if(d<2)return true;const s=Math.min(d,sp*dt);moveCollide(e,dx/d*s,dy/d*s,7);e.moving=true;e.walk+=dt*10;if(Math.abs(dx)>1)e.face=dx>0?1:-1;return false;}
 function raiderActs(e){
@@ -787,7 +799,8 @@ function tickFactions(){
     notice('Thornback Grove discovered','<p><b>A territorial creature species.</b> The ring of rune stones marks their grove.</p><p>Rules, so nothing surprises you: stepping inside makes them <b>wary</b>. Felling their marked elder trees, or attacking them, raises hostility. If they become <b>hostile</b> they attack inside the grove and can raid your city.</p><p>You can leave them alone entirely, and an offering of grain at the border stone calms them.</p>');}
   if(F.thorn.disc&&!F.thorn.entered&&dT<S.thorn.r){F.thorn.entered=true;if(F.thorn.h<30)setHost('thorn',30);toast('You have entered Thornback territory. Elder trees with a gold band are protected — felling them angers the grove.','warn');}
   if(!F.bandit.disc&&dB<19){F.bandit.disc=true;F.bandit.h=70;G.found++;G.raid.cd=Math.max(G.raid.cd,120);
-    notice('Rustcloak Camp discovered','<p><b>A hostile raider camp.</b> Now that they have seen you, the Rustcloaks know about your city.</p><p><b>New risk:</b> from time to time they may send a small raid to steal some stored goods or briefly disable a workshop. You always get a warning with a direction and countdown. Buildings and villagers are never lost.</p><p>Your options: guards and watchtowers defend automatically; the Awe miracle sends raiders running without a fight; a tribute at the red border stone west of the camp buys a long peace; or turn raids off entirely in Menu.</p><p>The first raid cannot come for at least two minutes.</p>');}
+    if(!G.settings.raids)notice('Rustcloak Camp discovered','<p><b>A raider camp.</b> Raids are switched off, so the Rustcloaks will leave your city in peace. They only defend their own camp inside the red banners.</p><p>If you ever want the extra excitement, you can switch raids on in Menu.</p>');
+    else notice('Rustcloak Camp discovered','<p><b>A hostile raider camp.</b> Now that they have seen you, the Rustcloaks know about your city.</p><p><b>New risk:</b> from time to time they may send a small raid to steal some stored goods or briefly disable a workshop. You always get a warning with a direction and countdown. Buildings and villagers are never lost.</p><p>Your options: guards and watchtowers defend automatically; when you are badly hurt, your faith drives attackers off by itself; a tribute at the red border stone west of the camp buys a long peace; or turn raids off entirely in Menu.</p><p>The first raid cannot come for at least two minutes.</p>');}
   G.terr=(F.thorn.disc&&dT<S.thorn.r)?'thorn':(F.bandit.disc&&dB<S.bandit.r)?'bandit':null;
   if(++G.driftT>=15){G.driftT=0;
     if(F.bandit.disc&&F.bandit.h!==70)setHost('bandit',F.bandit.h+(F.bandit.h<70?1:-1));
@@ -940,7 +953,7 @@ function updPois(P,dt){
     if(p.type==='cache'){if(d<44)openCache(p);}
     else if(p.type==='stranded'){
       if(p.kind<2&&!p.wolves&&d<16*TILE){p.wolves=true;                 // half of all travellers are cornered by wolves
-        for(let k=0;k<3;k++){const a=k*2.1+1,x=p.x+Math.cos(a)*46,y=p.y+Math.sin(a)*34;spawnEnemy('wolf',bpx(x,y)?p.x:x,bpx(x,y)?p.y+20:y,{wild:true,poi:p.key,hx:p.x,hy:p.y,hp:22,max:22,dmg:5,sp:80});}
+        for(let k=0;k<3;k++){const a=k*2.1+1,x=p.x+Math.cos(a)*46,y=p.y+Math.sin(a)*34;spawnEnemy('wolf',bpx(x,y)?p.x:x,bpx(x,y)?p.y+20:y,{wild:true,poi:p.key,hx:p.x,hy:p.y,hp:20,max:20,dmg:3,sp:80});}
         tip('wolves','Wolves have cornered a traveller! Drive them off — you fight automatically when close — and the traveller will join you.');}
       p.threat=!!p.wolves&&G.enemies.some(e=>e.poi===p.key&&!e.dead);
       if(d<52&&!p.threat){p.dwell+=dt;if(p.dwell>0.5){
@@ -951,7 +964,7 @@ function updPois(P,dt){
   }
 }
 function updZones(P,dt){
-  let ctx=null;const W=G.B.warehouse;
+  const W=G.B.warehouse;
   // unloading: the warehouse plot doubles as a stockpile even before it is finished, so a full pack can never softlock
   for(const b of [W,G.B.outpost]){
     if(b!==W&&!b.built)continue;if(hyp(P.x-b.zone.x,P.y-b.zone.y)>=b.zone.r){continue;}
@@ -969,7 +982,7 @@ function updZones(P,dt){
   // the anvil: pay for the next axe the same way as a building site
   const A=G.anvil;
   if(G.tool<4&&hyp(P.x-L.anvil.x,P.y-L.anvil.y)<L.anvil.r){
-    if(G.tool>G.ms){if(G.time-A.hintT>4){A.hintT=G.time;floatT(P.x,P.y-48,'Next axe unlocks at '+MS_NAMES[G.tool],'#ffe9a8');}}
+    if(false){if(G.time-A.hintT>4){A.hintT=G.time;floatT(P.x,P.y-48,'Next axe unlocks at '+MS_NAMES[G.tool],'#ffe9a8');}}
     else{A.dwell+=dt;if(A.dwell>DWELL&&donate(A,dt,true,L.anvil.x,L.anvil.y-20)){
       G.tool++;A.cost=TOOL_COST[G.tool]||null;A.paid={};A.dwell=0;celebrate(L.anvil.x,L.anvil.y-30);
       toast('Forged: '+TOOLS[G.tool].name+'! You chop, mine and reap faster'+(TOOLS[G.tool].pow>TOOLS[G.tool-1].pow?', and each swing bites deeper.':'.'),'good');requestSave();}}
@@ -977,7 +990,7 @@ function updZones(P,dt){
   // the staff rack: the separate fighting track, paid the same way
   const K=G.rack;
   if(G.weapon<4&&hyp(P.x-L.rack.x,P.y-L.rack.y)<L.rack.r){
-    if(G.weapon>G.ms){if(G.time-K.hintT>4){K.hintT=G.time;floatT(P.x,P.y-48,'Next fighting rank unlocks at '+MS_NAMES[G.weapon],'#ffe9a8');}}
+    if(false){if(G.time-K.hintT>4){K.hintT=G.time;floatT(P.x,P.y-48,'Next fighting rank unlocks at '+MS_NAMES[G.weapon],'#ffe9a8');}}
     else{K.dwell+=dt;if(K.dwell>DWELL&&donate(K,dt,true,L.rack.x,L.rack.y-20)){
       G.weapon++;K.cost=WEAPON_COST[G.weapon]||null;K.paid={};K.dwell=0;celebrate(L.rack.x,L.rack.y-30);
       toast(G.weapon===4?'You have mastered Lightning! Bolts strike enemies from afar and leap to others nearby.':'Trained: '+WEAPONS[G.weapon].name+'. You hit harder and faster in a fight.','good');requestSave();}}
@@ -995,8 +1008,12 @@ function updZones(P,dt){
   // construction sites
   for(const id in G.B){
     const b=G.B[id];if(b.built)continue;
+    if(!b.type){                                           // free plot: step into one of the small rings to choose
+      if(!isUnlocked(b))continue;let any=false;
+      for(let i=0;i<CHOICES.length;i++){const c=choiceSpot(b,i);if(hyp(P.x-c.x,P.y-c.y)>=c.r)continue;any=true;
+        if(b.pick!==i){b.pick=i;b.dwell=0;}b.dwell+=dt;if(b.dwell>1.2){b.dwell=0;b.pick=null;chooseBuild(b,CHOICES[i]);}break;}
+      if(!any){b.dwell=0;b.pick=null;}continue;}
     if(!isUnlocked(b)||hyp(P.x-b.zone.x,P.y-b.zone.y)>=b.zone.r){b.dwell=0;b.dt=0;continue;}
-    if(!b.type){ctx={k:'choice:'+id,type:'choice',b};continue;}
     b.dwell+=dt;
     if(b.dwell>DWELL){
       const tx=b.type==='bridge'?(L.bridge.x0+1)*TILE:(b.p.x+b.p.w/2)*TILE,ty=b.type==='bridge'?TILE:(b.p.y+b.p.h*0.5)*TILE;
@@ -1004,18 +1021,30 @@ function updZones(P,dt){
     }
   }
   G.praying=hyp(P.x-L.bell.x,P.y-L.bell.y)<L.bell.r;          // the altar: standing in its ring restores faith faster
-  // strategic choices (buttons): tribute stones and the Fernhollow market
+  // tribute: stand at a border stone for two seconds (step out and back in to offer again)
   const S=L.sites,F=G.factions;
-  if(F.thorn.disc&&hyp(P.x-S.thorn.stone.x,P.y-S.thorn.stone.y)<S.thorn.stone.r)ctx={k:'trib:thorn',type:'tribute',fac:'thorn'};
-  if(F.bandit.disc&&hyp(P.x-S.bandit.stone.x,P.y-S.bandit.stone.y)<S.bandit.stone.r)ctx={k:'trib:bandit',type:'tribute',fac:'bandit'};
-  if(F.fern.disc&&hyp(P.x-S.fern.stall.x,P.y-S.fern.stall.y)<S.fern.stall.r)ctx={k:'trade',type:'trade'};
-  G.ctx=ctx;
+  for(const id of ['thorn','bandit']){const st=S[id].stone;
+    if(!F[id].disc||hyp(P.x-st.x,P.y-st.y)>=st.r){st.td=0;st.armed=true;continue;}
+    if(!st.armed||F[id].h<25){st.td=0;continue;}
+    st.td=(st.td||0)+dt;if(st.td<2)continue;
+    const c=TRIBUTE[id];let ok=true;for(const r in c)if(G.wh[r]<c[r])ok=false;
+    if(ok){offerTribute(id);st.armed=false;st.td=0;}else{st.td=2;if(G.time-(st.hintT||-9)>4){st.hintT=G.time;floatT(P.x,P.y-50,'Warehouse needs '+costText(c),'#ffe9a8');}}
+  }
+  // Fernhollow market: one small ring per trade; standing in it trades every 1.5 seconds
+  const stall=S.fern.stall;if(!stall.dw)stall.dw=[0,0,0];
+  for(let i=0;i<TRADES.length;i++){const c=tradeSpot(i);
+    if(!F.fern.disc||hyp(P.x-c.x,P.y-c.y)>=c.r){stall.dw[i]=0;continue;}
+    stall.dw[i]+=dt;if(stall.dw[i]<1.5)continue;
+    let ok=true;for(const r in TRADES[i].give)if(G.wh[r]<TRADES[i].give[r])ok=false;
+    if(ok){doTrade(i);stall.dw[i]=0;}else{stall.dw[i]=1.5;if(G.time-(stall.hintT||-9)>4){stall.hintT=G.time;floatT(P.x,P.y-50,'Warehouse needs '+costText(TRADES[i].give),'#ffe9a8');}}
+  }
+  G.ctx=null;
 }
 function updPlayer(dt){
   const P=G.player;let ix=input.x,iy=input.y;const m0=hyp(ix,iy);if(m0>1){ix/=m0;iy/=m0;}      // diagonals are never faster
   const m=Math.min(1,m0);P.moving=m>0.1;
   if(P.moving){
-    const road=L.road.has(tkey(Math.floor(P.x/TILE),Math.floor(P.y/TILE))),sp=150*(1+0.08*G.up.speed)*(road?1.12:1);
+    const road=L.road.has(tkey(Math.floor(P.x/TILE),Math.floor(P.y/TILE))),sp=165*(1+0.08*G.up.speed)*(road?1.12:1);
     moveCollide(P,ix*sp*dt,iy*sp*dt,8);P.walk+=dt*11*m;if(Math.abs(ix)>0.2)P.face=ix>0?1:-1;
   }
   P.atkCd-=dt;P.hitCd-=dt;P.swing-=dt;P.flash-=dt;if(P.invuln>0)P.invuln-=dt;
@@ -1166,7 +1195,7 @@ function drawPlot(b){
     fs('#7a5a3a');for(const [sx,sy] of [[x+3,y+6],[x+w-5,y+6],[x+3,y+h-2],[x+w-5,y+h-2]])C.fillRect(sx-1,sy-10,3,11);
     C.strokeStyle='rgba(250,240,210,0.85)';C.lineWidth=1;C.strokeRect(x+3.5,y-2.5,w-8,h-1);C.globalAlpha=1;
     if(!un){label(G.ms<p.ms?'Unlocks at '+MS_NAMES[p.ms]:'Needs '+BT[G.B[p.req].type].name,x+w/2,y+h/2,10,'#f3e7c9');return;}
-    if(!b.type){label('Free plot',x+w/2,y+h/2-6,11);label('stand in the ring to choose',x+w/2,y+h/2+8,9,'#f3e7c9');return;}
+    if(!b.type){label('Free plot',x+w/2,y+h/2-6,11);label('step into a ring below to choose',x+w/2,y+h/2+8,9,'#f3e7c9');return;}
     let tot=0,paid=0;for(const r in b.cost){tot+=b.cost[r];paid+=Math.min(b.cost[r],b.paid[r]||0);}const pr=tot?paid/tot:0;
     if(pr>0){const hh=(h+12)*pr;fs('#c9935a');C.fillRect(x+7,y+h-4-hh,4,hh);C.fillRect(x+w-11,y+h-4-hh,4,hh);C.fillRect(x+w/2-2,y+h-4-hh,4,hh);
       fs('#e2b072');const rows=Math.floor(pr*4.01);for(let i=0;i<rows;i++)C.fillRect(x+7,y+h-12-i*((h+6)/4),w-14,4);}
@@ -1303,7 +1332,7 @@ function drawRack(){
   if(G.weapon>=4){fs('rgba(191,227,255,'+(0.5+0.4*Math.sin(G.time*7))+')');circ(x-8,y-36,6);}
   if(hyp(P.x-L.rack.x,P.y-L.rack.y)<4.5*TILE){
     if(G.weapon>=4)label('Staff rack — Lightning mastered',x,y-48,10,'#f3e7c9');
-    else if(G.weapon>G.ms)label('Staff rack — '+WEAPONS[G.weapon+1].name+' unlocks at '+MS_NAMES[G.weapon],x,y-48,10,'#f3e7c9');
+    else if(false)label('Staff rack — '+WEAPONS[G.weapon+1].name+' unlocks at '+MS_NAMES[G.weapon],x,y-48,10,'#f3e7c9');
     else needBubble(x,y-50,G.rack.cost,G.rack.paid,'Fighting: '+WEAPONS[G.weapon+1].name);}
 }
 function drawAnvil(){
@@ -1312,7 +1341,7 @@ function drawAnvil(){
   C.save();C.translate(x-4,y-14);C.rotate(-0.5);fs('#6b4a34');C.fillRect(-1,-14,2.4,15);fs(T.col);rr(-6,-17,10,6,2);C.restore();      // your current axe rests on it
   if(hyp(P.x-L.anvil.x,P.y-L.anvil.y)<4.5*TILE){
     if(G.tool>=4)label('Anvil — '+T.name+' (best)',x,y-40,10,'#f3e7c9');
-    else if(G.tool>G.ms)label('Anvil — '+TOOLS[G.tool+1].name+' unlocks at '+MS_NAMES[G.tool],x,y-40,10,'#f3e7c9');
+    else if(false)label('Anvil — '+TOOLS[G.tool+1].name+' unlocks at '+MS_NAMES[G.tool],x,y-40,10,'#f3e7c9');
     else needBubble(x,y-42,G.anvil.cost,G.anvil.paid,'Forge '+TOOLS[G.tool+1].name);}
 }
 function drawBell(){                                         // the altar: a ring of standing stones
@@ -1402,13 +1431,18 @@ function render(rdt){
   for(const id in G.B){const b=G.B[id],z=b.zone;if(!onScreen(z.x,z.y,60))continue;
     if(b.built){if(b.type==='warehouse'||b.type==='outpost')ring(z.x,z.y,z.r,'rgba(200,232,255,0.9)','rgba(200,232,255,0.1)',0);else if(PILE_RES[b.type]&&b.pile>0)ring(z.x,z.y,z.r,'rgba(255,236,170,0.9)','rgba(255,236,170,0.1)',0);
       else if(b.type==='house'&&G.villagers.length<popCap())ring(z.x,z.y,z.r,'#ffd166','rgba(255,214,120,'+pulse+')',Math.max(0,b.dwell));}
-    else if(isUnlocked(b))ring(z.x,z.y,z.r,'#ffd166','rgba(255,209,102,'+pulse+')',b.type?b.dwell/DWELL:0);}
-  if(G.weapon<4)ring(L.rack.x,L.rack.y,L.rack.r,'#8ecae6','rgba(142,202,230,0.12)',G.weapon<=G.ms?G.rack.dwell/DWELL:0);
-  if(G.tool<4)ring(L.anvil.x,L.anvil.y,L.anvil.r,'#ffb347','rgba(255,179,71,0.12)',G.tool<=G.ms?G.anvil.dwell/DWELL:0);
+    else if(isUnlocked(b)){
+      if(b.type)ring(z.x,z.y,z.r,'#ffd166','rgba(255,209,102,'+pulse+')',b.dwell/DWELL);
+      else for(let i=0;i<CHOICES.length;i++){const c=choiceSpot(b,i),near=hyp(P.x-c.x,P.y-c.y)<TILE*1.1;ring(c.x,c.y,c.r,'#ffd166','rgba(255,209,102,'+pulse+')',b.pick===i?b.dwell/1.2:0);
+        label(BT[CHOICES[i]].name,c.x,c.y+c.r+9+(i%2)*11,9,near?'#fff3c4':'#f3e7c9');if(near)needBubble(c.x,c.y-c.r-16,CHOICE_COST[CHOICES[i]],{},null);}}}
+  if(G.weapon<4)ring(L.rack.x,L.rack.y,L.rack.r,'#8ecae6','rgba(142,202,230,0.12)',true?G.rack.dwell/DWELL:0);
+  if(G.tool<4)ring(L.anvil.x,L.anvil.y,L.anvil.r,'#ffb347','rgba(255,179,71,0.12)',true?G.anvil.dwell/DWELL:0);
   ring(L.bell.x,L.bell.y,L.bell.r,'#ffd166','rgba(255,214,120,0.12)',0);
-  if(F.thorn.disc)ring(S.thorn.stone.x,S.thorn.stone.y,S.thorn.stone.r,'#7be0c0','rgba(123,224,192,0.1)',0);
-  if(F.bandit.disc)ring(S.bandit.stone.x,S.bandit.stone.y,S.bandit.stone.r,'#ff8a80','rgba(229,72,77,0.1)',0);
-  if(onScreen(S.fern.stall.x,S.fern.stall.y,60))ring(S.fern.stall.x,S.fern.stall.y,S.fern.stall.r,'#9bdeac','rgba(155,222,172,0.1)',0);
+  for(const [id,col,fill] of [['thorn','#7be0c0','rgba(123,224,192,0.1)'],['bandit','#ff8a80','rgba(229,72,77,0.1)']]){const st=S[id].stone;if(!F[id].disc||!onScreen(st.x,st.y,80))continue;
+    ring(st.x,st.y,st.r,col,fill,(st.td||0)/2);
+    if(hyp(P.x-st.x,P.y-st.y)<4*TILE)label(F[id].h<25?'At peace — no tribute needed':st.armed===false?'Tribute given':'Stand here to offer '+costText(TRIBUTE[id]),st.x,st.y+st.r+12,10,'#f3e7c9');}
+  if(F.fern.disc&&onScreen(S.fern.stall.x,S.fern.stall.y,120))for(let i=0;i<TRADES.length;i++){const c=tradeSpot(i),dw=S.fern.stall.dw;ring(c.x,c.y,c.r,'#9bdeac','rgba(155,222,172,0.12)',dw?dw[i]/1.5:0);
+    label(costText(TRADES[i].give),c.x,c.y+c.r+10,9,'#f3e7c9');label('for '+costText(TRADES[i].get),c.x,c.y+c.r+21,9,'#d7fff2');}
   for(const p of pois)if(p.type==='ruin'&&!p.done)ring(p.zone.x,p.zone.y,p.zone.r,'#ffd166','rgba(255,209,102,'+pulse+')',p.dwell/DWELL);
   const g=C.createRadialGradient(HOME.x,HOME.y-6,4,HOME.x,HOME.y-6,80);g.addColorStop(0,'rgba(255,190,90,0.32)');g.addColorStop(1,'rgba(255,190,90,0)');C.fillStyle=g;circ(HOME.x,HOME.y-6,80);
   // target highlights
@@ -1484,8 +1518,8 @@ function closeModal(){ui.modal=null;$('modal').classList.add('hidden');if(ui.not
 function notice(title,html){if(ui.modal){ui.noticeQ.push([title,html]);return;}openModal('<h2>'+title+'</h2>'+html+'<div class="foot"><button data-a="close" class="primary">Understood</button></div>','notice');}
 function saveInfo(){if(!ui.saveOK)return 'Browser storage is unavailable here, so automatic saving is off. Use Export save to keep your progress.';return ui.lastSave?'Last saved '+Math.max(0,Math.round((Date.now()-ui.lastSave)/1000))+'s ago. Autosaves every 20 seconds.':'Autosaves every 20 seconds.';}
 function menuPanel(){
-  openModal('<h2>Emberwick</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. Miracles unlock as you grow (buttons above your backpack, keys 1–2): <b>Bless</b> speeds villagers up, <b>Awe</b> drives enemies off. Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
-    '<label class="row"><input type="checkbox" id="optRaids" '+(G.settings.raids?'checked':'')+'><span>Raids enabled <small>— untick for a fully peaceful game</small></span></label>'+
+  openModal('<h2>Oh My God</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. There are no action buttons — everything is done by walking and standing. Villagers near you work faster. If you are badly hurt, 35 faith is spent by itself to drive attackers away. Stand at a border stone to offer tribute, in a market ring to trade, and in a small ring at a free plot to choose its building. Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
+    '<label class="row"><input type="checkbox" id="optRaids" '+(G.settings.raids?'checked':'')+'><span>Raids enabled <small>— off by default; tick for occasional raids once you have met a hostile camp</small></span></label>'+
     '<div class="grid"><button data-a="save">Save now</button><button data-a="export">Export save</button><button data-a="import">Import save</button><button data-a="new" class="danger">New game</button></div>'+
     '<p class="sm">'+saveInfo()+'</p><p class="sm">World seed '+G.seed+' · '+G.found+' discoveries. The game only runs while this tab is open; there is no offline progress.</p>'+
     '<div class="foot"><button data-a="close" class="primary">Resume</button></div>','menu');
@@ -1545,7 +1579,7 @@ function onCardClick(e){
   else if(a==='import')importPanel();
   else if(a==='new')confirmNew();
   else if(a==='newYes'){startNew();saveGame(false);closeModal();}
-  else if(a==='dl'){try{const u=URL.createObjectURL(new Blob([$('expTxt').value],{type:'application/json'})),l=document.createElement('a');l.href=u;l.download='emberwick-save.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);$('expMsg').textContent='Download started. If nothing arrived, use Copy text instead.';}catch(err){$('expMsg').textContent='Downloads are blocked here — use Copy text.';}}
+  else if(a==='dl'){try{const u=URL.createObjectURL(new Blob([$('expTxt').value],{type:'application/json'})),l=document.createElement('a');l.href=u;l.download='oh-my-god-save.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);$('expMsg').textContent='Download started. If nothing arrived, use Copy text instead.';}catch(err){$('expMsg').textContent='Downloads are blocked here — use Copy text.';}}
   else if(a==='copy'){const t=$('expTxt');t.focus();t.select();let ok=false;try{ok=document.execCommand('copy');}catch(err){}
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t.value).then(()=>{$('expMsg').textContent='Copied to clipboard.';},()=>{$('expMsg').textContent=ok?'Copied to clipboard.':'Select the text and copy it manually.';});
     else $('expMsg').textContent=ok?'Copied to clipboard.':'Select the text and copy it manually.';}
@@ -1578,11 +1612,8 @@ function updateHud(){
   setText('terrChip',tc);$('terrChip').classList.toggle('hidden',!tc);
   const fm=faithMax();setText('faithN',Math.floor(G.faith)+'/'+fm+'  +'+G.faithRate.toFixed(1)+'/s'+(G.fed?' (fed)':''));
   const ffw=Math.round(100*G.faith/fm)+'%';if(ui.last.ffw!==ffw){ui.last.ffw=ffw;$('faithFill').style.width=ffw;}
-  let mh='';MIRACLES.forEach((m,i)=>{if(G.ms<m.ms)return;const c=miracleCost(m);mh+='<button data-m="'+m.id+'" style="--c:'+m.col+'" '+(G.faith>=c?'':'disabled')+' title="Key '+(i+1)+'">'+m.name+'<small>'+c+'</small></button>';});
-  if(!mh)mh='<span class="mirNone">Miracles awaken as your settlement grows</span>';
-  if(ui.last.mh!==mh){ui.last.mh=mh;$('mirBtns').innerHTML=mh;}
   // contextual strategic choices
-  const c=G.ctx;let html='',key='';
+  const c=null;let html='',key='';
   if(c&&c.type==='tribute'){const cost=TRIBUTE[c.fac],ok=RES.every(r=>!cost[r]||G.wh[r]>=cost[r]);key=c.k+ok+facState(c.fac);
     html='<div class="ctxT">'+FAC[c.fac].name+' — '+facState(c.fac)+'</div><button data-a="trib" data-f="'+c.fac+'" '+(ok?'':'disabled')+'>Offer tribute: '+costText(cost)+'</button><div class="ctxS">Sent from your warehouse. Lowers their hostility.</div>';}
   else if(c&&c.type==='trade'){const oks=TRADES.map(t=>RES.every(r=>!t.give[r]||G.wh[r]>=t.give[r]));key='trade'+oks.join('');
@@ -1598,7 +1629,6 @@ function bindInput(){
     if(e.code==='Escape'){if(ui.modal)closeModal();else menuPanel();return;}
     if(ui.modal)return;
     if(e.code==='KeyP'){ui.paused=!ui.paused;updateHud();return;}
-    if(/^Digit[1-5]$/.test(e.code)&&!ui.paused){const m=MIRACLES[+e.code[5]-1];if(m){castMiracle(m.id);updateHud();}return;}
     const k=KEY[e.code];if(k){input.keys[k]=true;e.preventDefault();}else if(e.code==='Space')e.preventDefault();});
   window.addEventListener('keyup',e=>{const k=KEY[e.code];if(k)input.keys[k]=false;});
   window.addEventListener('blur',()=>{input.keys={};input.joy=null;});
@@ -1617,7 +1647,6 @@ function bindInput(){
   $('card').addEventListener('click',onCardClick);
   $('card').addEventListener('change',e=>{if(e.target.id==='optRaids'){G.settings.raids=e.target.checked;toast(G.settings.raids?'Raids enabled.':'Raids disabled — a fully peaceful game.','info');requestSave();}});
   $('ctx').addEventListener('click',onCtxClick);
-  $('mirBtns').addEventListener('click',e=>{const el=e.target.closest('[data-m]');if(!el||el.disabled||ui.paused)return;castMiracle(el.dataset.m);updateHud();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){input.keys={};input.joy=null;saveGame(false);}else lastTs=performance.now();});   // pause while hidden
   window.addEventListener('pagehide',()=>saveGame(false));
 }
@@ -1638,7 +1667,7 @@ const num=(v,d,a,b)=>Number.isFinite(v)?clamp(v,a,b):d;
 function cleanRes(o){const r=zeroRes();if(o&&typeof o==='object')for(const k of RES)r[k]=Math.floor(num(o[k],0,0,1e7));return r;}
 function validateSave(d){
   if(!d||typeof d!=='object'||Array.isArray(d))throw new Error('This is not a save file.');
-  if(d.game!=='emberwick')throw new Error('This file is not an Emberwick save.');
+  if(d.game!=='emberwick')throw new Error('This file is not an Oh My God save.');
   if(!Number.isInteger(d.v)||d.v<1)throw new Error('The save has no valid version number.');
   if(d.v>SAVE_VERSION)throw new Error('This save comes from a newer version of the game.');
   if(!Number.isFinite(d.seed))throw new Error('The save is missing its world seed.');
@@ -1700,7 +1729,7 @@ function loadGame(){
 }
 function startNew(){
   newState((Math.random()*2147483647)|0);mmCache.clear();ensureChunks(true);revealAt(HOME.x,HOME.y,12);camSnap=true;ui.last={};ui.ctxKey='?';ui.noticeQ=[];$('toasts').innerHTML='';$('banner').classList.remove('show');
-  toast('The land has withered. Walk near the bare trees: a little rain gathers over each one and it grows. Chop them and carry 20 wood to the warehouse plot.','info');
+  toast('Welcome. The land has withered, and there is no hurry. Wander near the bare trees and a little rain wakes each one. Chop a few and carry the wood to the warehouse plot when you feel like it.','info');
 }
 
 /* ---------- 14. MAIN LOOP ---------- */
@@ -1745,7 +1774,7 @@ function init(){
   $('res').innerHTML=RES.map(r=>'<span class="chip" title="'+r+' in warehouse"><i class="ic '+r+'"></i><b id="w_'+r+'">0</b></span>').join('');
   bindInput();
   if(!loadGame()){startNew();if(ui.loadErr)toast('Your saved game could not be read ('+ui.loadErr+'), so a new one was started. The old data was kept as a backup.','warn');}
-  else toast('Welcome back to Emberwick.','info');
+  else toast('Welcome back. No rush — pick up wherever you like.','info');
   updateHud();
   requestAnimationFrame(ts=>{lastTs=ts;frame(ts);});
 }
