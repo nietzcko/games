@@ -316,8 +316,9 @@ function reviveNode(n){n.rainUntil=G.time+1.9;n.dead=false;n.wither=false;n.hp=n
 function bringLife(x,y,rt,witherOnly){       // wakes the ground and every withered or felled tree in range; returns trees woken
   const cs=FOGC*TILE,r=rt*TILE,c0=Math.floor((x-r)/cs),c1=Math.floor((x+r)/cs),r0=Math.floor((y-r)/cs),r1=Math.floor((y+r)/cs),dirty=new Set();
   for(let j=r0;j<=r1;j++)for(let i=c0;i<=c1;i++){if(hyp((i+0.5)*cs-x,(j+0.5)*cs-y)>r+cs*0.5)continue;const cx=Math.floor(i/4),cy=Math.floor(j/4),k=ckey(cx,cy),bit=1<<((j-cy*4)*4+(i-cx*4)),m=G.life.get(k)|0;
-    if(!(m&bit)){G.life.set(k,m|bit);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)dirty.add(ckey(cx+a,cy+b));}}
-  for(const k of dirty){const c=G.chunks.get(k);if(c)c.canvas=null;}                     // repaint the ground green
+    if(!(m&bit)){G.life.set(k,m|bit);const li=i-cx*4,lj=j-cy*4,ax=li===0?-1:li===3?1:0,ay=lj===0?-1:lj===3?1:0;        // neighbours only when the cell touches a chunk edge
+      dirty.add(k);if(ax)dirty.add(ckey(cx+ax,cy));if(ay)dirty.add(ckey(cx,cy+ay));if(ax&&ay)dirty.add(ckey(cx+ax,cy+ay));}}
+  for(const k of dirty){const c=G.chunks.get(k);if(c)c.dirty=true;}                      // repaint later; the old ground stays on screen until then
   let n=0;nodesNear(x,y,r,nd=>{if(nd.res==='wood'&&nd.dead&&(nd.wither||!witherOnly)&&lifeAt(nd.tx,nd.ty)){reviveNode(nd);n++;}});return n;
 }
 
@@ -1096,7 +1097,7 @@ function renderChunk(c){
     else if(b===B_SAND){if(h<0.35){g.fillStyle='#d3c18a';g.beginPath();g.arc(px,py,1.5,0,TAU);g.fill();}}
     else if(b===B_GROVE){if(h<0.3){g.fillStyle='#4a8468';g.beginPath();g.arc(px,py,3,0,TAU);g.fill();}else if(h>0.9){g.fillStyle='#e9e2f5';g.fillRect(px-0.7,py-3,1.4,4);g.fillStyle='#b58be0';g.beginPath();g.arc(px,py-4,2.6,Math.PI,0);g.fill();}}
   }
-  c.canvas=cv;
+  c.canvas=cv;c.dirty=false;
 }
 
 // --- world objects ---
@@ -1384,10 +1385,12 @@ function render(rdt){
   C.setTransform(DPR,0,0,DPR,0,0);fs('#1d2230');C.fillRect(0,0,W,H);
   C.setTransform(DPR*Z,0,0,DPR*Z,Math.round((W/2-cam.x*Z)*DPR),Math.round((H/2-cam.y*Z)*DPR));
   // ground
-  let budget=3;const cx0=Math.floor(VIEW.x0/CHPX),cx1=Math.floor(VIEW.x1/CHPX),cy0=Math.floor(VIEW.y0/CHPX),cy1=Math.floor(VIEW.y1/CHPX);
+  let budget=3,repaint=1;const cx0=Math.floor(VIEW.x0/CHPX),cx1=Math.floor(VIEW.x1/CHPX),cy0=Math.floor(VIEW.y0/CHPX),cy1=Math.floor(VIEW.y1/CHPX);
   const pois=[];
-  for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++){const c=G.chunks.get(ckey(cx,cy));if(!c)continue;if(!c.canvas){if(budget<=0)continue;budget--;renderChunk(c);}
-    C.drawImage(c.canvas,cx*CHPX,cy*CHPX,CHPX+0.6,CHPX+0.6);if(c.poi)pois.push(c.poi);}
+  for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++){const c=G.chunks.get(ckey(cx,cy));if(!c)continue;if(c.poi)pois.push(c.poi);
+    if(!c.canvas){if(budget>0){budget--;renderChunk(c);}else{fs('#b9b083');C.fillRect(cx*CHPX,cy*CHPX,CHPX+0.6,CHPX+0.6);continue;}}     // never show bare background
+    else if(c.dirty&&repaint>0){repaint--;renderChunk(c);}
+    C.drawImage(c.canvas,cx*CHPX,cy*CHPX,CHPX+0.6,CHPX+0.6);}
   if(VIEW.x1>18*TILE&&VIEW.x0<42*TILE){C.strokeStyle='rgba(255,255,255,0.3)';C.lineWidth=2;C.lineCap='round';
     for(let ty=Math.floor(VIEW.y0/TILE);ty<=VIEW.y1/TILE;ty+=2){const x=(L.riverX(ty+0.5)+Math.sin(t*0.7+ty*1.7)*1.1)*TILE,y=(ty+0.5)*TILE+Math.sin(t+ty)*4;C.beginPath();C.moveTo(x-6,y);C.lineTo(x+6,y);C.stroke();}
     C.lineCap='butt';if(VIEW.y0<3*TILE&&VIEW.y1>-TILE)drawBridge();}
