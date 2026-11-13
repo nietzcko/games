@@ -143,8 +143,10 @@ const BT={
   guardpost:{name:'Guard Post',w:2,h:2,jobs:{guard:2}},
   garden:{name:'Garden',w:3,h:2,pop:1},
 };
-const CHOICES=['house','farm','lumber','quarry','tower','garden'];
-const CHOICE_COST={house:{planks:20,stone:14,bread:5},farm:{wood:28,planks:14},lumber:{wood:20,planks:10},quarry:{wood:20,planks:14},tower:{stone:28,planks:14},garden:{wood:14,stone:14}};
+const CHOICES=['house','farm','lumber','quarry','sawmill','bakery','tower','garden'];
+/* Upgrades: every level adds one worker (or one bed) to a building, up to level 3. Cost is this times the current level. */
+const UP_COST={lumber:{wood:20,planks:8},quarry:{stone:20,planks:8},farm:{wood:15,planks:10},sawmill:{wood:20,stone:15},bakery:{stone:15,planks:10},house:{wood:15,planks:10},warehouse:{wood:20,stone:20},tower:{stone:20,planks:10},guardpost:{stone:20,planks:10},outpost:{stone:15,planks:15}};
+const CHOICE_COST={house:{planks:20,stone:14,bread:5},farm:{wood:28,planks:14},lumber:{wood:20,planks:10},quarry:{wood:20,planks:14},tower:{stone:28,planks:14},garden:{wood:14,stone:14},sawmill:{wood:28,stone:20},bakery:{wood:20,stone:20,planks:8}};
 /* Workplaces stack what they make beside the door; you or a hauler carry it to storage. */
 const PILE_RES={lumber:'wood',quarry:'stone',farm:'grain',sawmill:'planks',bakery:'bread'}, PILE_CAP=80;
 const TOOLS=[{name:'Flint axe',hit:0.5,pow:1,dmg:10,col:'#aab2ba'},{name:'Copper axe',hit:0.4,pow:1,dmg:14,col:'#d98a4a'},{name:'Iron axe',hit:0.32,pow:1,dmg:18,col:'#dfe5ea'},{name:'Steel axe',hit:0.48,pow:2,dmg:23,col:'#8ecae6'},{name:'Master axe',hit:0.34,pow:2,dmg:28,col:'#ffd166'}];
@@ -194,6 +196,7 @@ function buildLayout(seed){
     if(d.type==='bridge'){d.x=x0;d.y=0;d.zone={x:(x0-0.5)*TILE,y:1*TILE,r:1.3*TILE};reserve(x0-3,-1,x1-x0+7,4,0);}
     else{d.zone={x:(d.x+d.w/2)*TILE,y:(d.y+d.h+0.8)*TILE,r:1.25*TILE};solid(d.x,d.y,d.w,d.h,d.id);reserve(Math.floor(d.x+d.w/2)-1,d.y+d.h,3,2,0);}
     if(d.field)reserve(d.field[0],d.field[1],4,3,0);
+    if(d.choices)reserve(Math.floor(d.zone.x/TILE)-4,Math.floor(d.zone.y/TILE)-1,9,4,0);      // keep the choice rings clear of trees
     L.plots.push(d);
   }
   reserve(-1,-1,3,3,0);
@@ -226,6 +229,11 @@ function buildLayout(seed){
   const oz=defs.find(d=>d.id==='outpost').zone,ox=Math.floor(oz.x/TILE),oy=Math.floor(oz.y/TILE);
   addRoad(x1+1,0,ox,oy);
   for(const d of defs)if(d.district==='frontier'&&d.id!=='outpost')addRoad(ox,oy,Math.floor(d.zone.x/TILE),Math.floor(d.zone.y/TILE));
+  // a small side ring next to each building, used for upgrades
+  for(const d of defs){if(d.type==='bridge')continue;
+    const ok=(x,y)=>{if(blocked(Math.floor(x/TILE),Math.floor(y/TILE),true))return false;for(const o of defs)if(o!==d&&hyp(o.zone.x-x,o.zone.y-y)<2*TILE)return false;
+      for(const o of [L.bell,L.anvil,L.rack,HOME])if(hyp(o.x-x,o.y-y)<2*TILE)return false;return true;};
+    for(const [ox,oy] of [[-2.4,0],[2.4,0],[0,1.9],[-2.4,1.3],[2.4,1.3],[-3.4,0],[0,2.8]]){const x=d.zone.x+ox*TILE,y=d.zone.y+oy*TILE;if(ok(x,y)){d.up={x,y,r:0.62*TILE};break;}}}
   // lantern spots along home roads (revealed as the city grows)
   for(const k of L.road){const tx=Math.floor(k/65536)-32768,ty=(k%65536)-32768;if(tx*tx+ty*ty<196&&tx*tx+ty*ty>6&&hash2(seed+77,tx,ty)<0.16&&!L.solid.has(tkey(tx,ty-1)))L.lamps.push({x:(tx+0.5)*TILE+13,y:(ty+0.5)*TILE-10,o:hash2(seed+78,tx,ty)});}
   L.lamps.sort((a,b)=>a.o-b.o);
@@ -383,13 +391,13 @@ function newState(seed){
     decor:0,pending:0,recruits:0,nextId:1,tool:0,anvil:{cost:TOOL_COST[0],paid:{},dwell:0,dt:0,hintT:-9},weapon:0,rack:{cost:WEAPON_COST[0],paid:{},dwell:0,dt:0,hintT:-9},bolts:[],tips:{},fly:0,ctx:null,terr:null,
     respawn:{thorn:[],bandit:[]},slowT:0,fastT:0,saveT:20,driftT:0,pathBudget:0,bellDwell:0,found:0,smokeT:0};
   for(const p of L.plots){
-    const b={id:p.id,p,type:p.type||null,built:false,paid:{},cost:p.cost||null,zone:p.zone,dwell:0,dt:0,disabledUntil:0,craftT:0,active:0,shotCd:0,fields:null,hintT:-9,pile:0};
+    const b={id:p.id,p,type:p.type||null,built:false,paid:{},cost:p.cost||null,zone:p.zone,dwell:0,dt:0,disabledUntil:0,craftT:0,active:0,shotCd:0,fields:null,hintT:-9,pile:0,lvl:1,upg:null};
     if(b.type==='farm')makeFields(b);G.B[p.id]=b;
   }
 }
 function makeFields(b){const f=b.p.field;b.fields=[];for(let j=0;j<3;j++)for(let i=0;i<4;i++)b.fields.push({x:(f[0]+i+0.5)*TILE,y:(f[1]+j+0.5)*TILE,grow:hash2(L.seed,f[0]+i,f[1]+j)*0.6,claim:0});}
 const isUnlocked=b=>G.ms>=b.p.ms&&(!b.p.req||G.B[b.p.req].built);
-function popCap(){let c=0;for(const id in G.B){const b=G.B[id];if(b.built&&BT[b.type].pop)c+=BT[b.type].pop;}return c;}
+function popCap(){let c=0;for(const id in G.B){const b=G.B[id];if(b.built&&BT[b.type].pop)c+=BT[b.type].pop+(b.type==='house'?b.lvl-1:0);}return c;}
 const maxHp=()=>100+G.up.hp*20;
 function invTotal(){const i=G.player.inv;return i.wood+i.stone+i.grain+i.planks+i.bread;}
 const packCap=()=>PACK[G.ms]+G.up.pack*6;
@@ -417,7 +425,7 @@ function clearPlot(b){
   for(const v of G.villagers){if(v.job&&v.job.b===b.id)setJob(v,null);else if(v.src===b.id)release(v);}
   spawnP((b.p.x+b.p.w/2)*TILE,(b.p.y+b.p.h/2)*TILE,'#c9a074',14,110);
   toast((b.built?nm+' taken down':nm+' cancelled')+' — the plot is free again.'+(costText(back)?' Returned to the warehouse: '+costText(back)+'.':''),'info');
-  b.built=false;b.type=null;b.cost=null;b.paid={};b.pile=0;b.fields=null;b.dwell=0;b.dt=0;b.pick=null;b.clr=0;b.disabledUntil=0;
+  b.lvl=1;b.upg=null;b.built=false;b.type=null;b.cost=null;b.paid={};b.pile=0;b.fields=null;b.dwell=0;b.dt=0;b.pick=null;b.clr=0;b.disabledUntil=0;
   assignIdle();requestSave();
 }
 function chooseBuild(b,type){if(b.type||!CHOICES.includes(type))return;b.type=type;b.cost=CHOICE_COST[type];b.paid={};if(type==='farm')makeFields(b);toast(BT[type].name+' staked out — needs '+costText(b.cost)+'.','info');}
@@ -435,7 +443,7 @@ function finishBuilding(b){
 const ROLES=['woodcutter','hauler','miner','farmer','sawyer','baker','guard'];
 const ROLE_NAME={hauler:'Haulers',woodcutter:'Woodcutters',miner:'Miners',farmer:'Farmers',sawyer:'Sawmill workers',baker:'Bakers',guard:'Guards'};
 function jobSlots(){const s=[];for(const id in G.B){const b=G.B[id];if(!b.built)continue;const j=BT[b.type].jobs;if(!j)continue;
-  for(const r in j){let used=0;for(const v of G.villagers)if(v.job&&v.job.b===id&&v.job.role===r)used++;s.push({b:id,role:r,cap:j[r],used});}}return s;}
+  for(const r in j){let used=0;for(const v of G.villagers)if(v.job&&v.job.b===id&&v.job.role===r)used++;s.push({b:id,role:r,cap:j[r]+(b.lvl-1),used});}}return s;}
 function roleTotals(){const t={};for(const s of jobSlots()){const o=t[s.role]||(t[s.role]={cap:0,used:0});o.cap+=s.cap;o.used+=s.used;}return t;}
 function assignIdle(force){
   for(const v of G.villagers){if(v.job||(v.manualIdle&&!force))continue;
@@ -457,7 +465,11 @@ function checkMilestone(){if(G.ms>=4||!MS_REQ[G.ms].every(reqDone))return;G.ms++
 /* ----- Faith and miracles ----- */
 const MIRACLES=[
   {id:'awe',name:'Awe',cost:35,ms:0,col:'#f7a8b8'}];      // no buttons: awe fires by itself when you are badly hurt
-const choiceSpot=(b,i)=>({x:b.zone.x+(i-2.5)*1.4*TILE,y:b.zone.y,r:0.62*TILE});
+const choiceSpot=(b,i)=>({x:b.zone.x+((i%4)-1.5)*1.7*TILE,y:b.zone.y+Math.floor(i/4)*1.8*TILE,r:0.62*TILE});      // two rows of four
+const clearSpot=b=>({x:b.zone.x+3.6*TILE,y:b.zone.y,r:0.62*TILE});
+const slotCap=(b,r)=>BT[b.type].jobs[r]+(b.lvl-1);
+function upCost(b){const c={},u=UP_COST[b.type];for(const r in u)c[r]=u[r]*b.lvl;return c;}
+function getUpg(b){if(!b.upg||b.upg.lvl!==b.lvl||b.upg.type!==b.type)b.upg={lvl:b.lvl,type:b.type,cost:upCost(b),paid:{},dwell:0,dt:0,hintT:-9};return b.upg;}
 const tradeSpot=i=>({x:L.sites.fern.stall.x+(i-1)*2.3*TILE,y:L.sites.fern.stall.y+0.6*TILE,r:0.8*TILE});
 const faithMax=()=>100+25*G.ms;
 function lifeCost(){let c=Math.min(60,20+G.recruits*3);if(G.factions.fern.disc)c=Math.ceil(c*0.7);return c;}
@@ -1017,8 +1029,14 @@ function updZones(P,dt){
     G.faith-=c;G.recruits++;b.dwell=-1.5;spawnVillager(b.zone.x,b.zone.y-6);celebrate(b.zone.x,b.zone.y-30);if(G.rings.length<8)G.rings.push({x:b.zone.x,y:b.zone.y,t:0,r:2.5*TILE,col:'#ffd166'});
     toast('A new villager steps out of the light and looks for work.','good');checkMilestone();
   }
+  // upgrades: stand in a building's small side ring to pay for one more worker or bed
+  for(const id in G.B){const b=G.B[id],c=b.p.up;if(!b.built||!c||!UP_COST[b.type]||b.lvl>=3)continue;
+    if(hyp(P.x-c.x,P.y-c.y)>=c.r){if(b.upg){b.upg.dwell=0;b.upg.dt=0;}continue;}
+    const u=getUpg(b);u.dwell+=dt;
+    if(u.dwell>DWELL&&donate(u,dt,true,(b.p.x+b.p.w/2)*TILE,(b.p.y+b.p.h/2)*TILE)){
+      b.lvl++;b.upg=null;celebrate(b.zone.x,b.zone.y-40);toast(BT[b.type].name+' upgraded to level '+b.lvl+': room for one more '+(b.type==='house'?'villager.':'worker.'),'good');assignIdle();requestSave();}}
   // clearing a free plot: stand in its small side ring for three seconds
-  for(const id in G.B){const b=G.B[id];if(!b.p.choices||!b.type)continue;const c=choiceSpot(b,5);
+  for(const id in G.B){const b=G.B[id];if(!b.p.choices||!b.type)continue;const c=clearSpot(b);
     if(hyp(P.x-c.x,P.y-c.y)<c.r){b.clr=(b.clr||0)+dt;if(b.clr>3)clearPlot(b);}else b.clr=0;}
   // construction sites
   for(const id in G.B){
@@ -1241,6 +1259,7 @@ function drawPlot(b){
     for(let i=0;i<10;i++){const a=i/10*TAU,fx=cx+Math.cos(a)*(w*0.36),fy=y+h/2+2+Math.sin(a)*(h*0.3);fs('#5d9a48');circ(fx,fy,3.5);fs(['#f7a8b8','#ffd166','#fff6d8','#c9b6f2','#ef8354'][i%5]);circ(fx,fy-2+Math.sin(t*2+i)*0.6,2.6);}
     fs('#c9a074');for(let i=0;i<=w/16;i++)C.fillRect(x+3+i*((w-8)/(w/16)),y+h-10,2,9);break;
   }
+  for(let i=1;i<b.lvl;i++){fs('#3a2a20');circ(cx-5+(i-1)*10+(b.lvl===2?5:0),y+h-27,4);fs('#ffd166');circ(cx-5+(i-1)*10+(b.lvl===2?5:0),y+h-27,2.8);}       // level pips over the door
   if(b.type==='house'&&G.villagers.length<popCap()&&hyp(G.player.x-b.zone.x,G.player.y-b.zone.y)<3.5*TILE)label('Stand in the ring: new villager · '+lifeCost()+' faith',cx,y-h*0.3-14,10,'#fff3c4');
   if(PILE_RES[b.type]&&b.pile>0){                              // the stack waiting to be hauled
     const r=PILE_RES[b.type],px=b.zone.x+16,py=b.zone.y-14,n=Math.min(9,Math.ceil(b.pile/4));
@@ -1444,7 +1463,9 @@ function render(rdt){
   if(F.bandit.disc&&onScreen(S.bandit.x,S.bandit.y,S.bandit.r*TILE+40)){C.strokeStyle='rgba(229,72,77,0.5)';C.lineWidth=3;C.setLineDash([14,10]);C.beginPath();C.arc(S.bandit.x,S.bandit.y,S.bandit.r*TILE,0,TAU);C.stroke();C.setLineDash([]);}
   const pulse=0.1+0.05*Math.sin(t*3);
   for(const id in G.B){const b=G.B[id],z=b.zone;if(!onScreen(z.x,z.y,160))continue;
-    if(b.p.choices&&b.type){const c=choiceSpot(b,5),near=hyp(P.x-c.x,P.y-c.y)<TILE*1.6;ring(c.x,c.y,c.r,'#e8a79d','rgba(224,120,110,0.12)',(b.clr||0)/3);
+    if(b.built&&b.p.up&&UP_COST[b.type]&&b.lvl<3){const c=b.p.up,near=hyp(P.x-c.x,P.y-c.y)<TILE*1.6;ring(c.x,c.y,c.r,'#b9e3a0','rgba(155,222,140,0.12)',b.upg?b.upg.dwell/DWELL:0);
+      label('Upgrade',c.x,c.y+c.r+9,9,'#e3f7d3');if(near)needBubble(c.x,c.y-c.r-16,upCost(b),b.upg&&b.upg.lvl===b.lvl?b.upg.paid:{},b.type==='house'?'+1 bed':'+1 worker');}
+    if(b.p.choices&&b.type){const c=clearSpot(b),near=hyp(P.x-c.x,P.y-c.y)<TILE*1.6;ring(c.x,c.y,c.r,'#e8a79d','rgba(224,120,110,0.12)',(b.clr||0)/3);
       label(b.built?'Clear plot':'Cancel',c.x,c.y+c.r+9,9,'#ffd9d2');if(near)label(b.built?'stand 3s · half the cost returns':'stand 3s · materials return',c.x,c.y+c.r+20,9,'#f3e7c9');}
     if(b.built){if(b.type==='warehouse'||b.type==='outpost')ring(z.x,z.y,z.r,'rgba(200,232,255,0.9)','rgba(200,232,255,0.1)',0);else if(PILE_RES[b.type]&&b.pile>0)ring(z.x,z.y,z.r,'rgba(255,236,170,0.9)','rgba(255,236,170,0.1)',0);
       else if(b.type==='house'&&G.villagers.length<popCap())ring(z.x,z.y,z.r,'#ffd166','rgba(255,214,120,'+pulse+')',Math.max(0,b.dwell));}
@@ -1535,7 +1556,7 @@ function closeModal(){ui.modal=null;$('modal').classList.add('hidden');if(ui.not
 function notice(title,html){if(ui.modal){ui.noticeQ.push([title,html]);return;}openModal('<h2>'+title+'</h2>'+html+'<div class="foot"><button data-a="close" class="primary">Understood</button></div>','notice');}
 function saveInfo(){if(!ui.saveOK)return 'Browser storage is unavailable here, so automatic saving is off. Use Export save to keep your progress.';return ui.lastSave?'Last saved '+Math.max(0,Math.round((Date.now()-ui.lastSave)/1000))+'s ago. Autosaves every 20 seconds.':'Autosaves every 20 seconds.';}
 function menuPanel(){
-  openModal('<h2>Oh My God</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. There are no action buttons — everything is done by walking and standing. Villagers near you work faster. If you are badly hurt, 35 faith is spent by itself to drive attackers away. Stand at a border stone to offer tribute, in a market ring to trade, and in a small ring at a free plot to choose its building (the side ring clears it again). Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
+  openModal('<h2>Oh My God</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. There are no action buttons — everything is done by walking and standing. Villagers near you work faster. If you are badly hurt, 35 faith is spent by itself to drive attackers away. Stand at a border stone to offer tribute, in a market ring to trade, and in a small ring at a free plot to choose its building (the pink side ring clears it again). Every building also has a small green <b>Upgrade</b> ring beside it: pay there to add one more worker or bed, up to level 3. Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
     '<label class="row"><input type="checkbox" id="optRaids" '+(G.settings.raids?'checked':'')+'><span>Raids enabled <small>— off by default; tick for occasional raids once you have met a hostile camp</small></span></label>'+
     '<div class="grid"><button data-a="save">Save now</button><button data-a="export">Export save</button><button data-a="import">Import save</button><button data-a="new" class="danger">New game</button></div>'+
     '<p class="sm">'+saveInfo()+'</p><p class="sm">World seed '+G.seed+' · '+G.found+' discoveries. The game only runs while this tab is open; there is no offline progress.</p>'+
@@ -1672,7 +1693,7 @@ function bindInput(){
 function serialize(){
   const P=G.player,B={},wh=Object.assign({},G.wh);
   for(const e of G.enemies)if(e.raid&&!e.dead&&e.loot)for(const r in e.loot)wh[r]+=e.loot[r];      // an interrupted raid steals nothing
-  for(const id in G.B){const b=G.B[id];if(b.built||Object.keys(b.paid).length||(!b.p.type&&b.type))B[id]={built:b.built,paid:b.paid,type:b.p.type?undefined:b.type,pile:b.pile||undefined};}
+  for(const id in G.B){const b=G.B[id];if(b.built||Object.keys(b.paid).length||(!b.p.type&&b.type))B[id]={built:b.built,paid:b.paid,type:b.p.type?undefined:b.type,pile:b.pile||undefined,lvl:b.lvl>1?b.lvl:undefined,up:b.upg&&b.upg.lvl===b.lvl&&Object.keys(b.upg.paid).length?b.upg.paid:undefined};}
   const mods={};for(const k in G.mods){const m=G.mods[k],o={};let n=0;for(const i in m)if(m[i]>G.time){o[i]=Math.round(m[i]);n++;}if(n)mods[k]=o;else delete G.mods[k];}   // only still-depleted nodes
   return {game:'emberwick',v:SAVE_VERSION,savedAt:Date.now(),seed:G.seed,time:Math.round(G.time),ms:G.ms,
     player:{x:Math.round(P.x),y:Math.round(P.y),hp:Math.round(P.hp),inv:P.inv},up:G.up,wh,B,
@@ -1708,7 +1729,8 @@ function applySave(d){
     if(!b.p.type&&CHOICES.includes(s.type)){b.type=s.type;b.cost=CHOICE_COST[s.type];if(s.type==='farm')makeFields(b);}
     if(!b.type)continue;
     if(obj(s.paid))for(const r in b.cost){const n=Math.floor(num(s.paid[r],0,0,b.cost[r]));if(n>0)b.paid[r]=n;}
-    b.built=!!s.built;if(b.built&&PILE_RES[b.type])b.pile=Math.floor(num(s.pile,0,0,999));}
+    b.built=!!s.built;if(b.built&&PILE_RES[b.type])b.pile=Math.floor(num(s.pile,0,0,999));
+    if(b.built&&UP_COST[b.type]){b.lvl=Math.floor(num(s.lvl,1,1,3));if(b.lvl<3&&obj(s.up)){const u=getUpg(b);for(const r in u.cost){const n=Math.floor(num(s.up[r],0,0,u.cost[r]));if(n>0)u.paid[r]=n;}}}}
   if(bpx(P.x,P.y)){P.x=HOME.x+30;P.y=HOME.y+34;}
   if(Array.isArray(d.fog))for(const e of d.fog)if(Array.isArray(e)&&typeof e[0]==='string'&&/^-?\d+,-?\d+$/.test(e[0])&&Number.isFinite(e[1]))G.fog.set(e[0],e[1]&0xffff);
   if(obj(d.mods))for(const k in d.mods){const m=d.mods[k];if(!obj(m))continue;const o={};for(const i in m)if(Number.isFinite(m[i])&&m[i]>G.time)o[i]=m[i];G.mods[k]=o;}
@@ -1730,7 +1752,7 @@ function applySave(d){
     if(obj(s.carry)&&RES.includes(s.carry.res))v.carry={res:s.carry.res,n:Math.floor(num(s.carry.n,0,0,12))};
     if(obj(s.job)){const b=G.B[s.job.b];if(b&&b.built&&BT[b.type].jobs&&BT[b.type].jobs[s.job.role]){
       let used=0;for(const o of G.villagers)if(o.job&&o.job.b===b.id&&o.job.role===s.job.role)used++;
-      if(used<BT[b.type].jobs[s.job.role])v.job={b:b.id,role:s.job.role};}}
+      if(used<slotCap(b,s.job.role))v.job={b:b.id,role:s.job.role};}}
   }
   assignIdle();ensureChunks(true);revealAt(P.x,P.y,10);camSnap=true;ui.last={};ui.ctxKey='?';
 }
