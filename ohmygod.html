@@ -408,6 +408,18 @@ function hitNode(n){n.hp--;n.shake=0.25;spawnP(n.x,n.y-14,n.res==='wood'?'#c9935
 
 /* ---------- 6. BUILDINGS, JOBS, MILESTONES ---------- */
 function needText(b){const c={};for(const r in b.cost){const n=b.cost[r]-(b.paid[r]||0);if(n>0)c[r]=n;}return costText(c);}
+/* Free plots can be cleared again: half the cost comes back (all of it if the building was never finished). */
+function clearPlot(b){
+  const nm=BT[b.type].name,back={};
+  if(b.built)for(const r in b.cost)back[r]=Math.floor(b.cost[r]/2);else for(const r in b.paid)back[r]=b.paid[r];
+  if(b.pile&&PILE_RES[b.type])back[PILE_RES[b.type]]=(back[PILE_RES[b.type]]||0)+b.pile;
+  for(const r in back)G.wh[r]+=back[r];
+  for(const v of G.villagers){if(v.job&&v.job.b===b.id)setJob(v,null);else if(v.src===b.id)release(v);}
+  spawnP((b.p.x+b.p.w/2)*TILE,(b.p.y+b.p.h/2)*TILE,'#c9a074',14,110);
+  toast((b.built?nm+' taken down':nm+' cancelled')+' — the plot is free again.'+(costText(back)?' Returned to the warehouse: '+costText(back)+'.':''),'info');
+  b.built=false;b.type=null;b.cost=null;b.paid={};b.pile=0;b.fields=null;b.dwell=0;b.dt=0;b.pick=null;b.clr=0;b.disabledUntil=0;
+  assignIdle();requestSave();
+}
 function chooseBuild(b,type){if(b.type||!CHOICES.includes(type))return;b.type=type;b.cost=CHOICE_COST[type];b.paid={};if(type==='farm')makeFields(b);toast(BT[type].name+' staked out — needs '+costText(b.cost)+'.','info');}
 function finishBuilding(b){
   b.built=true;b.dwell=0;const nm=BT[b.type].name;revealAt(b.zone.x,b.zone.y,8);if(b.type!=='bridge')bringLife(b.zone.x,b.zone.y,3);celebrate(b.zone.x,b.zone.y-40);
@@ -1005,6 +1017,9 @@ function updZones(P,dt){
     G.faith-=c;G.recruits++;b.dwell=-1.5;spawnVillager(b.zone.x,b.zone.y-6);celebrate(b.zone.x,b.zone.y-30);if(G.rings.length<8)G.rings.push({x:b.zone.x,y:b.zone.y,t:0,r:2.5*TILE,col:'#ffd166'});
     toast('A new villager steps out of the light and looks for work.','good');checkMilestone();
   }
+  // clearing a free plot: stand in its small side ring for three seconds
+  for(const id in G.B){const b=G.B[id];if(!b.p.choices||!b.type)continue;const c=choiceSpot(b,5);
+    if(hyp(P.x-c.x,P.y-c.y)<c.r){b.clr=(b.clr||0)+dt;if(b.clr>3)clearPlot(b);}else b.clr=0;}
   // construction sites
   for(const id in G.B){
     const b=G.B[id];if(b.built)continue;
@@ -1428,7 +1443,9 @@ function render(rdt){
   if(F.thorn.disc&&onScreen(S.thorn.x,S.thorn.y,S.thorn.r*TILE+40)){C.strokeStyle='rgba(123,224,192,0.5)';C.lineWidth=3;C.setLineDash([14,10]);C.beginPath();C.arc(S.thorn.x,S.thorn.y,S.thorn.r*TILE,0,TAU);C.stroke();C.setLineDash([]);}
   if(F.bandit.disc&&onScreen(S.bandit.x,S.bandit.y,S.bandit.r*TILE+40)){C.strokeStyle='rgba(229,72,77,0.5)';C.lineWidth=3;C.setLineDash([14,10]);C.beginPath();C.arc(S.bandit.x,S.bandit.y,S.bandit.r*TILE,0,TAU);C.stroke();C.setLineDash([]);}
   const pulse=0.1+0.05*Math.sin(t*3);
-  for(const id in G.B){const b=G.B[id],z=b.zone;if(!onScreen(z.x,z.y,60))continue;
+  for(const id in G.B){const b=G.B[id],z=b.zone;if(!onScreen(z.x,z.y,160))continue;
+    if(b.p.choices&&b.type){const c=choiceSpot(b,5),near=hyp(P.x-c.x,P.y-c.y)<TILE*1.6;ring(c.x,c.y,c.r,'#e8a79d','rgba(224,120,110,0.12)',(b.clr||0)/3);
+      label(b.built?'Clear plot':'Cancel',c.x,c.y+c.r+9,9,'#ffd9d2');if(near)label(b.built?'stand 3s · half the cost returns':'stand 3s · materials return',c.x,c.y+c.r+20,9,'#f3e7c9');}
     if(b.built){if(b.type==='warehouse'||b.type==='outpost')ring(z.x,z.y,z.r,'rgba(200,232,255,0.9)','rgba(200,232,255,0.1)',0);else if(PILE_RES[b.type]&&b.pile>0)ring(z.x,z.y,z.r,'rgba(255,236,170,0.9)','rgba(255,236,170,0.1)',0);
       else if(b.type==='house'&&G.villagers.length<popCap())ring(z.x,z.y,z.r,'#ffd166','rgba(255,214,120,'+pulse+')',Math.max(0,b.dwell));}
     else if(isUnlocked(b)){
@@ -1518,7 +1535,7 @@ function closeModal(){ui.modal=null;$('modal').classList.add('hidden');if(ui.not
 function notice(title,html){if(ui.modal){ui.noticeQ.push([title,html]);return;}openModal('<h2>'+title+'</h2>'+html+'<div class="foot"><button data-a="close" class="primary">Understood</button></div>','notice');}
 function saveInfo(){if(!ui.saveOK)return 'Browser storage is unavailable here, so automatic saving is off. Use Export save to keep your progress.';return ui.lastSave?'Last saved '+Math.max(0,Math.round((Date.now()-ui.lastSave)/1000))+'s ago. Autosaves every 20 seconds.':'Autosaves every 20 seconds.';}
 function menuPanel(){
-  openModal('<h2>Oh My God</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. There are no action buttons — everything is done by walking and standing. Villagers near you work faster. If you are badly hurt, 35 faith is spent by itself to drive attackers away. Stand at a border stone to offer tribute, in a market ring to trade, and in a small ring at a free plot to choose its building. Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
+  openModal('<h2>Oh My God</h2><p class="sm">You are the keeper of a withered land. Move with <b>WASD / arrow keys</b>, or <b>drag anywhere</b>. Walking wakes withered land: a little rain cloud forms over each bare tree or stump near you and it grows. Fields ripen faster near you. By the sacred fire, the <b>anvil</b> upgrades your axe (harvest faster) and the <b>staff rack</b> trains fighting (ends in Lightning) — two separate tracks. Stand in the ring at a house door to create a villager (costs faith, needs a free bed). Travellers you save — some from wolves — join you too. There are no action buttons — everything is done by walking and standing. Villagers near you work faster. If you are badly hurt, 35 faith is spent by itself to drive attackers away. Stand at a border stone to offer tribute, in a market ring to trade, and in a small ring at a free plot to choose its building (the side ring clears it again). Faith comes from your villagers (more when they have bread) and from praying at the altar. Everything else happens by walking close: chopping, mining, picking up, unloading, building, recruiting and fighting. Workplaces stack what they make by the door: walk into the ring to load it, or let haulers carry it. Ripe (golden) field tiles can be reaped by walking onto them.  Stand inside a glowing ring for a moment to give materials.</p>'+
     '<label class="row"><input type="checkbox" id="optRaids" '+(G.settings.raids?'checked':'')+'><span>Raids enabled <small>— off by default; tick for occasional raids once you have met a hostile camp</small></span></label>'+
     '<div class="grid"><button data-a="save">Save now</button><button data-a="export">Export save</button><button data-a="import">Import save</button><button data-a="new" class="danger">New game</button></div>'+
     '<p class="sm">'+saveInfo()+'</p><p class="sm">World seed '+G.seed+' · '+G.found+' discoveries. The game only runs while this tab is open; there is no offline progress.</p>'+
